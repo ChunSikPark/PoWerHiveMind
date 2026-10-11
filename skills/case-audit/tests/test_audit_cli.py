@@ -38,6 +38,16 @@ def test_profiles_are_deduplicated(fake_esapp, tmp_path, monkeypatch):
     assert json.loads((tmp_path / "o" / "findings.json").read_text(encoding="utf-8"))["profiles"] == ["base", "timestep"]
 
 
+def test_not_checked_reaches_the_cli_files(fake_esapp, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    out = tmp_path / "o"
+    assert audit.main(["--case", str(_case(tmp_path)), "--profiles", "base,lint", "--out", str(out)]) == 0
+    r = json.loads((out / "findings.json").read_text(encoding="utf-8"))
+    assert {"lint.shunt_steps", "lint.shunt_band_inverted", "lint.gen_below_min"} <= {
+        s["rule"] for s in r["rules_skipped"]}
+    assert "## Not checked" in (out / "findings.md").read_text(encoding="utf-8")
+
+
 def test_unknown_profile_is_three_plain_lines(capsys):
     with pytest.raises(SystemExit) as e:
         audit.main(["--case", "x.pwb", "--profiles", "base,n2"])

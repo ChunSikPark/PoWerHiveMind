@@ -1,6 +1,6 @@
 ---
 name: case-audit
-description: "Check a PowerWorld case read-only and say whether it is sane and READY for a study - base power flow, N-1 monitoring, TimeStep with weather, OPF/SCOPF - with a case summary (load, generation, headroom by fuel type, shunts, size) and every blocker named by its object keys. Use for 'review this case', 'scan the case', 'give me a summary of this case', 'what's in this case', 'can I run a time step / OPF / N-1 on this', 'is this case ready for X'. Never writes the case."
+description: "Check a PowerWorld case read-only and say whether it is sane and READY for a study - base power flow, N-1 monitoring, TimeStep with weather, OPF/SCOPF - with a case summary (load, generation, headroom by fuel type, shunts, size) and every blocker named by its object keys, plus a data lint (shunt steps, unit limits, ratings, islands, names, kV). Use for 'review this case', 'scan the case', 'what's wrong with this case', 'check the case for issues', 'give me a summary of this case', 'what's in this case', 'can I run a time step / OPF / N-1 on this', 'is this case ready for X'. Never writes the case."
 ---
 
 # Case audit
@@ -24,7 +24,8 @@ environment variable: in any other harness, or if you still see the literal text
 | time step, weather, PFW, renewables over time | `base,timestep` |
 | OPF, economic dispatch | `base,opf` |
 | SCOPF | `base,opf` (the `scopf` verdict line comes with it) |
-| "scan the whole case", or you cannot tell | `base,timestep,opf` |
+| data problems: "what's wrong with this case", "check it for issues", "is the data clean" | `base,lint` |
+| "scan the whole case", or you cannot tell | `base,timestep,opf,lint` |
 
 For a time step, pass the weather file with `--pww` if the engineer named one. If they did not,
 run without it: the engine reports that as one FYI line. Never ask for it mid-run.
@@ -61,7 +62,8 @@ Read `findings.json` (numbers) and `findings.md` (tables already formatted).
   (Broken / Probably on purpose / Your call). The engine's triage is its default reading; change
   one only when the case in front of you gives a reason, and say the reason.
 - `rules_skipped`: checks that did not run, and why (most need a solved AC power flow). Never
-  say a skipped check passed.
+  say a skipped check passed. A lint rule is here when the case or snapshot did not carry a field
+  it reads; a rule that ran in part is in both lists.
 - `variants_beside`: other versions of the case in its folder. Say which file you audited.
 - `ts.pfw_missing` and `ts.latlon_missing` never stop a time step: say what the run will do
   ("115 of 120 renewables will follow the weather; 5 read 0 MW").
@@ -72,6 +74,9 @@ Verdict first, then the summary tables, then the findings that matter; everythin
 `findings.md`, whose path you give once. The full output contract, triage guide and handoffs are
 in `${CLAUDE_PLUGIN_ROOT}/agents/case-auditor.md` - read its *Output format* and *Handoffs*
 sections before your first answer.
+
+When `lint` ran, every lint finding is a Findings row with its count and up to 3 object keys, and
+every `rules_skipped` entry is a `not checked` line.
 
 ## Never
 

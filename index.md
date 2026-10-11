@@ -24,6 +24,7 @@ Step-by-step procedures. Read the one that matches your task.
 | Page | What it covers |
 |---|---|
 | [adding-devices-esapp](methods/adding-devices-esapp.md) | Create buses, branches and loads in an open case, then solve a DC OPF and screen N-1. The write-side counterpart to esapp-overview. |
+| [case-data-lint](methods/case-data-lint.md) | Find the data defects a case solves straight through: discrete shunts set off their steps, units below their minimum, placeholder or inverted limits, missing emergency ratings, negative reactance, unnamed buses, stray islands and slacks, odd nominal kV. The case-auditor's `lint` profile. |
 | [aux-file-mode](methods/aux-file-mode.md) | PowerWorld and LLM interaction through files: the agent writes `.aux`, you drop it into a watched folder, results come back as CSVs. The GUI setup handshake an agent cannot perform itself, the rules (never `OpenCase`, never `LogClear`, always read back), and a working template to copy. |
 | [applying-a-dispatch-to-a-case](methods/applying-a-dispatch-to-a-case.md) | Turn a MW-per-generator dispatch into a runnable scenario case. The DC solve fakes a balance rather than telling you the fleet is short. |
 | [converting-lines-to-transformers](methods/converting-lines-to-transformers.md) | Reclassify branches as transformers when a case models every branch as a line. `BranchDeviceType` is read-only; the real switch is `LineXFMR = "YES"` plus the nominal kV fields. |

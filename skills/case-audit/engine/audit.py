@@ -1,6 +1,6 @@
 """Audit a PowerWorld case, read-only: is it sane, and can it run the studies asked for?
 
-    python audit.py --case <case.pwb> [--profiles base,timestep,opf] [--pww <file.pww>] [--out <dir>]
+    python audit.py --case <case.pwb> [--profiles base,timestep,opf,lint] [--pww <file.pww>] [--out <dir>]
 
 Writes findings.json and findings.md into --out (default: ./case-audit/<case name>/ under the
 current folder, with a .gitignore so the case's data never lands in a repository by accident).
@@ -16,7 +16,7 @@ import traceback
 from pathlib import Path
 
 ENGINE = Path(__file__).resolve().parent
-VALID_PROFILES = ("base", "timestep", "opf")      # the same tuple as checks.VALID_PROFILES (tested)
+VALID_PROFILES = ("base", "timestep", "opf", "lint")  # the same tuple as checks.VALID_PROFILES (tested)
 
 
 def _say(lines: list[str]) -> None:
@@ -71,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     ap = _Parser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--case", required=True, help="the .pwb to audit (opened read-only)")
-    ap.add_argument("--profiles", type=_profiles, default=["base"], help="comma list of base,timestep,opf")
+    ap.add_argument("--profiles", type=_profiles, default=["base"], help="comma list of base,timestep,opf,lint")
     ap.add_argument("--pww", help="the weather file the time step will use, if any")
     ap.add_argument("--out", help="folder for findings.json and findings.md (default ./case-audit/<case name>/)")
     a = ap.parse_args(argv)

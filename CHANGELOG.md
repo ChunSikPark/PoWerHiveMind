@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **The case-auditor lints for data defects: a `lint` profile with nine rules** (`--profiles base,lint`).
+  Discrete shunts set beyond their blocks or between steps, inverted shunt bands, online units below
+  their minimum, missing, placeholder or inverted unit limits, negative reactance, branches with no
+  rating A or no B/C, unnamed buses, stray islands and slack counts, and nominal kV that is missing
+  or not round. None needs a solve and none stops a study. A field that reads blank on every row is
+  treated as not read, so its rule stays silent instead of flagging everything. New page:
+  `methods/case-data-lint.md`. The reader now also reads `GenMWMin`, `SSVHigh`, `SSVLow` and the
+  ten shunt blocks.
 - **The case-auditor is live: a fifth skill, `case-audit`, and the `case-auditor` agent.** Checks a
   case read-only and says whether it is READY for a base power flow, an N-1 (its monitoring), a
   time step, an OPF and a SCOPF, with the case summary the agent presents (load, generation,

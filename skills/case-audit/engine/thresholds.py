@@ -36,6 +36,18 @@ STUB_LIGHT_PERCENT = 10.0        # proposed default: "carries almost no MW", rat
 STUB_LIGHT_MW = 10.0             # proposed default: the same, for a bridge with LineAMVA = 0
 STUB_RISE_PU = 0.005             # proposed default: the page's far end sat at 1.06-1.08 pu with the plant off
 
+# lint profile  (methods/case-data-lint.md)
+SHUNT_STEP_TOL_MVAR = 0.01       # proposed default: Mvar values read back single-precision; a real
+                                 # mismatch is a fraction of a block, far above this
+SHUNT_MAX_COMBOS = 100_000       # simple: a shunt with more step combinations than this is skipped, not
+                                 # checked; raise it if a real case ever hits it
+GEN_UNDER_MIN_MW = 0.1           # proposed default: the same noise floor as GEN_OVER_MIN_MW
+GEN_LIMIT_PLACEHOLDER = 9999.0   # proposed default: a limit at or past +/-9999 is a format placeholder, not a rating
+ZBR_X_PU = 2e-4                  # proposed default: PowerWorld's default zero-impedance threshold; a branch
+                                 # with R = 0 and |X| at or below it is a jumper and carries no rating
+KV_DECIMALS = 2                  # proposed default: 4.16 and 13.8 are real nominal kV; a third decimal is not
+SHUNT_BAND_TOL_PU = 1e-4         # proposed default: the same single-precision allowance as BAND_TOL_PU
+
 # timestep  (the case-auditor brief, demos/timestep-and-pfw.md)
 RENEWABLE_CODES = ("WND", "SUN") # sourced: GenFuelType contains one of these
 PFW_MIN_CHARS = 2                # sourced: a PFW model string longer than 2 characters

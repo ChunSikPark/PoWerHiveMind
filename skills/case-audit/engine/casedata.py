@@ -14,6 +14,9 @@ from pathlib import Path
 import pandas as pd
 
 RATINGS = ["LineAMVA"] + [f"LineAMVA:{i}" for i in range(1, 15)]   # rate sets A..O
+_BLOCK = ["", *(f":{i}" for i in range(1, 10))]                      # switched-shunt blocks 1..10
+BLOCK_STEPS = [f"SSBlockNumSteps{s}" for s in _BLOCK]
+BLOCK_MVAR = [f"SSBlockMVarPerStep{s}" for s in _BLOCK]
 
 # object -> the fields the rules read, keys first. The reader reads exactly these.
 READS: dict[str, list[str]] = {
@@ -27,10 +30,10 @@ READS: dict[str, list[str]] = {
     "Gen": ["BusNum", "GenID", "GenStatus", "GenMW", "GenMVR", "GenMWMax", "GenMVRMax", "GenMVRMin",
             "GenFuelType", "TSPFWModelString", "Latitude", "Longitude", "Latitude:1", "Longitude:1",
             "CustomInteger:1", "GenUnitType", "GenAGCAble", "GenCostModel", "GenCostCurvePoints",
-            "GenMCost", "AreaNum"],
+            "GenMCost", "AreaNum", "GenMWMin"],
     "Load": ["BusNum", "LoadID", "LoadStatus", "LoadMW", "LoadMVR"],
     "Shunt": ["BusNum", "ShuntID", "SSStatus", "SSCMode", "AutoControl", "SSRegNum", "SSAMVR",
-              "SSNMVR", "SSMaxMVR", "SSMinMVR"],
+              "SSNMVR", "SSMaxMVR", "SSMinMVR", "SSVHigh", "SSVLow", *BLOCK_STEPS, *BLOCK_MVAR],
     "Area": ["AreaNum", "SAName", "BGAGC", "BGReportLimits", "BGReportLimMinKV", "BGReportLimMaxKV"],
     "Zone": ["ZoneNum", "BGReportLimits", "BGReportLimMinKV", "BGReportLimMaxKV"],
     "SuperArea": ["SAName", "BGAGC"],
@@ -49,25 +52,29 @@ NUMERIC = {
     "LineTap", "XFRegError", "GenMW", "GenMVR", "GenMWMax", "GenMVRMax", "GenMVRMin", "Latitude",
     "Longitude", "Latitude:1", "Longitude:1", "CustomInteger:1", "GenCostCurvePoints", "GenMCost",
     "LoadMW", "LoadMVR", "SSRegNum", "SSAMVR", "SSNMVR", "SSMaxMVR", "SSMinMVR",
-    "BGReportLimMinKV", "BGReportLimMaxKV", *RATINGS,
+    "BGReportLimMinKV", "BGReportLimMaxKV", *RATINGS, "GenMWMin", "SSVHigh", "SSVLow",
+    *BLOCK_STEPS, *BLOCK_MVAR,
 }
 
 
 def typed(df: pd.DataFrame | None, columns: list[str]) -> pd.DataFrame:
     """Numbers as floats ('None' and blanks become NaN), text stripped, every declared column
-    present. None (PowerWorld's answer for an object with no rows) becomes an empty frame."""
+    present. None (PowerWorld's answer for an object with no rows) becomes an empty frame.
+    The declared columns the source lacked are listed in `attrs["unread"]`."""
     if df is None:
         return pd.DataFrame({c: pd.Series(dtype=float if c in NUMERIC else object) for c in columns})
     out = df.copy()
-    for c in columns:
-        if c not in out.columns:
-            out[c] = float("nan") if c in NUMERIC else ""
+    unread = [c for c in columns if c not in out.columns]
+    for c in unread:
+        out[c] = float("nan") if c in NUMERIC else ""
     for c in out.columns:
         if c in NUMERIC:
             out[c] = pd.to_numeric(out[c], errors="coerce").astype(float)
         else:
             out[c] = out[c].astype(str).str.strip()
-    return out.reset_index(drop=True)
+    out = out.reset_index(drop=True)
+    out.attrs["unread"] = unread
+    return out
 
 
 @dataclass
@@ -104,7 +111,9 @@ class CaseData:
         return self.frames[obj]
 
     def to_json(self, path: str | Path) -> None:
-        payload = {"frames": {o: d.to_dict(orient="list") for o, d in self.frames.items()},
+        # unread columns are left out, so typed() marks them unread again on load
+        payload = {"frames": {o: d.drop(columns=d.attrs.get("unread", [])).to_dict(orient="list")
+                              for o, d in self.frames.items()},
                    "scalars": self.scalars, "solve": asdict(self.solve)}
         raw = json.dumps(payload, default=str).encode("utf-8")
         Path(path).write_bytes(gzip.compress(raw) if str(path).endswith(".gz") else raw)
