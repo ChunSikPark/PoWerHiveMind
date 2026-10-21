@@ -27,6 +27,16 @@
   `methods/finding-and-fixing-radial-by-n1-pockets.md`, and
   `methods/zone-load-multiplier-trap.md` (why the served load differs from the load entered).
   `concepts/per-unit-basis-discipline.md` adds the per-mile impedance trap with magnitudes.
+- New pages on fixing violations in large cases: `methods/remediating-base-case-violations.md`
+  (the intact-case action ladder, cheapest first), `methods/remediating-n1-contingency-violations.md`
+  (the N-1 loop, round after round), `methods/diagnosing-a-non-converging-contingency.md` (why an
+  outage returns unsolved, in four probes), `methods/removing-empty-buses.md` (dead voltage levels
+  that inflate islanding and N-1 counts), `concepts/agc-participation-factors.md` (who picks up
+  lost generation), `concepts/sizing-a-device-whose-impedance-determines-its-own-flow.md` (why a
+  transformer is not sized like a line), `concepts/one-device-per-voltage-pocket.md`
+  (undervoltage clusters by driving outage, not by bus) and
+  `concepts/aggregate-clauses-cannot-bound-one-row.md` (why counts and maxima hide one element
+  getting worse).
 - violation-map uses the case's own voltage limits by default, treats "show me the violations" as
   intact plus N-1, and reports thermal overloads in text.
 - knowledge-base-page gains a "Share it" step: scrub a copy, then hand the user a pre-filled
