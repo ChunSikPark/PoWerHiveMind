@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* dark by default; a data-theme="light" set by the host page still wins */document.documentElement.dataset.theme=document.documentElement.dataset.theme||"dark";</script>
 <title>Voltage Violation Map</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +15,7 @@
   --sh-cap:#DD6B2E; --sh-rea:#0A8A8A;
   --c0:#DCE3DE; --c1:#E9C46A; --c2:#E07A3A; --c3:#B0306A;
   --sel:#2F5BD3; --warn-bg:#FFF4DC; --warn-ink:#7A4B00; --new:#D6247F;
+  --t-over:#B42318; --t-near:#E8710A; --t-ok:#B7C0BB; --t-sub:#E3E8E4; --t-flow:#F3F5F2;
   --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --cond:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
@@ -29,6 +31,7 @@
     --sh-cap:#F07A3C; --sh-rea:#2EC4C4;
     --c0:#2B3531; --c1:#C9A44A; --c2:#E0763A; --c3:#D24BA6;
     --sel:#7E9CFF; --warn-bg:#3A2E12; --warn-ink:#F5D48A; --new:#FF5CB0;
+    --t-over:#ff4d4d; --t-near:#ffc247; --t-ok:#46524C; --t-sub:#2B3531; --t-flow:#0F1412;
   }
 }
 :root[data-theme="dark"]{
@@ -41,8 +44,10 @@
   --sh-cap:#F07A3C; --sh-rea:#2EC4C4;
   --c0:#2B3531; --c1:#C9A44A; --c2:#E0763A; --c3:#D24BA6;
   --sel:#7E9CFF; --warn-bg:#3A2E12; --warn-ink:#F5D48A; --new:#FF5CB0;
+  --t-over:#ff4d4d; --t-near:#ffc247; --t-ok:#46524C; --t-sub:#2B3531; --t-flow:#0F1412;
 }
 [hidden]{display:none!important}
+body[data-view="thermal"] .vonly,body[data-view="voltage"] .tonly{display:none!important}
 html,body{height:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.45 var(--sans);}
 .app{display:grid;grid-template-columns:minmax(0,1fr) 390px;height:100%;}
@@ -154,13 +159,26 @@ td.num{font-family:var(--mono);text-align:right;white-space:nowrap}
   .mapwrap{border-right:0;border-bottom:1px solid var(--rule);height:62vh}
   .panel{overflow:visible;padding-inline:16px}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.tflow{fill:none;stroke:var(--t-flow);stroke-dasharray:2 10;stroke-linecap:round;opacity:.9;animation:tflow 2.4s linear infinite;pointer-events:none}
+@keyframes tflow{to{stroke-dashoffset:-12}}
+.tpulse{fill:none;stroke:var(--t-over);stroke-linecap:round;animation:tpulse 2.8s ease-in-out infinite;pointer-events:none}
+@keyframes tpulse{0%,100%{opacity:.08}50%{opacity:.36}}
+.tpl{font:600 11px var(--mono);fill:var(--ink);text-anchor:middle;pointer-events:none;font-variant-numeric:tabular-nums}
+.tpill{fill:var(--panel);stroke-width:1.6px;pointer-events:none}
+.tout{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center}
+.tout select{min-width:0;width:100%}
+.tout button{font:500 12px var(--sans);color:var(--ink);background:var(--chip);border:1px solid var(--rule);border-radius:6px;padding:4px 9px;cursor:pointer}
+.kpi.t-over{box-shadow:inset 0 3px 0 var(--t-over)} .kpi.t-near{box-shadow:inset 0 3px 0 var(--t-near)}
+.prob .pct{font:600 12.5px var(--mono);font-variant-numeric:tabular-nums}
+tr.zebra:nth-child(even) td{background:var(--chip)}
+tr[data-tn]{cursor:pointer} tr[data-tn]:hover td{background:var(--grid)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important} .tflow,.tpulse{animation:none} .tpulse{opacity:.24}}
 </style>
 
 <div class="app">
   <div class="mapwrap" id="mapwrap">
     <svg id="map" role="img" aria-label="Map of the substations around the out-of-band buses">
-      <g id="world"><g id="gEdges"></g><g id="gCand"></g><g id="gHi"></g><g id="gNodes"></g><g id="gDev"></g><g id="gLabels"></g></g>
+      <g id="world"><g id="gEdges"></g><g id="gTh"></g><g id="gCand"></g><g id="gHi"></g><g id="gNodes"></g><g id="gDev"></g><g id="gLabels"></g><g id="gTl"></g></g>
     </svg>
     <div class="mapbar">
       <button id="prevP" type="button" aria-label="Previous problem bus">&#9664;</button>
@@ -189,18 +207,34 @@ td.num{font-family:var(--mono);text-align:right;white-space:nowrap}
 
     <section class="ctl">
       <h2>Area, dispatch, state</h2>
+      <div class="seg" id="segView" hidden></div>
       <div class="seg" id="segArea"></div>
       <div class="seg" id="segSce"></div>
       <div class="seg" id="segSet"></div>
     </section>
 
-    <section>
+    <section class="ctl tonly">
+      <h2>Branch loading</h2>
+      <div class="seg" id="segTv"></div>
+      <div class="tout" id="tOutBox"><button type="button" id="tPrev" aria-label="Previous outage">&#9664;</button>
+        <select id="tOut" aria-label="Outage"></select><button type="button" id="tNext" aria-label="Next outage">&#9654;</button></div>
+      <div class="kpis" id="tKpis"></div>
+      <p class="note" id="tNote"></p>
+    </section>
+
+    <section class="tonly">
+      <h2>Loaded branches &mdash; click to zoom</h2>
+      <div class="problist" id="tList"></div>
+      <p class="note" id="tListNote"></p>
+    </section>
+
+    <section class="vonly">
       <h2>Problem buses &mdash; click to zoom</h2>
       <div class="problist" id="probList"></div>
       <p class="note" id="probNote"></p>
     </section>
 
-    <section class="ctl" id="desSec" hidden>
+    <section class="ctl vonly" id="desSec" hidden>
       <h2>Candidate fixes, measured</h2>
       <div class="seg" id="segOut"></div>
       <div class="seg" id="segMode"></div>
@@ -215,13 +249,13 @@ td.num{font-family:var(--mono);text-align:right;white-space:nowrap}
       <p class="note" style="margin:0">Shows only lines of that class and substations with a bus at that voltage; substations are coloured by that voltage.</p>
     </section>
 
-    <section>
+    <section class="vonly">
       <h2>Inside the hop radius</h2>
       <div class="kpis" id="kpis"></div>
       <p class="note" id="kpinote"></p>
     </section>
 
-    <section>
+    <section class="vonly">
       <h2>Reactive balance (MVAr)</h2>
       <div class="bal" id="bal"></div>
       <p class="note">Line charging is B/2&middot;(V<sub>f</sub>&sup2;+V<sub>t</sub>&sup2;)&middot;100 for every line with both ends inside the radius. &ldquo;Room&rdquo; is how much more a unit or reactor can still absorb before it hits its limit &mdash; capability is not room. A generator counts as pinned when it is within 1&nbsp;MVAr of its limit.</p>
@@ -231,22 +265,22 @@ td.num{font-family:var(--mono);text-align:right;white-space:nowrap}
       <h2>View</h2>
       <label for="hops"><span>Substation hops from the seed buses</span><span id="hopsv" style="font-family:var(--mono)"></span></label>
       <input id="hops" type="range" min="1" max="6" step="1" value="5">
-      <label for="lmode"><span>Colour lines by</span>
+      <label for="lmode" class="vonly"><span>Colour lines by</span>
         <select id="lmode"><option value="kv">Voltage class</option><option value="chg">Charging MVAr</option><option value="x">Reactance X (pu)</option></select></label>
-      <label for="devs"><span>Show generators and shunts</span><input type="checkbox" id="devs" checked></label>
+      <label for="devs" class="vonly"><span>Show generators and shunts</span><input type="checkbox" id="devs" checked></label>
     </section>
 
-    <section>
+    <section class="vonly">
       <h2 id="hiH">Highest network buses</h2>
       <div class="list" id="hiList"></div>
     </section>
 
-    <section>
+    <section class="vonly">
       <h2>Generators by reactive output</h2>
       <div class="list" id="genList"></div>
     </section>
 
-    <section>
+    <section class="vonly">
       <h2>Largest charging lines</h2>
       <div class="list" id="chgList"></div>
     </section>
@@ -258,16 +292,21 @@ td.num{font-family:var(--mono);text-align:right;white-space:nowrap}
 
     <section class="legend">
       <h2>Legend</h2>
-      <div class="r"><span class="sw" style="background:var(--kv765);height:4px"></span>765 kV
+      <div class="r tonly"><span class="sw" style="background:var(--t-over);height:4px"></span><span id="legTo"></span>
+        <span class="sw" style="background:var(--t-near);height:4px"></span><span id="legTn"></span>
+        <span class="sw" style="background:var(--t-ok)"></span><span id="legTk"></span></div>
+      <div class="r tonly">Line width is MVA flow. Moving dots show the direction of flow on lines above half their rating; the arrow on a red or orange line does the same.
+        <svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="var(--ink)" stroke-width="2" stroke-dasharray="4 3"/></svg>the element that is out.</div>
+      <div class="r vonly"><span class="sw" style="background:var(--kv765);height:4px"></span>765 kV
         <span class="sw" style="background:var(--kv345)"></span>345 kV
         <span class="sw" style="background:var(--kv138)"></span>138 kV
         <span class="sw" style="background:var(--kv69);height:2px"></span>&le;69 kV &nbsp;every line in its own kV colour</div>
-      <div class="r" id="legV"></div>
-      <div class="r"><svg width="12" height="12" aria-hidden="true"><path d="M6 1 L11 11 L1 11 Z" fill="var(--q-pin)"/></svg>generator pinned at its absorbing limit
+      <div class="r vonly" id="legV"></div>
+      <div class="r vonly"><svg width="12" height="12" aria-hidden="true"><path d="M6 1 L11 11 L1 11 Z" fill="var(--q-pin)"/></svg>generator pinned at its absorbing limit
         <svg width="12" height="12" aria-hidden="true"><path d="M6 1 L11 11 L1 11 Z" fill="var(--q-room)"/></svg>absorbing, room left
         <svg width="12" height="12" aria-hidden="true"><path d="M6 1 L11 11 L1 11 Z" fill="var(--q-inj)"/></svg>injecting
         <svg width="12" height="12" aria-hidden="true"><path d="M6 1 L11 11 L1 11 Z" fill="none" stroke="var(--q-zero)"/></svg>no Q range</div>
-      <div class="r"><svg width="12" height="12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="var(--sh-rea)"/></svg>reactor in service
+      <div class="r vonly"><svg width="12" height="12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="var(--sh-rea)"/></svg>reactor in service
         <svg width="12" height="12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="var(--sh-cap)"/></svg>capacitor in service; label is MVAr now</div>
       <div class="r" id="legC" hidden><span class="sw" style="background:var(--c0)"></span><span id="legC0"></span>
         <span class="sw" style="background:var(--c1)"></span><span id="legC1"></span>
@@ -380,6 +419,67 @@ function qClass(g, gs) {
 }
 const qColor = {pin: 'var(--q-pin)', room: 'var(--q-room)', inj: 'var(--q-inj)', zero: 'var(--q-zero)'};
 
+// ---------- thermal view (optional): branch loading with nothing out, after one outage, or each branch at its worst
+const TH = D.thermal || null;
+st.view = TH ? 'thermal' : 'voltage'; st.tview = 'worst'; st.tout = null; st.tpi = -1;
+const thermal = () => st.view === 'thermal';
+const thc = () => TH.states[st.set + '|' + st.sce];
+const FLOW_MIN = 50;                                  // % of rating above which a line shows moving flow dots
+const tBand = pct => pct == null || isNaN(pct) ? 'ok' : pct >= TH.over ? 'over' : pct >= TH.near ? 'near' : 'ok';   // same rule as vmap.thermal_band
+const tColor = {over: 'var(--t-over)', near: 'var(--t-near)', ok: 'var(--t-ok)'};
+const TVIEW = {base: 'Nothing out', out: 'After an outage', worst: 'Worst case per line'};
+// one branch in a view: base row [mw, mva, % normal, normal rating, contingency rating]; post row [mw, mva, % contingency]
+function tLoad(br, view = st.tview, n = st.tout) {
+  const c = thc(), r = c.base[br.i];
+  if (!r) return {on: false};
+  const flat = {on: true, mw: r[0], mva: r[1], pct: r[4] ? r[1] / r[4] * 100 : r[2], rate: r[4]};   // unchanged by the outage
+  if (view === 'base') return {on: true, mw: r[0], mva: r[1], pct: r[2], rate: r[3]};
+  if (view === 'worst') { const w = c.worst[br.i]; return w ? {on: true, pct: w[0], out: w[1], mw: w[2], mva: w[3], rate: r[4]} : flat; }
+  const o = c.outages[n];
+  if (!o || !o.solved) return {on: true, unsolved: true};
+  if (o.trip.includes(br.i)) return {on: false, tripped: true};
+  const p = c.post[n][br.i];
+  if (p === null) return {on: false};
+  return p === undefined ? flat : {on: true, mw: p[0], mva: p[1], pct: p[2], rate: r[4]};
+}
+// a substation pair: worst circuit's %, summed MVA, net MW from p.a to p.c
+function tPair(p, view, n) {
+  const t = {on: false, pct: null, mva: 0, mw: 0, tripped: false, unsolved: false, b: null};
+  for (const b of p.ckts) { const L = tLoad(b, view, n);
+    if (L.tripped) t.tripped = true; if (L.unsolved) t.unsolved = true;
+    if (!L.on || L.pct == null) continue;
+    t.on = true; t.mva += L.mva || 0; t.mw += (b.sf === p.a ? 1 : -1) * (L.mw || 0);
+    if (t.pct == null || L.pct > t.pct) { t.pct = L.pct; t.b = b; } }
+  t.band = tBand(t.pct); return t;
+}
+const tRefs = new Map();                               // widest flow per state, so widths do not jump between views
+function tRef() { const k = st.set + '|' + st.sce; if (!tRefs.has(k)) { let m = 1;
+  for (const p of P) for (const v of ['base', 'worst']) m = Math.max(m, tPair(p, v).mva); tRefs.set(k, m); } return tRefs.get(k); }
+const tWidth = mva => 1 + 7 * Math.sqrt(Math.max(0, mva || 0) / tRef());
+const tOrders = new Map();                             // outages, worst loading they cause first
+// the chosen outage is held by label: indices differ between states and dispatches, labels do not
+const setTout = n => { st.tout = n; st.toutLabel = thc().outages[n] ? thc().outages[n].label : null; };
+function resolveTout() {
+  const c = thc(); let n = st.toutLabel != null ? c.outages.findIndex(o => o.label === st.toutLabel) : -1;
+  if (n < 0) { const ord = tOrder(); n = ord.length ? ord[0].n : 0; }
+  setTout(n);
+}
+function tOrder() { const k = st.area + '|' + st.set + '|' + st.sce; if (tOrders.has(k)) return tOrders.get(k);
+  const c = thc(), inA = b => hopOf(S.get(b.sf)) != null && hopOf(S.get(b.st)) != null;
+  const ord = c.outages.map((o, n) => { let w = null, wb = null;
+    if (o.solved) for (const [i, v] of Object.entries(c.post[n])) { const b = D.branches[+i]; if (v && v[2] != null && inA(b) && (w == null || v[2] > w)) { w = v[2]; wb = b; } }
+    return {n, w, wb}; }).sort((u, v) => (v.w ?? -1) - (u.w ?? -1));
+  tOrders.set(k, ord); return ord; }
+function tPairTip(p, a, c) {
+  const c0 = thc(), rows = p.ckts.map(b => { const L = tLoad(b);
+    const v = L.tripped ? 'out (the tripped element)' : L.unsolved ? 'outage did not solve' : !L.on ? 'open' : `${fmt(L.mva, 0)} of ${fmt(L.rate, 0)} MVA · <b>${fmt(L.pct, 1)}%</b>`;
+    const why = st.tview === 'worst' && L.out != null ? `<div class="m">&nbsp;&nbsp;after ${esc(c0.outages[L.out].name)}</div>` : '';
+    return `<div class="m">#${esc(b.ckt)} ${v}</div>${why}`; }).join('');
+  return `<b>${esc(a.name)} – ${esc(c.name)}</b><div class="m">${fmt(p.kv, 0)} kV · ${p.ckts.length} ckt · ${TVIEW[st.tview]}</div>${rows}`;
+}
+const brName = b => b.sf === b.st ? `${S.get(b.sf).name} transformer ${b.f}→${b.t} #${b.ckt}` : `${S.get(b.sf).name} – ${S.get(b.st).name} #${b.ckt}`;
+const pctTx = x => x == null ? '–' : x.toFixed(0) + '%';
+
 // ---------- build SVG once
 const gE = $('gEdges'), gH = $('gHi'), gN = $('gNodes'), gD = $('gDev'), gL = $('gLabels');
 const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) if (attrs[k] != null) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
@@ -389,7 +489,7 @@ for (const p of P.sort((u, v) => u.kv - v.kv)) {
   p.hit = el('line', {x1: a.x, y1: a.y, x2: c.x, y2: c.y, stroke: 'transparent', 'stroke-width': 10, 'vector-effect': 'non-scaling-stroke'}, gE);
   p.hit.style.cursor = 'pointer';
   p.hit.addEventListener('click', ev => { ev.stopPropagation(); select({type: 'pair', p}); });
-  p.hit.addEventListener('pointermove', ev => { const ch = p.ckts.reduce((t, b) => t + charging(b), 0);
+  p.hit.addEventListener('pointermove', ev => { if (thermal()) return tip(ev, tPairTip(p, a, c)); const ch = p.ckts.reduce((t, b) => t + charging(b), 0);
     tip(ev, `<b>${esc(a.name)} – ${esc(c.name)}</b><div class="m">${p.ckts.length} ckt · ${fmt(p.kv, 0)} kV · ${fmt(p.ckts[0].mi)} mi</div><div class="m">charging ${fmt(ch)} MVAr · X ${fmt(Math.min(...p.ckts.map(b => b.x)), 4)} pu</div>`); });
   p.hit.addEventListener('pointerleave', untip);
 }
@@ -398,7 +498,8 @@ for (const s of [...S.values()].sort((u, v) => u.maxKv - v.maxKv)) {
   s.dot = el('circle', {cx: s.x, cy: s.y, r: 1, 'stroke-width': 0.8, 'vector-effect': 'non-scaling-stroke'}, gN);
   s.dot.style.cursor = 'pointer';
   s.dot.addEventListener('click', ev => { ev.stopPropagation(); select({type: 'sub', s}); });
-  s.dot.addEventListener('pointermove', ev => { const hi = subHiV(s), lo = subLoV(s);
+  s.dot.addEventListener('pointermove', ev => { if (thermal()) return tip(ev, `<b>${esc(s.name)}</b><div class="m">hop ${hopOf(s) ?? '–'} · ${[...new Set(s.buses.filter(b => b.kv >= 60).map(b => b.kv.toFixed(0)))].join('/')} kV · click for its lines</div>`);
+    const hi = subHiV(s), lo = subLoV(s);
     tip(ev, `<b>${esc(s.name)}</b><div class="m">hop ${hopOf(s) ?? '–'} · ${[...new Set(s.buses.filter(b => b.kv >= 60).map(b => b.kv.toFixed(0)))].join('/')} kV</div><div class="m">V ${lo == null ? '–' : lo.toFixed(4)} to ${hi == null ? '–' : hi.toFixed(4)} pu</div>`); });
   s.dot.addEventListener('pointerleave', untip);
   s.lbl = el('text', {class: 'lbl'}, gL); s.lbl.textContent = s.name;
@@ -416,28 +517,43 @@ function lineColor(p) {
 function render() {
   if (st.lmode === 'chg') colorScale = [5, 20, 50];
   else if (st.lmode === 'x') colorScale = [0.005, 0.02, 0.06];
-  $('legC').hidden = st.lmode === 'kv';
+  document.body.dataset.view = st.view;
+  if (thermal()) resolveTout();                        // before anything reads st.tout
+  $('legC').hidden = st.lmode === 'kv' || thermal();
   if (st.lmode === 'chg') { ['< 5', '5–20', '20–50', '≥ 50 MVAr'].forEach((t, i) => $('legC' + i).textContent = t); }
   if (st.lmode === 'x') { ['> 0.06', '0.02–0.06', '0.005–0.02', '≤ 0.005 pu X'].forEach((t, i) => $('legC' + i).textContent = t); }
+  const hot = new Set();                               // substations at the end of a red, orange or tripped line
   for (const p of P) {
-    const on = vis(S.get(p.a)) && vis(S.get(p.c)) && pairInLayer(p) && p.ckts.some(b => brState(b).on);
+    p._t = thermal() ? tPair(p) : null;
+    const live = thermal() ? p._t.on || p._t.unsolved : p.ckts.some(b => brState(b).on);
+    const on = vis(S.get(p.a)) && vis(S.get(p.c)) && pairInLayer(p) && live;
     p.line.style.display = p.hit.style.display = on ? '' : 'none';
-    if (on) { p.line.setAttribute('stroke', lineColor(p)); p.line.setAttribute('opacity', st.lmode === 'kv' ? 0.85 : 1); }
+    if (on && thermal()) { const t = p._t;
+      p.line.setAttribute('stroke', t.unsolved ? 'var(--t-ok)' : tColor[t.band]); p.line.setAttribute('opacity', t.unsolved ? 0.45 : 1);
+      p.line.setAttribute('stroke-width', t.unsolved ? 1 : tWidth(t.mva));
+      if (t.band !== 'ok') { hot.add(p.a); hot.add(p.c); } }
+    else if (on) { p.line.setAttribute('stroke', lineColor(p)); p.line.setAttribute('opacity', st.lmode === 'kv' ? 0.85 : 1);
+      p.line.setAttribute('stroke-width', kvWidth[p.kc] + (p.ckts.length > 1 ? 0.8 : 0)); }
+    if (thermal() && p._t.tripped) { hot.add(p.a); hot.add(p.c); }
   }
+  if (thermal()) for (const s of S.values()) if (s.intra.some(b => { const L = tLoad(b); return L.tripped || (L.on && tBand(L.pct) !== 'ok'); })) hot.add(s.id);
+  st.hot = hot;
   for (const s of S.values()) {
     const on = vis(s); s.dot.style.display = on ? '' : 'none';
-    const hi = subHiV(s), lo = subLoV(s);
-    s.dot.setAttribute('fill', vFill(hi, lo));
+    const hi = thermal() ? null : subHiV(s), lo = thermal() ? null : subLoV(s);
+    s.dot.setAttribute('fill', thermal() ? 'var(--t-sub)' : vFill(hi, lo));
     s.dot.setAttribute('stroke', (hi != null && hi > WARM) || (lo != null && lo < LO) ? 'transparent' : 'var(--v-ok-edge)');
-    const show = on && (SEEDSUBS.has(s.id) || (hi != null && hi > HI) || (lo != null && lo < LO) || (FH ? FH.get(s.id) <= 1 : hopOf(s) <= 1) || (st.sel && st.sel.type === 'sub' && st.sel.s === s));
+    const show = on && (SEEDSUBS.has(s.id) || hot.has(s.id) || (hi != null && hi > HI) || (lo != null && lo < LO) || (FH ? FH.get(s.id) <= 1 : hopOf(s) <= 1) || (st.sel && st.sel.type === 'sub' && st.sel.s === s));
     s.lbl.style.display = show ? '' : 'none';
   }
+  drawThermal();
   drawDevices();
   gH.replaceChildren();
   for (const s of S.values()) s._sel = null;
   if (st.sel && st.sel.type === 'sub') { const s = st.sel.s; s._sel = el('circle', {cx: s.x, cy: s.y, r: 1, fill: 'none', stroke: 'var(--sel)', 'stroke-width': 2.2, 'vector-effect': 'non-scaling-stroke'}, gH); }
-  if (st.sel && st.sel.type === 'pair') { const p = st.sel.p, a = S.get(p.a), c = S.get(p.c);
-    el('line', {x1: a.x, y1: a.y, x2: c.x, y2: c.y, stroke: 'var(--sel)', 'stroke-width': 8, opacity: .35, 'vector-effect': 'non-scaling-stroke', 'pointer-events': 'none'}, gH); }
+  if (st.sel && st.sel.type === 'pair') { const p = st.sel.p, a = S.get(p.a), c = S.get(p.c), gT = $('gTh');   // thermal: under the red, not over it
+    const hl = el('line', {x1: a.x, y1: a.y, x2: c.x, y2: c.y, stroke: 'var(--sel)', 'stroke-width': thermal() ? tWidth(p._t.mva) + 14 : 8, opacity: .35, 'vector-effect': 'non-scaling-stroke', 'pointer-events': 'none'}, thermal() ? null : gH);
+    if (thermal()) gT.insertBefore(hl, gT.firstChild); }
   drawDesignLayer();
   $('hopsv').textContent = st.hops;
   sizeMarks();
@@ -446,7 +562,7 @@ function render() {
 function drawDesignLayer() {
   const g = $('gCand'); g.replaceChildren();
   for (const s of S.values()) { s._isl = null; s._il = null; s._dev2 = null; s._dl = null; }
-  if (!desActive() || st.set !== BASE) return;
+  if (!desActive() || st.set !== BASE || thermal()) return;
   if (st.outage !== 'n0') { const o = DZ.outages.find(x => x.key === st.outage), fb = B.get(o.f), tb = B.get(o.t);
     if (fb && tb) { const a = S.get(fb.sub), c = S.get(tb.sub);
       const p = pairs.get(Math.min(a.id, c.id) + '-' + Math.max(a.id, c.id)); if (p && p.ckts.length === 1) { p.line.style.display = 'none'; }
@@ -467,10 +583,59 @@ function drawDesignLayer() {
     const tx = el('text', {class: 'lbl cl', x: (a.x + c.x) / 2, y: (a.y + c.y) / 2}, g); tx.style.fill = col;
     const nl = r && r.new_line; tx.textContent = after ? `NEW ${fmt(d.kv, 0)} kV · ${fmt(d.mi)} mi${nl ? ` · ${fmt(nl.mw, 0)} MW · ${fmt(nl.pct, 0)}%` : ''}` : `proposed ${fmt(d.kv, 0)} kV · ${fmt(d.mi)} mi`; }
 }
+// thermal overlay: pulse under overloaded lines, red/orange lines on top, flow dots, arrows, % pills, the element that is out
+function drawThermal() {
+  const g = $('gTh'), gl = $('gTl'); g.replaceChildren(); gl.replaceChildren(); st.tmarks = [];
+  if (!thermal()) return;
+  const c = thc(), glow = [], main = [], flow = [], marks = [];
+  const nsl = {'vector-effect': 'non-scaling-stroke', 'pointer-events': 'none'};
+  for (const p of P) { const t = p._t; if (p.line.style.display === 'none' || !t.on) continue;
+    const a = S.get(p.a), z = S.get(p.c), [u, v] = t.mw >= 0 ? [a, z] : [z, a], w = tWidth(t.mva), xy = {x1: u.x, y1: u.y, x2: v.x, y2: v.y};
+    if (t.band === 'over') glow.push({...xy, class: 'tpulse', 'stroke-width': w + 10, ...nsl});
+    if (t.band !== 'ok') main.push({...xy, stroke: tColor[t.band], 'stroke-width': w, 'stroke-linecap': 'round', ...nsl});
+    if (t.pct >= FLOW_MIN) flow.push({...xy, class: 'tflow', 'stroke-width': Math.max(1.6, w * 0.42), ...nsl});
+    if (t.band !== 'ok') marks.push({kind: 'arrow', u, v}, {kind: 'pill', x: (u.x + v.x) / 2, y: (u.y + v.y) / 2, text: pctTx(t.pct), band: t.band}); }
+  // transformers inside a substation have no line to colour: ring the substation and label its worst one
+  for (const s of S.values()) { if (!vis(s)) continue; let m = null;
+    for (const b of s.intra) { const L = tLoad(b); if (L.on && L.pct != null && (m == null || L.pct > m)) m = L.pct; }
+    const band = tBand(m); if (band !== 'ok') marks.push({kind: 'ring', s, text: 'XF ' + pctTx(m), band}); }
+  // the element that is out: the chosen outage, or in the worst-case view the outage behind the selected line
+  const sb = st.tview === 'worst' && st.sel && st.sel.type === 'pair' && st.sel.p._t ? st.sel.p._t.b : null;
+  const cause = sb ? tLoad(sb).out : null, o = st.tview === 'out' ? c.outages[st.tout] : cause != null ? c.outages[cause] : null;
+  if (o) {
+    const tag = st.tview === 'out' ? 'OUT' : 'CAUSE: OUT';
+    for (const i of o.trip) { const b = D.branches[i], a = S.get(b.sf), z = S.get(b.st);
+      if (a === z) { marks.push({kind: 'ring', s: a, text: tag}); continue; }
+      main.push({x1: a.x, y1: a.y, x2: z.x, y2: z.y, stroke: 'var(--ink)', 'stroke-width': 2.4, 'stroke-dasharray': '7 5', ...nsl});
+      marks.push({kind: 'pill', x: a.x + (z.x - a.x) * 0.3, y: a.y + (z.y - a.y) * 0.3, text: tag, band: 'trip'}); }
+    for (const bus of o.gens) { const bb = B.get(bus); if (bb) marks.push({kind: 'ring', s: S.get(bb.sub), text: 'GEN ' + tag}); }
+  }
+  for (const at of glow.concat(main, flow)) el('line', at, g);
+  for (const m of marks) {
+    if (m.kind === 'arrow') { m.node = el('path', {fill: 'var(--ink)', stroke: 'var(--halo)', 'stroke-width': 1, ...nsl}, g); continue; }
+    if (m.kind === 'ring') m.node = el('circle', m.band ? {fill: 'none', stroke: tColor[m.band], 'stroke-width': 3, ...nsl}
+      : {fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.8, 'stroke-dasharray': '4 3', ...nsl}, g);
+    m.rect = el('rect', {class: 'tpill', stroke: m.band && m.band !== 'trip' ? tColor[m.band] : 'var(--ink)', ...nsl}, gl);
+    m.tx = el('text', {class: 'tpl'}, gl); m.tx.textContent = m.text;
+  }
+  st.tmarks = marks;
+}
+function sizeThermal(k) {
+  for (const m of st.tmarks || []) {
+    if (m.kind === 'arrow') { const dx = m.v.x - m.u.x, dy = m.v.y - m.u.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, s = 6 / k;
+      const px = m.u.x + dx * 0.74, py = m.u.y + dy * 0.74;
+      m.node.setAttribute('d', `M${px + ux * s} ${py + uy * s} L${px - ux * s - uy * s * .85} ${py - uy * s + ux * s * .85} L${px - ux * s + uy * s * .85} ${py - uy * s - ux * s * .85} Z`); continue; }
+    let x = m.x, y = m.y;
+    if (m.kind === 'ring') { const r = 11 / k; m.node.setAttribute('cx', m.s.x); m.node.setAttribute('cy', m.s.y); m.node.setAttribute('r', r); x = m.s.x; y = m.s.y + r + 12 / k; }
+    const w = (m.text.length * 6.9 + 12) / k, h = 17 / k;
+    m.rect.setAttribute('x', x - w / 2); m.rect.setAttribute('y', y - h / 2); m.rect.setAttribute('width', w); m.rect.setAttribute('height', h); m.rect.setAttribute('rx', h / 2);
+    m.tx.setAttribute('x', x); m.tx.setAttribute('y', y + 3.9 / k); m.tx.style.fontSize = (11 / k) + 'px';
+  }
+}
 function drawDevices() {
   gD.replaceChildren();
   for (const s of S.values()) { s._dev = []; s._ql = null; }
-  if (!st.devs) return;
+  if (!st.devs || thermal()) return;
   for (const s of S.values()) {
     if (!vis(s)) continue;
     let gi = 0;
@@ -518,6 +683,7 @@ function sizeMarks() {
     }
   }
   document.querySelectorAll('#gCand text.cl').forEach(tx => { tx.style.fontSize = (11.5 / k) + 'px'; tx.style.strokeWidth = (3.2 / k) + 'px'; });
+  sizeThermal(k);
   $('world').setAttribute('transform', `translate(${st.tx} ${st.ty}) scale(${k})`);
   const target = 90 / k, steps = [1, 2, 5, 10, 20, 25, 50, 100, 200];
   const mi = steps.reduce((b, x) => Math.abs(x - target) < Math.abs(b - target) ? x : b, 1);
@@ -533,6 +699,10 @@ function inside() {
   return {subs, ids, brs, gens, shs};
 }
 function panel() {
+  if (thermal()) { const c = thc(), o = st.tview === 'out' ? c.outages[st.tout] : null;
+    tPanel(); showDetails();
+    $('subtitle').textContent = `${AREAS[st.area].title} · ${SCE.get(st.sce).label} · ${SETL.get(st.set)} · ${TVIEW[st.tview]}${o ? ': ' + o.name : ''}`;
+    return; }
   renderProblems();
   renderDesigns();
   const A = AREAS[st.area], I = inside();
@@ -598,7 +768,58 @@ function renderProblems() {
   $('probNote').textContent = pr.length ? `${pr.length} bus${pr.length > 1 ? 'es' : ''} in ${pr.reduce((a, p) => a.add(p.s.id), new Set()).size} substation(s). Network buses ≥${D.min_net_kv} kV only; ${D.exclude_prefixes.length ? 'names starting ' + D.exclude_prefixes.join(', ') + ' are left out.' : ''}` : '';
   document.querySelectorAll('.prob').forEach(r => r.onclick = () => goProblem(+r.dataset.pi));
 }
+// ---------- thermal problems: every branch in the area at or above `near` in this view, worst first
+function tProblems() {
+  const out = [];
+  for (const b of D.branches) { if (hopOf(S.get(b.sf)) == null || hopOf(S.get(b.st)) == null) continue;
+    const L = tLoad(b); if (!L.on || L.pct == null) continue;
+    const band = tBand(L.pct); if (band !== 'ok') out.push({b, L, band}); }
+  return out.sort((u, w) => w.L.pct - u.L.pct);
+}
+function tPanel() {
+  const c = thc(), ord = tOrder();
+  syncSeg('segTv', st.tview);
+  $('tOutBox').hidden = st.tview !== 'out';
+  const key = st.area + '|' + st.set + '|' + st.sce, sel = $('tOut');
+  if (sel.dataset.k !== key) { sel.dataset.k = key;
+    sel.innerHTML = ord.map(({n, w}) => { const o = c.outages[n];
+      return `<option value="${n}">${esc(o.name)}${!o.solved ? ' · did not solve' : w != null ? ' · worst ' + pctTx(w) : ''}${o.lost_mw > 0 ? ' · cuts off ' + fmt(o.lost_mw, 0) + ' MW' : ''}</option>`; }).join(''); }
+  sel.value = String(st.tout);
+  const pr = tProblems(); st.tlist = pr;
+  const nOver = pr.filter(x => x.band === 'over').length, nNear = pr.length - nOver, top = pr[0];
+  $('tKpis').innerHTML = [[nOver, `at or over ${TH.over}%`, nOver ? 'over' : ''], [nNear, `${TH.near}–${TH.over}%`, nNear ? 'near' : ''],
+    [top ? pctTx(top.L.pct) : '–', 'highest loading', top ? top.band : '']]
+    .map(([n, l, b]) => `<div class="kpi${b ? ' t-' + b : ''}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+  const o = c.outages[st.tout], ch = c.check, uns = c.outages.filter(x => !x.solved).length;
+  const what = st.tview === 'base' ? `Nothing out. Loading is the higher end's MVA over the normal rating (rate set ${c.rate_sets.join('/')}).`
+    : st.tview === 'out' ? `${o.solved ? '' : 'This outage did not solve, so there are no loadings to show. '}${o.added ? 'An outage added for the drawn area' : 'A contingency from the case (' + o.label + ')'}${o.lost_mw > 0 ? `; it cuts off ${fmt(o.lost_mw, 0)} MW of load, which no line shows` : ''}. Loading is against the contingency rating.`
+    : `Each branch at its highest loading over ${c.outages.length - uns} solved outages (${ch.case_outages} from the case, ${ch.area_outages} added for the drawn branches)${uns ? `; ${uns} did not solve and are left out` : ''}. Loading is against the contingency rating. Click a line to see which outages do it.`;
+  const um = (ch.unmonitored || []).length;
+  $('tNote').textContent = `${what} Red at or above ${TH.over}%, orange from ${TH.near}%.${ch.violationctg_rows ? ` ${ch.violationctg_rows} of PowerWorld's own contingency violation rows were checked against these loadings and agree.` : ''}`
+    + (um ? ` ${um} overload${um > 1 ? 's' : ''} found here ${um > 1 ? 'sit' : 'sits'} on branches the case does not monitor, so PowerWorld's own report leaves ${um > 1 ? 'them' : 'it'} out.` : '');
+  $('tList').innerHTML = pr.length ? pr.map((x, i) => { const why = st.tview === 'worst' && x.L.out != null ? ` · after ${esc(c.outages[x.L.out].name)}` : '';
+    return `<button type="button" class="prob${i === st.tpi ? ' on' : ''}" data-ti="${i}"><span class="sev" style="background:${tColor[x.band]}"></span><span>${esc(brName(x.b))}</span><span class="pct">${pctTx(x.L.pct)}</span>`
+      + `<span class="d">${fmt(x.b.kv, 0)} kV · ${fmt(x.L.mva, 0)} of ${fmt(x.L.rate, 0)} MVA${why}</span></button>`; }).join('')
+    : `<div class="empty">No branch at or above ${TH.near}% in this view.</div>`;
+  const out = st.tview === 'worst' ? c.outside || [] : [];
+  $('tListNote').textContent = (pr.length ? `${pr.length} branch${pr.length > 1 ? 'es' : ''} at or above ${TH.near}% inside the area.` : '')
+    + (out.length ? ` Also found just past the drawn hops, so not on the map: ${out.slice(0, 4).map(([p, n, o]) => `${n} at ${pctTx(p)} after ${o}`).join('; ')}${out.length > 4 ? ` and ${out.length - 4} more` : ''}.` : '');
+  $('tList').querySelectorAll('.prob').forEach(r => r.onclick = () => goT(+r.dataset.ti));
+}
+function goT(i) {
+  const pr = st.tlist || tProblems(); if (!pr.length) return;
+  st.tpi = ((i % pr.length) + pr.length) % pr.length;
+  const x = pr[st.tpi], a = S.get(x.b.sf), z = S.get(x.b.st);
+  if (st.layer !== 'all') { st.layer = 'all'; syncSeg('segKv', 'all'); }
+  const h = Math.max(hopOf(a), hopOf(z)); if (h > st.hops) { st.hops = h; $('hops').value = h; }
+  if (FH && !(FH.has(a.id) && FH.has(z.id))) setFocus(null);
+  const p = pairs.get(Math.min(a.id, z.id) + '-' + Math.max(a.id, z.id));
+  st.sel = p ? {type: 'pair', p} : {type: 'sub', s: a}; render();
+  const ids = [a.id, z.id]; for (const s of [a, z]) for (const q of s.links) { const n = S.get(q.a === s.id ? q.c : q.a); if (vis(n)) ids.push(n.id); }
+  fit(ids, 80);
+}
 function goProblem(i) {
+  if (thermal()) return goT(i);
   const pr = st.plist || problems(); if (!pr.length) return;
   st.pi = ((i % pr.length) + pr.length) % pr.length;
   const p = pr[st.pi];
@@ -734,8 +955,39 @@ function oneLine(s) {
 }
 function select(x) { st.sel = x; render(); }
 function center(s) { const W = svg.clientWidth, H = svg.clientHeight; st.tx = W / 2 - st.k * s.x; st.ty = H / 2 - st.k * s.y; sizeMarks(); }
+function tDetails(box) {
+  const c = thc();
+  if (st.sel.type === 'pair') {
+    const p = st.sel.p, a = S.get(p.a), z = S.get(p.c);
+    let h = `<h2>Line</h2><div class="dh">${esc(a.name)} – ${esc(z.name)}</div><div class="chips"><span class="chip">${fmt(p.kv, 0)} kV</span><span class="chip">${fmt(p.ckts[0].mi)} mi straight-line</span><span class="chip">${p.ckts.length} circuit${p.ckts.length > 1 ? 's' : ''}</span></div>`;
+    h += `<div class="tbl"><table><tr><th>Ckt</th><th>MW</th><th>MVA</th><th>Rating</th><th>This view</th><th>Nothing out</th><th>Worst</th></tr>` + p.ckts.map(b => {
+      const L = tLoad(b), L0 = tLoad(b, 'base'), W = tLoad(b, 'worst');
+      return `<tr class="zebra"><td>#${esc(b.ckt)}</td><td class="num">${L.on ? fmt(L.mw, 0) : '–'}</td><td class="num">${L.on ? fmt(L.mva, 0) : L.tripped ? 'out' : '–'}</td><td class="num">${fmt(L.rate ?? L0.rate, 0)}</td>`
+        + `<td class="num">${L.on ? pctTx(L.pct) : '–'}</td><td class="num">${pctTx(L0.pct)}</td><td class="num">${pctTx(W.pct)}</td></tr>`; }).join('') + '</table></div>';
+    const b = (p._t && p._t.b) || p.ckts[0];
+    const hits = c.outages.map((o, n) => ({o, n, L: tLoad(b, 'out', n)})).filter(x => x.L.on && x.L.pct != null).sort((u, v) => v.L.pct - u.L.pct).slice(0, 8);
+    h += `<h2 style="margin-top:4px">Outages that load circuit #${esc(b.ckt)} most</h2><div class="tbl"><table><tr><th>Outage</th><th>MVA</th><th>%</th></tr>`
+      + hits.map(x => `<tr class="zebra" data-tn="${x.n}" tabindex="0"><td>${esc(x.o.name)}</td><td class="num">${fmt(x.L.mva, 0)}</td><td class="num">${pctTx(x.L.pct)}</td></tr>`).join('')
+      + `</table></div><p class="note">Click an outage to repaint the map after it. Flow is the higher end's MVA; the % is against the normal rating with nothing out and the contingency rating after an outage.</p>`;
+    box.innerHTML = h;
+  } else {
+    const s = st.sel.s;
+    let h = `<h2>Substation</h2><div class="dh">${esc(s.name)}</div><div class="chips"><span class="chip">hop ${hopOf(s) ?? '–'}</span><span class="chip">${TVIEW[st.tview]}</span></div>`;
+    const rows = s.links.map(p => ({p, t: tPair(p), o: S.get(p.a === s.id ? p.c : p.a)})).sort((u, v) => (v.t.pct ?? -1) - (u.t.pct ?? -1));
+    h += `<div class="tbl"><table><tr><th>Line to</th><th>kV</th><th>MVA</th><th>%</th></tr>` + rows.map(({p, t, o}) =>
+      `<tr class="zebra" data-pair="${p.a}-${p.c}" style="cursor:pointer"><td>${esc(o.name)}${p.ckts.length > 1 ? ' ×' + p.ckts.length : ''}</td><td class="num">${fmt(p.kv, 0)}</td><td class="num">${t.on ? fmt(t.mva, 0) : t.tripped ? 'out' : '–'}</td><td class="num">${pctTx(t.pct)}</td></tr>`).join('') + '</table></div>';
+    const xf = s.intra.filter(b => b.xf || b.w);
+    if (xf.length) h += `<div class="tbl"><table><tr><th>Transformer</th><th>MVA</th><th>Rating</th><th>%</th></tr>` + xf.map(b => { const L = tLoad(b);
+      return `<tr class="zebra"><td>${esc(B.get(b.f).name)} → ${esc(B.get(b.t).name)} #${esc(b.ckt)}</td><td class="num">${L.on ? fmt(L.mva, 0) : L.tripped ? 'out' : '–'}</td><td class="num">${fmt(L.rate, 0)}</td><td class="num">${L.on ? pctTx(L.pct) : '–'}</td></tr>`; }).join('') + '</table></div>';
+    box.innerHTML = h;
+    box.querySelectorAll('tr[data-pair]').forEach(r => r.onclick = () => { const p = pairs.get(r.dataset.pair); if (p) select({type: 'pair', p}); });
+  }
+  box.querySelectorAll('tr[data-tn]').forEach(r => { const go = () => { st.tview = 'out'; setTout(+r.dataset.tn); st.tpi = -1; render(); };
+    r.onclick = go; r.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
+}
 function showDetails() {
   const box = $('details');
+  if (st.sel && thermal()) return tDetails(box);
   if (!st.sel) { box.innerHTML = '<h2>Details</h2><div class="empty">Select a substation or a line on the map.</div>'; return; }
   const cmpCol = st.set !== BASE;
   if (st.sel.type === 'sub') {
@@ -785,8 +1037,17 @@ $('hops').oninput = e => { st.hops = +e.target.value; render(); };
 function syncSeg(id, v) { $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === String(v))); }
 seg('segKv', [['all', 'All voltages'], ['765', '765 kV'], ['345', '345 kV'], ['138', '138 kV'], ['69', '≤69 kV']], () => String(st.layer),
   v => { st.layer = v === 'all' ? 'all' : +v; render(); });
-$('prevP').onclick = () => goProblem(st.pi - 1);
-$('nextP').onclick = () => goProblem(st.pi + 1);
+$('prevP').onclick = () => thermal() ? goT(st.tpi - 1) : goProblem(st.pi - 1);
+$('nextP').onclick = () => thermal() ? goT(st.tpi + 1) : goProblem(st.pi + 1);
+if (TH) {
+  $('segView').hidden = false;
+  seg('segView', [['thermal', 'Thermal'], ['voltage', 'Voltage']], () => st.view, v => { st.view = v; st.sel = null; st.pi = st.tpi = -1; render(); fitOpen(); });
+  seg('segTv', Object.entries(TVIEW), () => st.tview, v => { st.tview = v; st.tpi = -1; render(); });
+  $('tOut').onchange = e => { setTout(+e.target.value); st.tpi = -1; render(); };
+  const step = d => { const ord = tOrder(), i = ord.findIndex(x => x.n === st.tout); setTout(ord[((i + d) % ord.length + ord.length) % ord.length].n); st.tpi = -1; render(); };
+  $('tPrev').onclick = () => step(-1); $('tNext').onclick = () => step(1);
+  $('legTo').textContent = `at or over ${TH.over}%`; $('legTn').textContent = `${TH.near}–${TH.over}%`; $('legTk').textContent = `below ${TH.near}%`;
+}
 $('bannerClear').onclick = () => { setFocus(null); render(); fitCore(); };
 $('lmode').onchange = e => { st.lmode = e.target.value; render(); };
 $('devs').onchange = e => { st.devs = e.target.checked; render(); };
@@ -819,6 +1080,12 @@ svg.addEventListener('click', () => { if (!moved && st.sel) { st.sel = null; ren
 $('zin').onclick = () => zoomAt(1.5, svg.clientWidth / 2, svg.clientHeight / 2);
 $('zout').onclick = () => zoomAt(1 / 1.5, svg.clientWidth / 2, svg.clientHeight / 2);
 function fitCore() { fit([...S.values()].filter(s => { const h = hopOf(s); return h != null && h <= Math.min(2, st.hops); }).map(s => s.id), 70); }
+function fitOpen() {                                   // thermal opens on the seeds plus every red or orange line
+  if (thermal()) { const ids = new Set([...SEEDSUBS, ...(st.hot || [])].filter(i => vis(S.get(i))));
+    for (const i of [...ids]) for (const q of S.get(i).links) { const o = q.a === i ? q.c : q.a; if (vis(S.get(o))) ids.add(o); }   // one ring of context
+    if (ids.size > 1) return fit([...ids], 60); }
+  fitCore();
+}
 $('fitCore').onclick = fitCore;
 $('fitAll').onclick = () => fit([...S.values()].filter(vis).map(s => s.id));
 
@@ -838,7 +1105,7 @@ async function saveFile(name, data) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000); note('Saved ' + name);
 }
-const PROPS = ['stroke', 'fill', 'stroke-width', 'stroke-dasharray', 'stroke-linecap', 'opacity', 'font-size', 'font-weight', 'paint-order', 'stroke-linejoin'];
+const PROPS = ['stroke', 'fill', 'stroke-width', 'stroke-dasharray', 'stroke-linecap', 'opacity', 'font-size', 'font-weight', 'paint-order', 'stroke-linejoin', 'text-anchor'];
 function exportSVG() {
   const W = svg.clientWidth, H = svg.clientHeight, css = getComputedStyle(document.documentElement), tok = n => css.getPropertyValue(n).trim();
   const clone = svg.cloneNode(true), src = svg.querySelectorAll('*'), dst = clone.querySelectorAll('*');
@@ -853,18 +1120,22 @@ function exportSVG() {
   const ink = tok('--ink'), ink2 = tok('--ink-2'), font = 'IBM Plex Sans, Segoe UI, Arial, sans-serif';
   add('rect', {x: 0, y: 0, width: W, height: total, fill: tok('--paper')});
   add('text', {x: 16, y: 28, fill: ink, 'font-family': font, 'font-size': 20, 'font-weight': 600}, `${AREAS[st.area].title} · ${D.title}`);
-  const what = desActive() && st.set === BASE && (st.outage !== 'n0' || (st.mode === 'after' && st.cand)) ? ` · ${OUTN[st.outage]}${st.mode === 'after' && st.cand ? ' · with ' + DZ.candidates[st.cand].short : ''}` : '';
+  const what = thermal() ? ` · ${TVIEW[st.tview]}${st.tview === 'out' ? ': ' + thc().outages[st.tout].name : ''}`
+    : desActive() && st.set === BASE && (st.outage !== 'n0' || (st.mode === 'after' && st.cand)) ? ` · ${OUTN[st.outage]}${st.mode === 'after' && st.cand ? ' · with ' + DZ.candidates[st.cand].short : ''}` : '';
   add('text', {x: 16, y: 50, fill: ink2, 'font-family': font, 'font-size': 12.5},
     `${SCE.get(st.sce).label} · ${SETL.get(st.set)}${what} · ${st.hops} hops · exported ${new Date().toISOString().slice(0, 10)}`);
   const g = document.createElementNS(NS, 'g'); g.setAttribute('transform', `translate(0 ${head})`);
   const inner = document.createElementNS(NS, 'svg'); inner.setAttribute('width', W); inner.setAttribute('height', H); inner.setAttribute('overflow', 'hidden');
   while (clone.firstChild) inner.appendChild(clone.firstChild); g.appendChild(inner); out.appendChild(g);
   let x = 16; const y = head + H + 28;
-  const key = [[tok('--kv765'), 'line', '765 kV'], [tok('--kv345'), 'line', '345 kV'], [tok('--kv138'), 'line', '138 kV'],
+  const key = thermal() ? [[tok('--t-over'), 'line', `≥${TH.over}% of rating`], [tok('--t-near'), 'line', `${TH.near}–${TH.over}%`], [tok('--t-ok'), 'line', `below ${TH.near}%`],
+    [ink, 'dash', 'element out'], [ink2, 'none', 'width = MVA flow']] : [[tok('--kv765'), 'line', '765 kV'], [tok('--kv345'), 'line', '345 kV'], [tok('--kv138'), 'line', '138 kV'],
     [tok('--v-low'), 'dot', `<${LO}`], [tok('--v-ok'), 'dot', `≤${WARM.toFixed(2)}`], [tok('--v-warm'), 'dot', `≤${HI}`], [tok('--v-hot'), 'dot', `≤${CRIT.toFixed(2)}`], [tok('--v-crit'), 'dot', `>${CRIT.toFixed(2)}`],
     [tok('--q-pin'), 'tri', 'gen pinned'], [tok('--q-room'), 'tri', 'gen w/ room'], [tok('--sh-rea'), 'sq', 'reactor'], [tok('--sh-cap'), 'sq', 'capacitor']];
   for (const [c, kind, label] of key) {
     if (kind === 'line') add('line', {x1: x, y1: y - 4, x2: x + 18, y2: y - 4, stroke: c, 'stroke-width': 3});
+    else if (kind === 'dash') add('line', {x1: x, y1: y - 4, x2: x + 18, y2: y - 4, stroke: c, 'stroke-width': 2, 'stroke-dasharray': '5 3'});
+    else if (kind === 'none') x -= 22;
     else if (kind === 'dot') add('circle', {cx: x + 6, cy: y - 4, r: 5, fill: c, stroke: ink2, 'stroke-width': 0.5});
     else if (kind === 'tri') add('path', {d: `M${x + 6} ${y - 10} L${x + 12} ${y + 1} L${x} ${y + 1} Z`, fill: c});
     else add('rect', {x, y: y - 9, width: 10, height: 10, fill: c});
@@ -874,7 +1145,7 @@ function exportSVG() {
   return new XMLSerializer().serializeToString(out);
 }
 const slug = s => String(s).replace(/[^A-Za-z0-9]+/g, '_');
-const fileBase = () => `voltage_${slug(st.area)}_${slug(st.sce)}_${slug(st.set)}_${st.hops}hop`;
+const fileBase = () => `${st.view}_${slug(st.area)}_${slug(st.sce)}_${slug(st.set)}${thermal() ? '_' + st.tview : ''}_${st.hops}hop`;
 $('expSvg').onclick = () => saveFile(fileBase() + '.svg', exportSVG());
 $('expPng').onclick = () => {
   const text = exportSVG(), img = new Image(), url = URL.createObjectURL(new Blob([text], {type: 'image/svg+xml'}));
@@ -884,7 +1155,12 @@ $('expPng').onclick = () => {
   img.onerror = () => note('Could not render the PNG.'); img.src = url;
 };
 $('expCsv').onclick = () => { const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  if (desActive()) {
+  if (thermal()) {
+    const c = thc(), hdr = ['from_bus', 'to_bus', 'ckt', 'from_substation', 'to_substation', 'kv', 'loading_pct', 'mva', 'rating_mva', 'view', 'outage'];
+    const rows = tProblems().map(x => [x.b.f, x.b.t, x.b.ckt, S.get(x.b.sf).name, S.get(x.b.st).name, x.b.kv, x.L.pct, x.L.mva, x.L.rate, TVIEW[st.tview],
+      st.tview === 'out' ? c.outages[st.tout].name : x.L.out != null ? c.outages[x.L.out].name : '']);
+    saveFile(`${fileBase()}.csv`, [hdr].concat(rows).map(r => r.map(q).join(',')).join('\n'));
+  } else if (desActive()) {
     const hdr = ['rank', 'design', 'verdict', 'scenario', 'buses_out_of_band_n0', 'worst_watched_n0', 'islanded_buses', 'worst_watched_post', 'unsolved_outages'];
     const rows = DZ.rank.flatMap((rk, n) => SCES.map(sc => { const s = desStats(rk.di, sc.key) || {};
       return [n + 1, DZ.candidates[rk.di].name, rk.verdict, sc.label, s.nout, s.w, s.isl, s.pw, s.unsolved]; }));
@@ -897,7 +1173,7 @@ $('expCsv').onclick = () => { const q = v => '"' + String(v == null ? '' : v).re
 };
 
 render();
-requestAnimationFrame(fitCore);
+requestAnimationFrame(fitOpen);
 window.addEventListener('resize', () => sizeMarks());
 })();
 </script>

@@ -24,7 +24,16 @@ DEFAULTS = {
     "hops": 5,
     "radial": {"min_kv": 138, "reach_mi": 60, "reach_max_mi": 90,
                "exclude_landing_name_parts": ["LargeLoad", "DataCenter", "Data_Center", "DC_"]},
+    "thermal": {"over": 100, "near": 90, "outages": "case+area"},
 }
+
+
+def thermal_band(pct, th):
+    """'over' at or above th['over'] % of the rating in use, 'near' from th['near'] up to it, else 'ok'.
+    template.html's tBand() is the same rule; test_thermal.py holds the two together."""
+    if pct is None or pct != pct:
+        return "ok"
+    return "over" if pct >= th["over"] else "near" if pct >= th["near"] else "ok"
 
 
 def load_config(argv=None):

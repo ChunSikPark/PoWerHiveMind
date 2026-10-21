@@ -17,6 +17,7 @@
   "min_net_kv": 69,
   "exclude_bus_prefixes": ["GSU_", "STR_", "TERT_"],
   "hops": 5,
+  "thermal": {"over": 100, "near": 90, "outages": "case+area"},
 
   "areas": {
     "north": {"title": "North area", "seeds": [1101, 1102], "default_hops": 5},

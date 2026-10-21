@@ -42,6 +42,58 @@ data = dict(title=cfg["title"], max_hops=H, band=BAND, min_net_kv=cfg["min_net_k
             scenarios=cfg["scenarios"], sets=[dict(key=s["key"], label=s["label"]) for s in cfg["states"]],
             areas=areas, subs=subs, buses=buses, branches=branches, gens=gens, shunts=shunts, states=states)
 
+# ---- thermal view (optional): thermal_<state>_<scenario>.json from extract_thermal.py, re-indexed to the page's branches
+TF = {(w, sc): OUT / f"thermal_{w}_{sc}.json" for w in SETS for sc in SCES}
+if all(p.exists() for p in TF.values()):
+    TH = cfg["thermal"]
+    page_i = {(b["f"], b["t"], b["ckt"]): i for i, b in enumerate(branches)}
+    to_page = [page_i.get((b["f"], b["t"], b["ckt"])) for b in T["branches"]]     # topo index -> page index (None: geometry ring)
+    BN = {b["num"]: b for b in T["buses"]}
+    SN = {s["id"]: s["name"] for s in T["subs"]}
+    where = lambda bus: SN.get(BN[bus]["sub"], str(bus)) if bus in BN else f"bus {bus}"
+
+    def outage_name(o):
+        parts = []
+        for e in o["elements"]:
+            if e["kind"] == "branch":
+                parts.append(f"{where(e['f'])} – {where(e['t'])} #{e['ckt']}")
+            elif e["kind"] == "gen":
+                parts.append(f"generator at {where(e['bus'])} #{e['id']}")
+            else:
+                parts.append(e.get("obj", e["kind"]))
+        return "Lose " + " + ".join(parts) if parts else o["label"]
+
+    th_states = {}
+    for (w, sc), p in TF.items():
+        d = json.load(open(p, encoding="utf-8"))
+        assert d.get("keys") == [f"{b['f']}-{b['t']}-{b['ckt']}" for b in T["branches"]], \
+            f"{p.name} was extracted against a different topo.json -- re-run extract_thermal.py"
+        base_p, worst_p = [None] * len(branches), [None] * len(branches)
+        for ti, pi in enumerate(to_page):
+            if pi is not None:
+                base_p[pi], worst_p[pi] = d["base"][ti], d["worst"][ti]
+        post_p = [{str(to_page[int(k)]): v for k, v in s.items() if to_page[int(k)] is not None} for s in d["post"]]
+        outs = []
+        for o in d["outages"]:
+            opens = [e for e in o["elements"] if e["action"].upper() == "OPEN"]     # only an OPEN element is drawn as out
+            trip = [page_i[k] for e in opens if e["kind"] == "branch"
+                    for k in ((e["f"], e["t"], e["ckt"]), (e["t"], e["f"], e["ckt"])) if k in page_i]
+            gens_out = [e["bus"] for e in opens if e["kind"] == "gen"]
+            outs.append(dict(label=o["label"], name=outage_name(o), added=o["added"], solved=o["solved"],
+                             lost_mw=o["lost_mw"], trip=trip, gens=gens_out))
+        # found by the run but on a branch past the drawn hops: named on the page, never silently dropped
+        outside = sorted(([x[0], f"{where(b['f'])} – {where(b['t'])} #{b['ckt']}", outs[x[1]]["name"]]
+                          for b, x, pi in zip(T["branches"], d["worst"], to_page)
+                          if pi is None and x and vmap.thermal_band(x[0], TH) != "ok"), reverse=True)
+        th_states[f"{w}|{sc}"] = dict(base=base_p, worst=worst_p, post=post_p, outages=outs, rate_sets=d["rate_sets"],
+                                      keep_delta=d["keep_delta"], check=d["check"], outside=outside)
+        n_over = sum(1 for x in worst_p if x and vmap.thermal_band(x[0], TH) == "over")
+        n_near = sum(1 for x in worst_p if x and vmap.thermal_band(x[0], TH) == "near")
+        print(f"thermal {w} {sc}: {len(outs)} outages; worst case per line on the page: {n_over} overloaded, {n_near} near")
+    data["thermal"] = dict(over=TH["over"], near=TH["near"], states=th_states)
+elif any(p.exists() for p in TF.values()):
+    print("thermal_*.json missing for some state x scenario -- page built without the thermal view")
+
 
 def watch_excess(o, post):
     """How far the watched buses sit outside their band (<= 0 is inside), or None."""
@@ -128,6 +180,7 @@ if DZ and all(p.exists() for p in mf):
 elif DZ:
     print("designs block present but design_meas_*.json missing for some scenario -- page built without the designs panel")
 
-size = vmap.inject(HERE / "template.html", data, OUT / "voltage_map.html")
+page = OUT / ("thermal_map.html" if "thermal" in data else "voltage_map.html")   # a thermal page opens on thermal, voltage one switch away
+size = vmap.inject(HERE / "template.html", data, page)
 print(f"{len(subs)} subs, {len(buses)} buses, {len(branches)} branches, {len(gens)} gens, {len(shunts)} shunts; "
-      f"{size / 1e6:.1f} MB -> {OUT / 'voltage_map.html'}")
+      f"{size / 1e6:.1f} MB -> {page}")
