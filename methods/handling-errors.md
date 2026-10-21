@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: scripting
 aliases: [handling-errors, error-handling, troubleshooting, recovery, agent-errors]
 tags: [errors, troubleshooting, recovery, agent-behaviour, powerworld, esapp]
 ---
@@ -57,7 +58,7 @@ analysis. If `pip` itself fails on permissions, retry with `--user` before escal
 | `pw.RunScriptCommand(...)` | `pw.esa.RunScriptCommand(...)` | The SAW wrapper is on `.esa` |
 | `pw.overloads` | `pw.overloads()` | It is a method |
 | `pw.flows`, `pw.ptdf`, `pw.lodf`, `pw.ybus` | all methods — call them | Same |
-| `pw.dc_mode(True)` | `pw.dc_mode = True` | It is an assignable solver option, not a method |
+| `pw.dc_mode(True)` or `pw.dc_mode = True` | `pw.pflow(method="DC")` | `dc_mode` is not a method, and assigning it does not make a scripted solve run DC (see *Power flow did not converge* below) |
 
 **A field name is wrong.** Do not guess a second time. Read the whole table and look:
 
@@ -147,9 +148,16 @@ to bus 26 instead"* — because the user's mental model of the answer is now dif
 ```python
 pw.pflow(method="POLARNEWT")     # default
 pw.pflow(method="RECTNEWT")      # different formulation
-pw.flat_start = True             # reset the starting point
-pw.dc_mode = True                # DC, if the study tolerates it
+pw.flatstart(); pw.pflow()       # reset the starting point, then re-solve
+pw.pflow(method="DC")            # DC, if the study tolerates it
 ```
+
+Do not reach for `pw.flat_start = True` or `pw.dc_mode = True` here. PowerWorld ignores the
+`FlatStart` option on scripted solves, and on 2026-09-23 setting the DC flag alone did not
+make the next solve run DC. `pw.flatstart()` runs `ResetToFlatStart`, which with its defaults
+also resets generator voltage setpoints to 1.0 pu
+([powerworld-study-commands](../references/powerworld-study-commands.md), from PowerWorld's manual). `pw.pflow(method="DC")` leaves the case in
+DC mode until an AC method solves it again.
 
 If only the DC solve converges, **say so** — a DC answer is not an AC answer.
 

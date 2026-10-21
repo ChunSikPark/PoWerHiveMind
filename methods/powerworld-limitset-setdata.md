@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: contingency
 aliases: [limitset, ctg-voltage-band, setdata-key-fields, limit-monitoring]
 tags: [esapp, powerworld, simauto, setdata, limitset, contingency, key-fields]
 ---
@@ -19,8 +20,8 @@ by round-tripping the same case's `LimitSet` values through a CSV export/reimpor
 
 ## Connections
 
-- **Up:** [esapp](../concepts/esapp.md) · esapp package
-- **Across:** [save-powerworld-case](save-powerworld-case.md) · [adding-devices-esapp](adding-devices-esapp.md) · [powerworld-simauto](../concepts/powerworld-simauto.md) · reactive power planning
+- **Up:** [esapp](../concepts/esapp.md)
+- **Across:** [save-powerworld-case](save-powerworld-case.md) · [adding-devices-esapp](adding-devices-esapp.md) · [powerworld-simauto](../concepts/powerworld-simauto.md)
 - **Deeper:** [esapp-package-backend](../references/esapp-package-backend.md)
 
 ## Content

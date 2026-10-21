@@ -1,6 +1,7 @@
 ---
 type: reference
 domain: tooling
+topic: scripting
 aliases: [aux-cookbook, two-window-workflow, script-transfer-walkthrough, first-drop,
   getting-started-aux, external-script-control-setup]
 tags: [demo, aux, script-transfer, walkthrough, getting-started, two-window]

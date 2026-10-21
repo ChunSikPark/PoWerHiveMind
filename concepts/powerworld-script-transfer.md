@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: tooling
+topic: scripting
 aliases: [script-transfer, drop-file-aux, SimulatorScriptInput, SimulatorScriptOutput, external-script-control, sced]
 tags: [powerworld, aux, script, external-program, llm, simulator-25, undocumented]
 ---

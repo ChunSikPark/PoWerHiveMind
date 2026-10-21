@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: tooling
+topic: power-flow
 aliases: [gic, geomagnetically-induced-current, gmd, geomagnetic-disturbance]
 tags: [gic, gmd, powerworld, esapp, transformer, solar-storm]
 ---

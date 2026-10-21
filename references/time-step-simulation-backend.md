@@ -1,6 +1,7 @@
 ---
 type: reference
 domain: cross-cutting
+topic: timestep
 aliases: [timestep-backend, time-step-simulation-backend]
 tags: [timestep, powerworld, esapp, simauto, backend, reference]
 ---
@@ -16,27 +17,27 @@ tags: [timestep, powerworld, esapp, simauto, backend, reference]
 
 ## Abstract
 
-Code-reconstruction reference for the time step simulation project — the `_simulation_worker` PowerWorld call sequence (weather load → generator selection → field-save wrapper → run → export), `_GEN_PARAM` field list, `process_results` CSV post-processing with 8 header rows skipped, and both series and parallel `main.py` orchestration variants. Covers every SimAuto command, required wrapper (`TIMESTEPSaveSelectedModifyStart`/`Finish`), and gotcha in enough detail to regenerate working simulation code from scratch. Read this in full only when writing or regenerating code for time step simulation; for the gist, use the project page.
+Code-reconstruction reference for a timestep simulation pipeline — the worker function's PowerWorld call sequence (weather load → generator selection → field-save wrapper → run → export), `_GEN_PARAM` field list, `process_results` CSV post-processing with 8 header rows skipped, and both series and parallel orchestration variants. Covers every SimAuto command, required wrapper (`TIMESTEPSaveSelectedModifyStart`/`Finish`), and gotcha in enough detail to regenerate working simulation code from scratch. Read this in full only when writing or regenerating code for a timestep simulation; for the gist, use [timestep-simulation](../concepts/timestep-simulation.md).
 
 ## Connections
 
-- **Up:** time step simulation (the project) + [Home](../index.md)
-- **Across:** [pww-data](../concepts/pww-data.md), pfw copperplate, [timestep-simulation](../concepts/timestep-simulation.md), [timestep-simulation-setup](../methods/timestep-simulation-setup.md)
+- **Up:** [timestep-simulation](../concepts/timestep-simulation.md) + [Home](../index.md)
+- **Across:** [pww-data](../concepts/pww-data.md), [copper-plate](../concepts/copper-plate.md), [timestep-simulation](../concepts/timestep-simulation.md), [timestep-simulation-setup](../methods/timestep-simulation-setup.md)
 
 ## Content
 
 > **Library note — prefer `esapp` over `esa`.** This repo imports the standalone `esa` (Easy SimAuto) package. For new or regenerated code, prefer **`esapp` (ESA++)**: it wraps the **same** PowerWorld SimAuto server, and esapp exposes each of those SCRIPT commands as a typed named method (`pw.esa.TimeStepDoRun()`), which is what you should call — see [esapp-script-command-wrappers](../concepts/esapp-script-command-wrappers.md) — an agent reasons about it more reliably. Swap esa's data helpers (`GetParametersMultipleElement`, `change_parameters_multiple_element_df`, `get_key_field_list`) for esapp's bracket interface (`pw[Type, fields]`, `pw[Type] = df`, `Type.keys()`). See [esapp-overview](../methods/esapp-overview.md). (Library choice only — unrelated to the TimeStep-vs-Transient-Stability distinction.)
 
-Code-reconstruction knowledge for time step simulation. Given a plain prompt
+Code-reconstruction knowledge for the timestep simulation pipeline. Given a plain prompt
 ("run the renewable sim on the Synth2k case"), an agent reads this page and
 writes WORKING code. Everything here is verified against the real source on disk
-(`C:\path\to\time-step-simulation`). Hub: [Home](../index.md).
+(the pipeline's source tree). Hub: [Home](../index.md).
 
-The whole engine is two functions in `function.py`: `_simulation_worker(...)` (drives
-PowerWorld) and `process_results(...)` (post-processes the CSV). `main.py` /
-`parallel/main.py` are just CLI + grouping + I/O around them. The time math lives in
-`time_utils.py`. **`parallel/function.py` is byte-identical to `function.py`** — the
-engine is shared; only the `main.py` orchestration differs.
+The whole engine is two functions in one engine module: `timestep_worker(...)` (drives
+PowerWorld) and `process_results(...)` (post-processes the CSV). The pipeline's CLI entry script and
+the parallel variant's entry script are just CLI + grouping + I/O around them. The time math lives in
+`time_utils.py`. **The parallel variant's engine module is byte-identical to the series one** — the
+engine is shared; only the entry-script orchestration differs.
 
 ---
 
@@ -48,18 +49,18 @@ engine is shared; only the `main.py` orchestration differs.
   method (`pw.esa.TimeStepDoRun()`) — call those, not a hand-written script string. Only the
   data helpers differ beyond that: the bracket interface replaces esa's
   `GetParametersMultipleElement` / `change_parameters_multiple_element_df`.
-- The import is **lazy** — done *inside* `_simulation_worker`, not at module top —
-  so importing `function.py` never requires PowerWorld to be installed. Keep it lazy
+- The import is **lazy** — done *inside* the worker function, not at module top —
+  so importing the engine module never requires PowerWorld to be installed. Keep it lazy
   if you regenerate this.
 - **Windows-only.** esapp drives PowerWorld Simulator through SimAuto (COM). No
   PowerWorld → no run.
 - `numpy` is imported at module top with `# noqa: F401` purely "for parity with
-  downstream tooling" — it's not used directly in `function.py`. `pandas` is used.
+  downstream tooling" — it's not used directly in the engine module. `pandas` is used.
 - `sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))` is done so
   `from time_utils import convert_to_utc` resolves regardless of CWD.
 
 ```python
-import os, sys, shutil, tempfile
+import os, sys, shutil, struct, tempfile
 import numpy as np   # noqa: F401
 import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -71,10 +72,10 @@ from esapp.components import Gen
 
 ---
 
-## 1. `_GEN_PARAM` — the generator field list (verbatim)
+## 1. `_GEN_PARAM` — the generator field list (reconstructed)
 
 These extra fields are appended to the case's key fields and pulled from every
-generator. Verbatim from `function.py:28-32`:
+generator. Reconstructed from the pipeline's engine module:
 
 ```python
 _GEN_PARAM = [
@@ -88,16 +89,16 @@ Why each field is pulled:
 
 | Field | Used for |
 |---|---|
-| `Latitude`, `Longitude` | output header rows (rows 7 & 8); also fed by `PFW_Insertion` to assign ISO region |
-| `GenUnitType` | pulled for completeness; not used downstream in `function.py` |
+| `Latitude`, `Longitude` | output header rows (rows 7 & 8); also fed to the ISO-assignment step (a geopandas spatial join) to assign ISO region |
+| `GenUnitType` | pulled for completeness; not used downstream in the engine module |
 | `GenFuelType` | **the renewable selector** — `.str.contains('WND\|SUN')` picks wind/solar; also splits solar (`SUN`) vs wind (`WND`) |
 | `ZoneName` | output header "State" row (label maps `ZoneName` → "State") |
 | `AreaName` | output header "Utility" row (label maps `AreaName` → "Utility") |
 | `TSPFWModelString` | output header "PV / Wind Types" row — the unit's PFW model string |
 | `GenMWMax` | output header "Gen Max MW" row |
 | `Selected` | toggled to `'YES'` for renewables, then used to drive `TimeDomainSelected` |
-| `CustomString:1` | pulled but not used in `function.py` |
-| `CustomString:2` | output header "ISO" row (label maps `CustomString:2` → "ISO"); populated by `PFW_Insertion` spatial join |
+| `CustomString:1` | pulled but not used in the engine module |
+| `CustomString:2` | output header "ISO" row (label maps `CustomString:2` → "ISO"); populated by the ISO-assignment step's spatial join |
 
 Key fields come from `Gen.keys()` (typically `BusNum`, `GenID`)
 and are **prepended**, so the resulting `gen` DataFrame has columns
@@ -112,16 +113,16 @@ and are **prepended**, so the resulting `gen` DataFrame has columns
 
 ---
 
-## 2. `_simulation_worker` — the FULL backend sequence, IN ORDER
+## 2. `timestep_worker` — the FULL backend sequence, IN ORDER
 
-Signature: `_simulation_worker(case_path, pww_list, result_csv) -> gen (DataFrame)`.
+Signature: `timestep_worker(case_path, pww_list, result_csv) -> gen (DataFrame)`.
 Returns the generator metadata DataFrame (the caller needs it for `process_results`).
-Verbatim mechanics from `function.py:35-83`:
+Reconstructed from the pipeline's worker function:
 
 ```python
-def _simulation_worker(case_path, pww_list, result_csv):
+def timestep_worker(case_path, pww_list, result_csv):
     from esapp import PowerWorld                     # lazy import
-    from esapp.components import Gen
+    from esapp.components import Gen, Timepoint
     tmp_case = None
     try:
         # (a) temp-copy the case so parallel runs never fight over the .pwb lock
@@ -136,10 +137,16 @@ def _simulation_worker(case_path, pww_list, result_csv):
         gen_param = list(Gen.keys()) + _GEN_PARAM
         gen = pw[Gen, gen_param]
 
-        # (d) load weather file(s): first = Load, rest = Append
-        pw.esa.TimeStepLoadPWW(pww_list[0], "Weather Only")
+        # (d) load weather file(s): first = Load, rest = Append. The project calls plain
+        # TimeStepLoadPWW here, which fails on every file on Simulator 25 (builds dated
+        # 2026-09-20 and 2026-09-25). Load the file's full span with the Range form instead.
+        d0, d1 = struct.unpack_from("<dd", open(pww_list[0], "rb").read(22), 6)  # OLE days, UTC
+        t0, t1 = [(pd.Timestamp("1899-12-30") + pd.Timedelta(days=d)).round("h") for d in (d0, d1)]
+        pw.esa.TimeStepLoadPWWRange(pww_list[0], f"{t0:%Y-%m-%dT%H:%M:%SZ}",
+                                    f"{t1:%Y-%m-%dT%H:%M:%SZ}", "Weather Only")
         for pww in pww_list[1:]:
             pw.esa.TimeStepAppendPWW(pww, "Weather Only")
+        assert len(pw[Timepoint, ["TimeDomainDateTimeUTC"]]) > 0, "weather load gave no timepoints"
 
         # (e) EDIT mode: mark renewables Selected = YES, push back
         pw.esa.EnterMode("EDIT")
@@ -178,7 +185,9 @@ Step-by-step, every SimAuto call / SAW method in execution order:
 2. `pw = PowerWorld(tmp_case)` — open the case.
 3. `gen_param = list(Gen.keys()) + _GEN_PARAM`
 4. `gen = pw[Gen, gen_param]` — DataFrame of all gens.
-5. `pw.esa.TimeStepLoadPWW(pww0, "Weather Only")` — load first weather file.
+5. `pw.esa.TimeStepLoadPWWRange(pww0, t0, t1, "Weather Only")` — load the first weather file over
+   its full span, read from the file header. Plain `TimeStepLoadPWW` fails on Simulator 25 builds
+   dated 2026-09-20 and 2026-09-25; assert the case now has timepoints.
 6. for each remaining pww: `pw.esa.TimeStepAppendPWW(pww, "Weather Only")` — append.
 7. `pw.esa.EnterMode("EDIT")`
 8. set `gen['Selected'] = 'YES'` where `GenFuelType` contains `WND|SUN`.
@@ -221,7 +230,7 @@ and wind MW outputs.
 
 ### `pww_list` semantics
 
-`pww_list[0]` → `TimeStepLoadPWW`; every subsequent entry → `TimeStepAppendPWW`. Both
+`pww_list[0]` → `TimeStepLoadPWWRange` over its full span; every subsequent entry → `TimeStepAppendPWW`. Both
 use the `"Weather Only"` mode argument. In practice the callers pass **one PWW per
 worker call** (`[pww]`) and concatenate the resulting CSVs in pandas afterward — the
 Append branch exists but the production paths feed single-file lists and stitch
@@ -233,11 +242,12 @@ quarters at the DataFrame level (see §4).
 
 Signature: `process_results(gen, df) -> (solar_df, wind_df)`. `gen` is the DataFrame
 returned by the worker; `df` is the raw exported CSV read back via `pd.read_csv`.
-Verbatim from `function.py:86-152`.
+Reconstructed from the pipeline's `process_results` function.
 
 ### 3a. Time conversion first
-`result = convert_to_utc(df)` — replaces the first column (Excel-serial CST
-timestamps) with ISO-8601 UTC strings (see §6).
+`result = convert_to_utc(df)` — replaces the first column (Excel-serial timestamps,
+which PowerWorld writes in UTC but the code treats as CST) with ISO-8601 strings marked
+UTC that run 7 h early in summer (see §6).
 
 ### 3b. The 8 metadata header rows
 Eight rows are prepended above the time-series. `row_names` are the row labels;
@@ -306,12 +316,12 @@ Both returned frames carry the 8 header rows on top.
 
 ---
 
-## 4. `main.py` (series) — grouping, run loop, output naming
+## 4. The pipeline's CLI entry script (series) — grouping, run loop, output naming
 
 - CLI args (`parse_args`): `--case` (required), mutually-exclusive **required** group
   `--pww FILE...` xor `--pww-dir DIR`, plus `--year YYYY` (int, filters `--pww-dir`),
   `--output-dir`, `--yes/-y` (skip the `input()` confirm prompt).
-- Default output: `Results/` next to `main.py` (`os.path.join(_script_dir, "Results")`).
+- Default output: `Results/` next to the entry script (`os.path.join(_script_dir, "Results")`).
 - **Grouping (`_group_files`)**: for each file, `re.search(r"(\d{4})_Q\d", name)`.
   Matches (quarter files like `NorthAmerica2025_Q1.pww`) are grouped by **year** so all
   4 quarters run as one logical run (`groups[year] = [...]`). Non-matches (e.g. forecast
@@ -323,7 +333,7 @@ Both returned frames carry the 8 header rows on top.
     start with `Forecast_`, so don't double-prefix).
   - Outputs: `{out_stem}_solar.csv`, `{out_stem}_wind.csv` in `output_dir`.
   - **Resume-safe skip**: if BOTH solar and wind CSVs already exist → skip (delete to re-run).
-  - Runs each pww **one at a time** via `_simulation_worker(args.case, [pww], q_csv)`
+  - Runs each pww **one at a time** via `timestep_worker(args.case, [pww], q_csv)`
     into `_raw_<qname>.csv`, reads each back with `pd.read_csv`, removes the temp csv,
     `pd.concat(dfs, ignore_index=True)`, then `process_results(gen, df)` → write
     `solar_path` / `wind_path`. `gen` from the last quarter is reused (identical per case).
@@ -331,14 +341,14 @@ Both returned frames carry the 8 header rows on top.
 
 ---
 
-## 5. `parallel/main.py` — the parallel variant
+## 5. The parallel variant's entry script
 
-Same engine (`parallel/function.py`); only orchestration differs. What can produce a wrong
+Same engine (the parallel variant's copy of the engine module); only orchestration differs. What can produce a wrong
 or failed run:
 
 - **Cap `--workers` at what the PowerWorld licence and RAM allow.** Each worker drives its
   own SimAuto instance against its own temp copy of the case — the temp-copy in
-  `_simulation_worker` is what makes concurrency safe.
+  the worker function is what makes concurrency safe.
 - **Workers must stay top-level and import the engine inside the child.** Windows spawn
   needs them picklable, and the parent must never load PowerWorld.
 - **Incomplete years are skipped silently** — only years with all four quarters become
@@ -346,15 +356,21 @@ or failed run:
 - **Resume-safe:** a group whose solar *and* wind CSVs both exist is skipped, so a rerun
   after a partial failure does not redo finished work.
 
-## 6. `time_utils.py` — time math ("settled, don't change")
+## 6. `time_utils.py` — time math
 
-Verified against real runs; **do not change without a clear reason.** Two facts that change
-an answer:
+> **Correction:** the conversion below is wrong. PowerWorld writes column 0 in **UTC**
+> (measured 2026-10-20 on build 2026-09-25: it matched `Timepoint.TimeDomainDateTimeUTC` row for
+> row), but the code treats it as CST and shifts it the wrong way. Labels run 7 h early in summer
+> and 6 h early in winter (7 h measured 2026-10-14 against `TimeDomainDateTimeUTC`). Re-label from
+> `Timepoint.TimeDomainDateTimeUTC` before joining on time; see [how-to-analyze-results](../methods/how-to-analyze-results.md).
+> The text below describes what the code does, not what is right.
 
-- **The CST→UTC conversion applies a DST correction, not a fixed offset.** Column 0 is
-  Excel-serial in CST (UTC-6), and one hour comes off inside US DST (second Sunday in March
-  02:00 → first Sunday in November 02:00) before rounding to the hour. Treating the column
-  as a flat UTC-6 offset shifts every summer timestamp by an hour.
+Two facts that change an answer:
+
+- **The conversion applies a DST step, not a fixed offset.** The code reads column 0 as
+  Excel-serial CST, subtracts 6 h, and takes one more hour off inside US DST (second Sunday in
+  March 02:00 → first Sunday in November 02:00) before rounding to the hour. A summer label is
+  therefore 7 h earlier than the true UTC hour, and a winter label 6 h earlier.
 - **`interpolate_to_hourly` exists but is NOT called** in the current run path. It fills
   3-hour forecast gaps; assuming it ran is how a gapped forecast series gets read as hourly.
 ## 7. Gotchas checklist (regenerate-safe)
@@ -378,13 +394,13 @@ an answer:
   group by year and are named `Historical_{year}_{solar,wind}.csv`; anything else runs
   individually under its stem. Keep `_group_files` and the `is_historical` check in sync.
 - ✅ Confirmation prompt via `input()` unless `--yes/-y`; parallel adds `--workers`.
-- ✅ Parallel workers must stay **top-level / picklable** and import `function` inside
+- ✅ Parallel workers must stay **top-level / picklable** and import the engine module inside
   the child process (Windows spawn).
 
 ---
 
 ## Related
 
-- Project: time step simulation · Hub: [Home](../index.md)
+- Hub: [Home](../index.md)
 - Concept/how-to: [timestep-simulation](../concepts/timestep-simulation.md) · [timestep-simulation-setup](../methods/timestep-simulation-setup.md)
-- Inputs: [pww-data](../concepts/pww-data.md) · PFW context: pfw copperplate · ISO prep: `PFW_Insertion/`
+- Inputs: [pww-data](../concepts/pww-data.md) · PFW context: [copper-plate](../concepts/copper-plate.md) · ISO prep: the ISO-assignment step (a geopandas spatial join)

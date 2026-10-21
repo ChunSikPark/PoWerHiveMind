@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: case-audit
 aliases: [line-to-transformer, linexfmr, make-branch-a-transformer, branchdevicetype]
 tags: [esapp, powerworld, simauto, branch, transformer, linexfmr, editmode]
 ---
@@ -21,7 +22,7 @@ max |ΔMW| = 0.0) — pure reclassification, R+jX untouched.
 
 ## Connections
 
-- **Up:** [esapp](../concepts/esapp.md) · esapp package
+- **Up:** [esapp](../concepts/esapp.md)
 - **Across:** [adding-devices-esapp](adding-devices-esapp.md) · [save-powerworld-case](save-powerworld-case.md) · [powerworld-limitset-setdata](powerworld-limitset-setdata.md) · [esapp-overview](esapp-overview.md)
 - **Deeper:** [esapp-package-backend](../references/esapp-package-backend.md)
 
@@ -35,7 +36,7 @@ returns empty and `BranchDeviceType.value_counts()` is 100% `Line`, yet many bra
 `BusNomVolt != BusNomVolt:1`.
 
 The mismatched-nominal-kV test is the right detector — check the pairs it finds are sane step-downs
-before trusting it. On Synth8k the only pairs were 765/345, 345/138, 138/69 (1586 of 13523 branches).
+before trusting it. On Synth8k the only pairs were 765/345, 345/138, 138/69 (about 12% of branches).
 
 ### The two traps
 
@@ -129,10 +130,13 @@ pw.pflow(); after = pw[Branch, "LineMW"]["LineMW"]; va = pw.voltage(complex=Fals
 assert (va - vb).abs().max() == 0.0 and (after - before).abs().max() == 0.0
 ```
 
-This holds **only if** the converted branches already had `LineC == 0`. Check that first — a branch
-with real line charging will move when reclassified, because a transformer's `LineC` is magnetizing
-susceptance, not π-model charging. Zeroing nonzero charging is a modelling decision, not a cleanup;
-surface it rather than doing it silently.
+This is guaranteed **only if** the converted branches already had `LineC == 0`. Check that first.
+A branch with real line charging **may** move when reclassified, since a transformer's `LineC` is
+treated as magnetizing susceptance rather than π-model charging. It may also not: one 2026-10-20
+run converted a single branch on a public synthetic case with its `LineC` kept, and the solution
+was identical (41.917784% loading before and after). That is one branch, measured once, so run the
+before/after assertion above rather than assuming either way. Zeroing nonzero charging is a
+modelling decision, not a cleanup; surface it rather than doing it silently.
 
 Then save via the aux script command, never the COM function — see [save-powerworld-case](save-powerworld-case.md):
 

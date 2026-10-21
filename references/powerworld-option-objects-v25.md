@@ -1,6 +1,7 @@
 ---
 type: reference
 domain: tooling
+topic: scripting
 aliases: [powerworld-option-objects-v25, option-objects, all-powerworld-options, options-catalog, sim-solution-options-fields, ctg-options-fields, opf-options-fields]
 tags: [powerworld, options, schema, reference, simulator-25, generated]
 ---

@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: cross-cutting
+topic: case-audit
 aliases: [per-unit basis, base conversion, normalization base, basis discipline]
 tags: [per-unit, normalization, powerworld, gotcha, data-provenance, technique]
 ---
@@ -60,8 +61,8 @@ TSH = H · GenMVABase / 100          system inertia (GW·s) = Σ TSH · 100 / 10
 Both expressions are "inertia in seconds." Neither is wrong. They are not interchangeable.
 
 On the Synth8k case `GenMVABase` spans **2.2 – 1,444.4 MVA (median 170)**, so treating
-assumed H as if it were `TSH` produced failure shape **2**: fleet inertia read 240.5 GW·s
-instead of 470.3, nuclear 2.04 instead of 22.58, and the unit-commitment order in the
+assumed H as if it were `TSH` produced failure shape **2**: fleet inertia read about 51% of
+its true GW·s value, nuclear about 9%, and the unit-commitment order in the
 dispatch algorithm was silently wrong.
 
 The physical statement underneath: **H alone is not an inertia quantity.** System inertia is
@@ -109,6 +110,20 @@ recurred. Two mechanical guards were added instead, and both earn their keep:
 
 Prefer the magnitude assert if you only do one. It is source-agnostic and it fires before
 a wrong number reaches a document.
+
+### The same trap with a length base: per-mile impedance entered as the total
+
+A line's impedance has a hidden second denominator, its length. A value copied from a
+per-mile table and entered as the whole line's impedance is off by exactly the line's
+mileage. That is often 30 to 100 times, and the case still solves, just with a line far
+stronger than the real one.
+
+Use magnitude as the check. On a 100 MVA base, an overhead line's reactance is roughly
+**2e-4 pu per mile at 500 kV** and **1.2e-3 to 1.5e-3 pu per mile at 230 kV**. So a line
+whose *total* X sits near those numbers is almost certainly per-mile data: multiply by its
+length. A 60-mile 500 kV line should carry about 0.012 to 0.015 pu, not 0.0002. Name that
+cause when you see it. A "typical value" from memory is a weaker answer than the length
+ratio the case itself shows.
 
 ### Checklist when a normalized quantity enters a project
 

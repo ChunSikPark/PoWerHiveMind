@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: design
 aliases: [comparing-planning-cases, case-diff, case-comparison, planning-delta, what-changed, new-devices]
 tags: [demo, planning, case-diff, contingency, aux, esapp, worked-example]
 ---
@@ -16,7 +17,7 @@ a scoping trap that would have made the headline answer **87% wrong**.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md)
 - **Across:** [new-device-contingency-aux](../methods/new-device-contingency-aux.md) · [ranking-new-devices-by-severity](../methods/ranking-new-devices-by-severity.md) · [contingency-and-aux](contingency-and-aux.md) · [reading-violationctg](../methods/reading-violationctg.md) · [adding-devices-esapp](../methods/adding-devices-esapp.md)
 
 ## Content
@@ -29,8 +30,9 @@ a scoping trap that would have made the headline answer **87% wrong**.
 ### Step 1 — the two cases
 
 ```python
+import os
 from esapp import PowerWorld
-from esapp.components import Bus, Branch, Gen
+from esapp.components import Bus, Branch, Gen, Contingency, ViolationCTG
 
 a = PowerWorld(r"C:\cases\Synth2k_case1.pwb")
 b = PowerWorld(r"C:\cases\Synth2k_case.PWB")
@@ -100,6 +102,73 @@ naive answer was fiction and you would never have known.
 Devices present in both but with changed parameters are a third category — **UPGRADED**
 — found by comparing ratings and impedances on the common keys, not by set difference.
 
+**When the two counts disagree, pair a removal with an addition on a second identity.** A key is a
+label, and labels get rewritten for reasons that have nothing to do with the device. Find an
+attribute that names the *thing* rather than the *record* and that the relabelling does not touch:
+for a bus, `(BusName, BusNomVolt)`, because a renumbered substation keeps its name and its voltage.
+Pair a retired-looking record with a new-looking one only when the rest of its identity matches
+(the `GenID`, the untouched far endpoint) **and** the moved key's second identity is unchanged.
+Three rules keep the pairing from hiding real findings:
+
+1. **Decline ambiguity; do not resolve it.** Several buses in one substation often share a name at
+   one voltage. If more than one candidate fits, make no pair. A guess that lands wrong turns a
+   real retirement into housekeeping, silently.
+2. **One addition can excuse only one removal.** Otherwise two devices that genuinely went away
+   both point at one new record and both vanish from the count.
+3. **Mark both halves, or neither.** Excusing the retirement while leaving its partner in the added
+   list is worse than doing nothing: the totals now disagree with each other, and the clean-looking
+   one is the wrong one.
+
+**Name what stayed behind.** Reserve "removed" for the strongest claim: the record is gone **and**
+so is the thing it named (neither number nor name survives). Everything weaker gets a verdict that
+says what is left: *bus remains, device gone*, *renumbered*, *renumbered (unpaired)*. A confirmed
+relabelling belongs in its own category, not under "removed" or "added", or the reader has to
+subtract in their head.
+
+**The two errors do not cost the same.** Calling a relabelling a retirement inflates the project
+list, which is **visible** on inspection. Calling a retirement a relabelling hides a removed device,
+which **silently never appears**. So when the evidence is suggestive but unconfirmed, let it count
+as gone and say why in the label.
+
+**Generators need their own two comparisons.** In a 2026-10-20 validation run, three agents
+reported "no generator settings changed" while voltage control (AVR) had been switched off on
+two generators. Compare status, AVR and AGC per generator on its key pair, then in-service MW
+and capacity by area, zone and fuel type. A design that quietly shifts where power comes from
+shows up in the second table.
+
+```python
+import pandas as pd
+
+def gens(pw, fields):
+    g = pw[Gen, ["BusNum", "GenID"] + fields]
+    g["GenID"] = g["GenID"].astype(str).str.strip()
+    return g.set_index(["BusNum", "GenID"])
+
+ctl = ["GenStatus", "GenAVRAble", "GenAGCAble"]
+ga, gb = gens(a, ctl), gens(b, ctl)
+common = ga.index.intersection(gb.index)
+flips = (ga.loc[common] != gb.loc[common]).any(axis=1)
+print(pd.concat({"base": ga.loc[common][flips], "design": gb.loc[common][flips]}, axis=1))
+
+mix = ["GenStatus", "GenMW", "GenMWMax", "AreaNum", "ZoneNum", "GenFuelType"]
+def by(pw, col):
+    g = gens(pw, mix)
+    return g[g.GenStatus == "Closed"].groupby(col)[["GenMW", "GenMWMax"]].sum()
+for col in ("AreaNum", "ZoneNum", "GenFuelType"):
+    t = pd.concat({"base": by(a, col), "design": by(b, col)}, axis=1).fillna(0)
+    d = t["design"] - t["base"]
+    print(t[d["GenMWMax"].abs() > 1.0])                  # capacity added, removed or switched off
+    print(d["GenMW"].sort_values(key=abs, ascending=False).head(5))  # where the new load's MW came from
+```
+
+Judge the shift on **capacity** (`GenMWMax` of in-service units), not on `GenMW`. A design that
+adds load moves dispatched MW in every area, because the slack and AGC pick it up, so a
+threshold on `GenMW` flags everything. Read the `GenMW` change as where the new load's power came
+from. Measured 2026-10-21 on a 2,000-bus synthetic case and a design copy: the control flip found
+exactly the two units with AVR switched off, while a 1 MW `GenMW` threshold flagged all 8 areas.
+`GenAVRAble` and `GenAGCAble` read back padded (`"NO "`), so strip them before comparing to a
+literal.
+
 ### Step 3 — a contingency set for only the new devices
 
 ```python
@@ -161,7 +230,7 @@ filter by the labels you actually created:
 labs = v["CTGLabel"].astype(str).str.strip()
 mine = labs.str.startswith("NEW_")
 print("from MY new-device contingencies :", int(mine.sum()))
-print("from contingencies already in the case:", int((~mine).sum()))
+print("from OTHER contingencies already in the case:", int((~mine).sum()))
 ```
 
 ```

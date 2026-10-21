@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: scripting
 aliases: [demos-index, demos, demo-index, examples, worked-examples]
 tags: [demo, index, examples, prompts, getting-started]
 ---
@@ -9,7 +10,7 @@ tags: [demo, index, examples, prompts, getting-started]
 
 ## Abstract
 
-Worked runs on a real 37-bus case (Synth40: 37 buses, 89 branches, 45 generators).
+Worked runs on the public synthetic Synth40 case (37 buses, 89 branches, 45 generators).
 Every number on these pages came from an actual run — including the failures, which were
 left in on purpose. Start with the one-line prompts below: you should not have to know
 which page covers what.
@@ -58,6 +59,7 @@ If a prompt fails, that is a defect worth reporting. The routing is
 | [power-flow-and-sensitivities](power-flow-and-sensitivities.md) | AC, DC, LODF, PTDF — with the `1e8` sentinel and a two-step error recovery |
 | [contingency-and-aux](contingency-and-aux.md) | N-1 from scratch, and generating a filter + contingency `.aux` automatically |
 | [timestep-and-pfw](timestep-and-pfw.md) | Weather to megawatts: PFW models, TimeStep, and reading the output |
+| [aux-file-cookbook](aux-file-cookbook.md) | Claude in one window, Simulator in the other. Four recipes in order: turn the channel on, prove it with a four-line script, inventory a case, then take a bus out and measure it. Start here if you are working through files rather than Python. |
 
 ### Queries versus studies
 

@@ -1,6 +1,7 @@
 ---
 type: reference
 domain: tooling
+topic: scripting
 aliases: [esapp-backend, esapp-internals]
 tags: [esapp, powerworld, simauto, internals, backend, reference]
 ---
@@ -9,12 +10,12 @@ tags: [esapp, powerworld, simauto, internals, backend, reference]
 
 ## Abstract
 
-Internals reference for the esapp package project, covering bracket-interface mechanics (`Indexable.__getitem__`/`__setitem__`), SAW mixin composition, the component-generation pipeline, GObject schema model, embedded utility apps (`Network`, `GIC`, `BusCat`), descriptors, and the exception hierarchy. This is the heavy/deep layer — read it in full only when writing or regenerating code for esapp package; for the gist, use the project page.
+Internals reference for the esapp package project, covering bracket-interface mechanics (`Indexable.__getitem__`/`__setitem__`), SAW mixin composition, the component-generation pipeline, GObject schema model, embedded utility apps (`Network`, `GIC`, `BusCat`), descriptors, and the exception hierarchy. This is the heavy/deep layer — read it in full only when writing or regenerating code for esapp package; for the gist, use [esapp](../concepts/esapp.md).
 
 ## Connections
 
-- **Up:** esapp package (the project) + [Home](../index.md)
-- **Across:** [esapp](../concepts/esapp.md) (API-usage map for callers), [powerworld-simauto](../concepts/powerworld-simauto.md), aux script catalog (raw SCRIPT-command name index)
+- **Up:** [Home](../index.md)
+- **Across:** [esapp](../concepts/esapp.md) (API-usage map for callers), [powerworld-simauto](../concepts/powerworld-simauto.md), [aux-script-commands](aux-script-commands.md) (SCRIPT command names)
 
 ## Content
 
@@ -22,7 +23,7 @@ Internals reference for the esapp package project, covering bracket-interface me
 mechanics, the SAW mixin assembly, the component-generation pipeline, the GObject
 schema model, embedded utility apps, descriptors, and the exception hierarchy. This
 is the INTERNALS companion to the API-usage map in [esapp](../concepts/esapp.md); it does not re-document
-user-facing call recipes. Project status/tracker lives at esapp package; hub is
+user-facing call recipes. Hub is
 [Home](../index.md).
 
 All file:line citations are against the real source under `C:\path\to\esapp`.
@@ -233,7 +234,7 @@ only "wiring" is the import + the line in the tuple.
 
 `grid.py` (~13 MB) and `ts_fields.py` are **auto-generated** from the `PWRaw` TSV
 schema export. Do **not** hand-edit them (the file banner says so, and the project
-conventions in esapp package reiterate it). Regenerate with:
+conventions in the esapp repo reiterate it). Regenerate with:
 
 ```bash
 cd esapp/components && python generate_components.py   # reads ./PWRaw
@@ -483,6 +484,5 @@ in `utils/`, then add `self.foo = Foo(self)` in `PowerWorld.__init__` (workbench
 
 ## See also
 - API-usage map (how to *call* esapp): [esapp](../concepts/esapp.md)
-- Project status/tracker: esapp package
 - Underlying COM server: [powerworld-simauto](../concepts/powerworld-simauto.md)
 - Hub: [Home](../index.md)

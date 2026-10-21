@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: design
 aliases: [add-devices, create-devices, createdata, add-buses-branches]
 tags: [esapp, powerworld, createdata, device-creation, dcopf, contingency, n-1]
 ---
@@ -13,12 +14,14 @@ How to programmatically create buses, branches (lines/transformers) and set load
 PowerWorld case with `esapp`, then solve a DC OPF and screen N-1 — the write-side mechanics the
 read-focused [esapp-overview](esapp-overview.md) doesn't cover. Read this before writing any transmission-expansion /
 what-if code. The headline gotcha: `CreateData` **silently no-ops** unless every primary + secondary
-+ required key field is supplied, and PowerWorld truncates `LineCircuit` to **2 characters**. All
-symbols below were live-verified against the installed package (not guessed).
++ required key field is supplied, and PowerWorld truncates `LineCircuit` (and `ShuntID`) to **2 characters**. All
+symbols below were live-verified against the installed package (not guessed). For switched shunts,
+also: a stepped reactor created on a bus that already has a capacitor may not stay on automatic
+control, and `SSRegVolt` is a reading, not a setpoint; the target is `DesiredVoltage`.
 
 ## Connections
 
-- **Up:** [esapp](../concepts/esapp.md) · esa pp llm
+- **Up:** [esapp](../concepts/esapp.md)
 - **Across:** [esapp-overview](esapp-overview.md) · [esapp-schema-reference](../references/esapp-schema-reference.md) · [powerworld-simauto](../concepts/powerworld-simauto.md)
 - **Deeper:** [esapp-package-backend](../references/esapp-package-backend.md)
 
@@ -82,7 +85,14 @@ string works: `1`, `2`, `11`, `22`, `33`. The only trap is PowerWorld's ~2-char 
 truncated, so distinct-*looking* IDs can collide — `NE1` and `NE2` both become `NE`, and the second
 silently no-ops. Keep circuit IDs ≤ 2 chars and distinct per pair.
 
-> The `esa_pp_llm` pipeline tagged its new circuits with an `N` prefix (`N1`, `N2`) **only** so its
+**The same cap applies to every 2-character ID, `ShuntID` included.** PowerWorld's field export
+describes `ShuntID` (and `GenID`) as a "2 character ... identification field". Seen 2026-09 on a
+~10k-bus planning model: `C10` silently became `C1`, the create reported success, the bank existed
+under the truncated ID, and the lookup that followed failed on a bank that was really there. Use
+short numeric IDs: `1`, or the next free number at that bus. The "count moved by exactly N" guard
+above caught it; nothing else did.
+
+> One research pipeline tagged its new circuits with an `N` prefix (`N1`, `N2`) **only** so its
 > own code could detect which devices were new — that prefix is a project convention, not a
 > PowerWorld requirement.
 
@@ -99,7 +109,7 @@ pw.esa.CreateData("Load", ["BusNum", "LoadID", "LoadSMW", "LoadSMVR", "LoadStatu
 
 ### Creating a switched shunt: the bracket writer DOES work, and three fields are traps
 
-Measured 2026-09-07 on Synth9k (10,476 buses, 1,187 existing shunts), adding 11 capacitor banks.
+Measured 2026-09-07 on a ~10k-bus synthetic case (about a thousand existing shunts), adding about ten capacitor banks.
 
 **`ChangeParametersMultipleElement` cannot create a shunt** - it answers `Object not found` for
 every row, because it only modifies objects that already exist. Creation goes through the bracket
@@ -150,19 +160,63 @@ A complete, working continuous capacitor bank regulating its own bus:
 ```
 
 `SSNMVR` seeded at 0 can diverge a stressed case by yanking reactive sources to zero as the
-solver's initial guess - see remediating base case violations.
+solver's initial guess - see [violation-remediation](../demos/violation-remediation.md).
 
 **Sizing: let PowerWorld measure it, do not estimate.** Install a deliberately oversized continuous
 bank, solve, and read back `SSNMVR` - the dispatched value IS the requirement. Then reinstall at
 that value (rounded up to a standard bank size) and confirm nothing rails at its own cap, which
 would mean the requirement was truncated by the probe. Required MVAr does not track depth of
-violation: on Synth9k a bus needing +0.0335 pu took 10 MVAr while one needing +0.0277 took 50,
+violation: on that case a bus needing +0.0335 pu took 10 MVAr while one needing +0.0277 took 50,
 because the difference is system strength at the bus, not how far it had sagged.
 
 **Regulation is a deadband, not a target.** With `[SSVLow, SSVHigh] = [0.96, 1.06]`, a bank that
 lands the bus anywhere inside that band has no reason to back off, so the final dispatch depends on
 where the solve started. If you need provably-minimal dispatch, tighten the band - do not shrink
-the bank.
+the bank. **Disputed 2026-09-29:** a measurement on a large synthetic regional planning model found
+every continuous shunt that was neither at a limit nor at zero sitting exactly on its
+`DesiredVoltage`, which reads as steering to a target rather than holding anywhere in the band.
+Unresolved; do not build anything that depends on either reading.
+
+### A stepped reactor next to a capacitor reads `AutoControl = NO`
+
+Suspected, not confirmed. Measured 2026-09-29 on a large synthetic regional planning model,
+creating one extra shunt record at a bus that already carried an adjustable capacitor.
+`AutoControl = YES` in the create call, or written again straight afterwards, or through a script
+`SetData`, read back **NO before any solve** for exactly one combination: a **Discrete** record
+with **negative** blocks (a reactor) on a bus that already has a capacitor record. No error is
+raised. Every other variant held `YES`:
+
+| new record | same bus as a capacitor? | AutoControl after the write |
+|---|---|---|
+| discrete capacitor (positive block) | yes | YES |
+| discrete reactor | no, alone on a neighbouring bus | YES |
+| continuous reactor | yes | YES |
+| **discrete reactor** | **yes** | **NO** |
+| discrete capacitor | yes, beside a continuous **reactor** (2026-09-30) | YES |
+
+The last row is the mirror case, measured 2026-09-30 on the same model at six sites in five
+operating conditions: a stepped capacitor added next to an existing adjustable reactor kept `YES`
+through creation, a solve and a re-assertion in every case. The refusal is specific to a stepped
+reactor joining a capacitor, not to mixing directions on one bus. A related observation, also
+suspected (2026-10-20, Simulator build 2026-09-25): a new discrete shunt whose `DesiredVoltage` is
+0 had `AutoControl` turned back to NO by the next solve, and kept YES once `DesiredVoltage` was set.
+
+A reactor with `AutoControl = NO` never switches, so a capacitor-plus-reactor design built this way
+is inert with no warning. **Read `AutoControl` back on every created record, after a solve.** Two
+layouts held `YES`, both verified the same day: put the reactor on **another bus in the same
+substation**, or make **one record carrying both kinds of block** (block 0 the reactor, block 1 the
+capacitor, one switching range). Why PowerWorld resets it is not established; this is the observed
+rule.
+
+### `SSRegVolt` is a reading; the voltage target is `DesiredVoltage`
+
+PowerWorld's field catalog describes `SSRegVolt` as *"the present per unit voltage at the
+regulated bus"* and marks it not enterable. Writing a setpoint into it does nothing. The target a
+switched shunt steers toward is **`DesiredVoltage`** ("Regulated Bus\\Target Value"), with
+`DesiredVoltage:1` as an optional separate high-side target. Code that writes `SSRegVolt = 1.04`
+as if it were a setpoint has set nothing; the device keeps whatever `DesiredVoltage` it already
+had. When a design gives a bank its own switching range, set its `DesiredVoltage` inside that
+range, or the bank steers toward a target it can never reach.
 
 ### Transformer vs line: you MUST flag it — kV mismatch is not enough
 
@@ -194,13 +248,22 @@ DC study. Their lat/lon is only useful for right-of-way / distance (cost) calcul
 ### Solving a DC OPF and reading the objective
 
 ```python
-pw.dc_mode = True          # DC approximation
 pw.run_mode()
-pw.esa.SolvePrimalLP()     # the LP OPF; with dc_mode this is the DC OPF
+pw.pflow(method="DC")      # SolvePowerFlow(DC): the case stays DC until an AC method solves
+assert (pw[Bus, ["BusPUVolt"]]["BusPUVolt"] == 1.0).all(), "not a DC solve"
+pw.esa.SolvePrimalLP()     # the LP OPF on the DC case
 tfc = float(pw[OPFSolutionSummary, :]["LPOPFCostFunction"].iloc[0])   # "Total Final Cost"
 ```
 
 `OPFSolutionSummary.LPOPFCostFunction` is the OPF objective ("Total Final Cost").
+
+Writing the DC flag is not enough. `pw.dc_mode`, `DCApprox` and `DCPFMode` are one field
+(`Sim_Solution_Options`), and on 2026-09-23 setting it did not make the next
+`SolvePowerFlow()` run DC: an AC method argument (esapp's `pw.pflow()` defaults to
+`POLARNEWT`) puts the case back in AC. Solve with the DC method itself and check that every
+bus sits at exactly 1.0 pu ([powerworld-study-options](../references/powerworld-study-options.md),
+[lodf](../concepts/lodf.md)). Not yet live-tested: that `SolvePrimalLP` keeps the DC model
+after a DC solve. The 1.0 pu check after the OPF is the test.
 
 ### Overloads: tolerate the binding-at-limit edge
 
@@ -215,16 +278,15 @@ overloaded = pw.overloads(threshold=100.1)   # >100.1% = a real overload; <=100.
 
 ### N-1 on new devices — just run the contingency analysis (don't hand-roll it)
 
-PowerWorld's built-in **contingency analysis** applies each outare-solves, records
-violations/non-convergence, and **restores the base case automatge, ically** — you never open or re-close
-anything yourself. Run it in DC mode by setting `DCApprox=YES` and the CTG method to `DC`. Verified
-call sequence (from `esa_pp_llm/Functions/contingency.py`):
+PowerWorld's built-in **contingency analysis** applies each outage, re-solves, records
+violations/non-convergence, and **restores the base case automatically** — you never open or re-close
+anything yourself. Run it in DC by solving the base case with the DC method and setting the
+CTG method to `DC`:
 
 ```python
 # DC contingency analysis
-pw.esa.SetData("Sim_Solution_Options", ["DCApprox"], ["YES"])          # DC power flow
 pw.esa.SetData("CTG_Options", ["CTG_CalculationMethod"], ["DC"])
-pw.esa.SolvePowerFlow()
+pw.pflow(method="DC")                                                  # DC base case; the flag alone is not enough
 pw.esa.CTGClearAllResults()
 pw.esa.CTGSolveAll()                                                    # solves all defined contingencies
 
@@ -240,10 +302,7 @@ line/transformer), e.g. via `ContingencyBuilder`/`SimAction` (`esapp.utils`) or 
 N-1 branch contingencies. `CTGViol`/`CTGSolved` on the `Contingency` object give per-contingency
 violation counts and convergence; `Branch.LineMaxPercentContingency` gives the worst loading seen.
 
-The `esa_pp_llm` bench wraps all of this as **`run_contingency(pw, method="DC", ...)`** →
-`solve_contingency` (the `SetData`/`CTGSolveAll` above) + `get_contingency_results` (the result
-frames) + an optional summary. For AC, pass `method="AC"` (`DCApprox=NO`).
-A manual snapshot→open→re-solve
+For AC, solve with `pw.pflow()` (an AC method) and set the CTG method to `AC`. A manual snapshot→open→re-solve
 loop is unnecessary — it just re-implements, worse, what `CTGSolveAll` already does.
 
 ### Recovering the devices a case already added (diff a modified vs base case)

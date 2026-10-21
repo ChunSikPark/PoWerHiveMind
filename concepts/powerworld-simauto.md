@@ -1,6 +1,7 @@
 ---
 type: tool
 domain: tooling
+topic: scripting
 aliases: [simauto, simauto-com, powerworld-com, saw]
 tags: [powerworld, simauto, com, tool]
 ---
@@ -14,7 +15,7 @@ SimAuto is PowerWorld Simulator's COM Automation Server — the Windows-only lay
 ## Connections
 
 - **Up:** [Home](../index.md)
-- **Across:** [esapp](esapp.md) · esapp package · [esapp-overview](../methods/esapp-overview.md) · esa pp llm · aux script catalog · [esapp-script-command-wrappers](esapp-script-command-wrappers.md) (named wrapper over `RunScriptCommand`, the house rule)
+- **Across:** [esapp](esapp.md) · [esapp-overview](../methods/esapp-overview.md) · [aux-script-commands](../references/aux-script-commands.md) · [esapp-script-command-wrappers](esapp-script-command-wrappers.md) (named wrapper over `RunScriptCommand`, the house rule)
 
 ## Content
 
@@ -77,7 +78,7 @@ pw.esa.SaveState(); pw.esa.LoadState()
 
 ## Why it matters here
 
-Everything in this wiki that touches a `.pwb` case ultimately goes through
+Everything in this knowledge base that touches a `.pwb` case ultimately goes through
 SimAuto. esapp wraps it so you almost always use `pw[...]` and `pw.pflow()`
 instead of raw COM, but the raw calls remain available on `pw.esa` for anything
 the high-level API doesn't cover (time-step runs via `TimeStepMixin`, weather
@@ -93,5 +94,5 @@ new objects.
 
 ## Related
 
-- Wrapped by [esapp](esapp.md) · used by esapp package
-- How-to: [esapp-overview](../methods/esapp-overview.md) · feeds esa pp llm
+- Wrapped by [esapp](esapp.md)
+- How-to: [esapp-overview](../methods/esapp-overview.md)

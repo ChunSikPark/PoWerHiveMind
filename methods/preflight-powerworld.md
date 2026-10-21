@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: scripting
 aliases: [preflight, preflight-powerworld, powerworld-check, simauto-check, license-check]
 tags: [powerworld, simauto, esapp, setup, troubleshooting, preflight]
 ---
@@ -31,6 +32,13 @@ of a study and then discovers on the last line that SimAuto was never licensed.
 
 Paste this and run it. It prints a line per check and stops at the first failure.
 
+**Run it with plain `python`, never `python -I`.** Isolated mode hides the user
+site-packages, which is where `pip install --user` puts esapp, so check 3 reports esapp
+missing when it is installed. In a 2026-10-20 validation run two agents hit exactly that and
+then ran `pip install` on a shared machine unasked. If esapp really is missing, tell the user
+to run `/powerworld-hivemind:powerworld-setup` (it installs esapp, TeamOverbyeWeather,
+pywin32 and openpyxl). **Never pip-install on your own.**
+
 Checks 1-4 are about the **machine** and need no case file; check 5 opens **your case**.
 Call `preflight_machine()` on its own when you do not have a case yet — during setup, say —
 and `preflight(case_path)` when you do.
@@ -56,7 +64,8 @@ def preflight_machine() -> bool:
     try:
         import win32com.client  # noqa: F401
     except ImportError:
-        print("FAIL 2/5  pywin32 missing -> pip install pywin32")
+        print(f"FAIL 2/5  pywin32 not importable from {sys.executable}")
+        print("          ask the user to run /powerworld-hivemind:powerworld-setup")
         return False
     print("ok   2/5  pywin32 importable")
 
@@ -64,7 +73,8 @@ def preflight_machine() -> bool:
     try:
         from esapp import PowerWorld  # noqa: F401
     except ImportError:
-        print("FAIL 3/5  esapp missing -> pip install esapp")
+        print(f"FAIL 3/5  esapp not importable from {sys.executable} (not under python -I?)")
+        print("          ask the user to run /powerworld-hivemind:powerworld-setup")
         return False
     print("ok   3/5  esapp importable")
 
@@ -124,8 +134,8 @@ if __name__ == "__main__":
 | Error you see | What is wrong | Fix |
 |---|---|---|
 | `platform is 'linux'` / `'darwin'` | SimAuto is a Windows COM server. There is no port | Use Windows. The weather half of this kit still works — see [teamoverbyeweather-client](teamoverbyeweather-client.md) |
-| `ModuleNotFoundError: No module named 'win32com'` | pywin32 is not installed | `pip install pywin32` |
-| `ModuleNotFoundError: No module named 'esapp'` | esapp is not installed, or you are in the wrong interpreter | `pip install esapp`, and check `sys.executable` is the interpreter you think it is |
+| `ModuleNotFoundError: No module named 'win32com'` | pywin32 is not installed | Ask the user to run `/powerworld-hivemind:powerworld-setup`; do not pip-install yourself |
+| `ModuleNotFoundError: No module named 'esapp'` | esapp is not installed, you are in the wrong interpreter, or you ran under `python -I` | Rerun without `-I` and check `sys.executable`. If it is still missing, ask the user to run `/powerworld-hivemind:powerworld-setup`; do not pip-install yourself |
 | `com_error: (-2147221005, 'Invalid class string', ...)` | SimAuto is not registered. Usually PowerWorld Simulator is not installed at all | Install Simulator. If it *is* installed, run it once as administrator so it registers its COM server |
 | `com_error: (-2147221164, 'Class not registered', ...)` | Same as above, or a 32/64-bit mismatch between Python and Simulator | Match the bitness. A 32-bit Simulator will not serve a 64-bit Python |
 | A COM error mentioning **licence**, **not authorized**, or **add-on** | Simulator is installed and licensed, but the **SimAuto add-on is a separate licence** and yours does not include it | This cannot be fixed in code. Talk to whoever administers your PowerWorld licence |

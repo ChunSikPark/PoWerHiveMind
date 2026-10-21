@@ -1,6 +1,7 @@
 ---
 type: method
 domain: cross-cutting
+topic: case-audit
 aliases: [ltc-regulation-checks, ltc-regulated-bus, XFRegBus, XFRegTargetType, SSRegNum,
   regulates-nothing, ltc-middle-target, ltc-regulates-lv-side, repoint-the-regulator,
   ltc-causes-violation, which-bus-does-the-ltc-hold]

@@ -1,6 +1,7 @@
 ---
 type: reference
 domain: tooling
+topic: scripting
 aliases: [powerworld-study-options, study-options, solution-options, ctg-options, opf-options, scopf-options, object-fields, case-object-fields, sim-solution-options]
 tags: [powerworld, esapp, options, power-flow, contingency, opf, scopf, schema, reference]
 ---
@@ -112,7 +113,7 @@ object is on [powerworld-option-objects-v25](powerworld-option-objects-v25.md).
 | islands and topology | — | `DetermineBranchesThatCreateIslands`, `FindRadialBusPaths`, `DeterminePathDistance` |
 | equivalencing | `Equiv_Options` | `Equivalence` (buses flagged `Equiv`) |
 | fault | `Fault_Options` | `Fault`, `FaultAutoInsert` |
-| time step | `Time_Step_Simulation_Options` | `TimeStepLoadPWW` (deletes existing timepoints), `TimeStepDoRun` |
+| time step | `Time_Step_Simulation_Options` | `TimeStepLoadPWW` (deletes existing timepoints; suspected glitch 2026-10-20-timestep-loadpww-plain: on builds dated 2026-09-20 and 2026-09-25 plain `TimeStepLoadPWW` failed with `Error With Loading PWWFile` while `TimeStepLoadPWWRange` loaded the same files; see [timestep-workflow](../concepts/timestep-workflow.md)), `TimeStepDoRun` |
 | weather | `Weather_Options` | `WeatherPWWLoadForDateTimeUTC`, `WeatherPFWModelsSetInputsAndApply`, `TemperatureLimitsBranchUpdate` |
 | scheduled actions | `ScheduledActions_Options` | `ApplyScheduledActionsAt`, `SetScheduleWindow` |
 

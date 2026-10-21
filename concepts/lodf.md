@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: cross-cutting
+topic: contingency
 aliases: [lodf, line-outage-distribution-factor, line-outage-distribution-factors, ptdf, isf, dc-contingency-screening]
 tags: [contingency, n-1, dcpf, lodf, ptdf, powerworld, esapp, screening, technique, cross-cutting]
 ---
@@ -13,7 +14,7 @@ LODF gives **every branch's post-outage MW flow for every single-branch outage**
 matrix factorization — no per-contingency power-flow solve. It is not an approximation of
 DC contingency analysis; measured live it **IS** DC contingency analysis
 (`corr = 1.00000000`, `max|err| = 0.0000 MW` vs PowerWorld's own DC CTG), computed ~190×
-faster. On Synth8k: the full 13,050-outage table in **5.8 s** versus **1,101 s** for the
+faster. On Synth8k: the full ~13k-outage table in **5.8 s** versus **1,101 s** for the
 10-worker parallel AC sweep ([parallel-contingency-solve](parallel-contingency-solve.md)). Read on for the mechanism, the
 free islanding detector that falls out of it, what it structurally cannot do (voltage,
 reactive power, losses, control limits, divergence), and the measured verdict that it was
@@ -26,13 +27,12 @@ constraint is local reactive adequacy, not MW redistribution.
 - **Measured in:** a reactive planning study, 2026-08-10, in a LODF-versus-contingency
   comparison — **measured and rejected** for the removal-stage screen; see the verdict below.
 - **💡 Could apply to (idea transfer):**
-  real power planning — its 70-iteration DCPF conductor-resizing loop is a *pure MW*
+  a conductor-resizing study — its 70-iteration DCPF resizing loop is a *pure MW*
   problem, which is exactly LODF's home ground: N-1 flows for every candidate resize with no
   extra solves ·
   dynamic line rating — the Impact×Likelihood branch screening needs post-outage loading,
   which is a LODF column ·
-  critical branch screening — LODF is the natural engine underneath it ·
-  grid statistics — an N-1-secure-by-construction check on synthetic cases (see below)
+  synthetic-grid validation — an N-1-secure-by-construction check on synthetic cases (see below)
 - **Across:** [parallel-contingency-solve](parallel-contingency-solve.md) (what you still need when the question is
   *voltage*, not MW) · [esapp](esapp.md) (topology + base flows come from here) ·
   [powerworld-simauto](powerworld-simauto.md) (the COM server; note the `SetData` / `dc_mode` traps below) ·
@@ -85,7 +85,7 @@ redistribution in closed form.
 
 When `ψ_kk → 1` the denominator → 0 and the shares blow up. Physically: the feedback never
 damps because **there is no alternate path** — outaging `k` splits the network. The math
-flags it before any solve is attempted. On Synth8k: **420 of 13,470** outages, found in the
+flags it before any solve is attempted. On Synth8k: **about 3%** of outages (roughly 1 in 30), found in the
 ~6 s it takes to build the PTDF.
 
 This is a **correctness fix, not a speed optimisation**, and it plugs a real hole: in a
@@ -95,7 +95,7 @@ PowerWorld CTG sweep, islanded buses read 0 and get skipped, so stranding a 138 
 [reading-violationctg](../methods/reading-violationctg.md) — but only for whoever reads those. A
 free connectivity check turns it into an explicit list before any solve.
 
-### Building it (measured recipe, Synth8k: 8,483 buses / 13,470 branches)
+### Building it (measured recipe, Synth8k: ~8k buses / ~13k branches)
 
 ```
 A     = incidence (L×N, +1 from / −1 to)      b = 1/x, floor |x| at 1e-5
@@ -110,7 +110,7 @@ in column chunks (512 works) and accumulate statistics rather than materialising
 in float32 if you do want it whole).
 
 **Take base flows from PowerWorld's own DC solve — do not reconstruct the injection vector.**
-On a real case, generation exceeds load by the AC loss provision (4,548 MW on Synth8k). A
+On a real case, generation exceeds load by the AC loss provision (several GW on Synth8k). A
 hand-built `P` dumps that entire imbalance on the single slack bus while PowerWorld
 distributes it, giving a **220 MW max discrepancy**. LODF needs only base flows + topology,
 so reading the base flows removes the question. A DC solve is still shunt-blind, so the
@@ -130,7 +130,7 @@ Not "a good approximation" — within DC's linear world, "delete the branch and 
 
 **2 — Cost.**
 
-| Method | Full 13,050-outage sweep |
+| Method | Full ~13k-outage sweep |
 |---|---|
 | **LODF** (+6.0 s PTDF, once per topology) | **5.8 s** |
 | PowerWorld DC, serial | 2,106 s |
@@ -190,8 +190,8 @@ needs the cycle basis extended, not a row perturbed). And **no literature was fo
 linear pre-screen's error as a function of the NUMBER of simultaneous changes — so use it to
 SHRINK a candidate list, then confirm the shortlist with a real solve.
 
-**Where this lands:** the composition objection does not block LODF for
-contingency remediation's DC subsystem. Its ~93 changes are all reactance perturbations on
+**Where this lands:** the composition objection does not block LODF for the DC subsystem of
+a violation-remediation study ([violation-remediation](../demos/violation-remediation.md)). Its ~93 changes are all reactance perturbations on
 EXISTING corridors (measured: 42 single-circuit, 3 double), and its 454 rating bumps do not touch
 these matrices at all — a rating change moves no flow, only the limit you compare against. Both
 reasons LODF was rejected for reactive planning also **invert** there: that case has 482 corridors over 100%
@@ -205,7 +205,7 @@ Two independent reasons, both measured — neither is "LODF is inaccurate":
 1. **No thermal headroom to discriminate on.** Across all outages, exactly **2 branches**
    exceed 100 % loading (max `1.000014`). TAMU synthetic grids are built N-1 thermally
    secure, so a correct detector runs on a grid engineered to have no positives. *(This is
-   itself a reusable validation check for grid statistics: does a synthetic case's rating
+   itself a reusable check for synthetic-grid validation: does a synthetic case's rating
    set actually satisfy N-1?)*
 2. **N-1 barely moves the ranking.** `Spearman(base-case stress, full-N-1 stress) = 0.8893` —
    the contingency dimension mostly reproduces the base-case stress signal already computed.
@@ -230,7 +230,8 @@ Each cost real time; all measured 2026-08-10.
 - **`pw.dc_mode` is effectively one-way.** Setting it `False` moves the case to AC; setting it
   `True` does **not** move it back, so every later "DC" solve silently stays AC. Use the
   explicit script commands and verify: `SolvePowerFlow(DC);` vs
-  `SolvePowerFlow(POLARNEWT);`. **The only unambiguous test is that a real DC solve pins every
+  `SolvePowerFlow(POLARNEWT);` (the Aux manual's token is `POLARNEWTON`; see
+  [aux-only-powerworld](aux-only-powerworld.md)). **The only unambiguous test is that a real DC solve pins every
   bus to exactly 1.0 pu** — check it, don't trust the flag.
 - **esapp calls `Branch.LineStatus` read-only. esapp is wrong — but what that costs you
   depends on your version.** `Branch.is_settable('LineStatus')` returns `False`, and that
@@ -274,4 +275,4 @@ Each cost real time; all measured 2026-08-10.
   by branches far from the outage that trivially do not move, which flatters any method to
   `mean |err| ≈ 0`. Measure error on the **flow change**, restricted to branches that actually
   moved, and against **each solver's own base** (mixing a DC base with an AC result folds the
-  792 MW DC/AC gap into the thing being tested).
+  hundreds-of-MW DC/AC gap into the thing being tested).

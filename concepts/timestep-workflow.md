@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: cross-cutting
+topic: timestep
 aliases: [timestep-workflow, time-step-simulation, timestep-engine, weather-to-mw]
 tags: [timestep, simulation, powerworld, weather, renewables, pww, parallel]
 ---
@@ -40,8 +41,12 @@ snapshots across a weather series.
 1. **Copy the case to a temporary `.pwb`.** The run mutates the case; work on a copy so
    a failed run does not leave your original in a strange state.
 2. **Open it** with `esapp`.
-3. **Load weather** with `TimeStepLoadPWW`, or `TimeStepLoadPWWRangeLatLon` to crop to a
-   lat/lon box at load time. Append further files with `TimeStepAppendPWW`.
+3. **Load weather** with `TimeStepLoadPWWRange` over the file's full time span, or
+   `TimeStepLoadPWWRangeLatLon` to also crop to a lat/lon box at load time. Append further
+   files with `TimeStepAppendPWW`, then assert the timepoint count. **Do not use plain
+   `TimeStepLoadPWW` on Simulator 25:** on builds dated 2026-09-20 and 2026-09-25 it fails on
+   every file with `Error With Loading PWWFile`, while `TimeStepLoadPWWRange` loads the same
+   files. A failure of the plain form says nothing about the file.
 4. **Select the renewable generators** — typically those whose fuel type contains `WND`
    or `SUN`. Only selected units produce output.
 5. **Declare the fields to save** with `TimeStepSaveFieldsSet(GEN, ...)`. Fields not
@@ -50,6 +55,12 @@ snapshots across a weather series.
    `TimeStepDoSinglePoint()` first — it solves one timestamp and fails in seconds
    rather than after a long run.
 7. **Export** with `TimeStepSaveResultsByTypeCSV`.
+
+**Running contingencies hour by hour?** Set each hour with `TimeStepDoSinglePoint(...)`, then
+call `CTGSetAsReference()` before `CTGSolveAll()`. Without it every hour is solved against an
+older stored reference and returns the same results. Measured 2026-10-20 on build 2026-09-25:
+three hours with about 2.7 GW to 7.6 GW of renewables gave identical answers until the
+reference was reset. See [reading-violationctg](../methods/reading-violationctg.md) (Trap 3b).
 
 ### PowerWorld does the conversion
 

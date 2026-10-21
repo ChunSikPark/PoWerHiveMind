@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: tooling
+topic: power-flow
 aliases: [SolvePrimalLP, DCOPF preconditions, OPF constraints, BGAGC, opf-area-control]
 tags: [powerworld, opf, dcopf, scopf, agc, cost-curve, gotcha, synthetic-grid]
 ---
@@ -22,12 +23,11 @@ on a regional synthetic planning model, Simulator 24.
 
 ## Connections
 
-- **Up:** [powerworld-simauto](powerworld-simauto.md) · esapp package · [Home](../index.md)
+- **Up:** [powerworld-simauto](powerworld-simauto.md) · [Home](../index.md)
 - **Across:** [aux-only-powerworld](aux-only-powerworld.md) (how this was driven, and the provenance rule that
   settled the field names) · [powerworld-inertia-and-cost-data](powerworld-inertia-and-cost-data.md) (the cost-curve
-  silent-zero traps) · [applying-a-dispatch-to-a-case](../methods/applying-a-dispatch-to-a-case.md) (same case family, AGC off) ·
-  artifact level validation
-- **Deeper:** [esapp-schema-reference](../references/esapp-schema-reference.md) · esa pp llm backend (the SCOPF call sequence)
+  silent-zero traps) · [applying-a-dispatch-to-a-case](../methods/applying-a-dispatch-to-a-case.md) (same case family, AGC off)
+- **Deeper:** [esapp-schema-reference](../references/esapp-schema-reference.md)
 
 ## Content
 
@@ -69,8 +69,8 @@ Area.is_edit_mode_only("BGAGC")   # False -- writable in RUN mode, no EnterMode(
 `Gen.GenAGCAble`, `Gen.GenCostModel`, `Gen.GenCostCurvePoints` and `Gen.GenMCost` all
 confirm the same way: real, editable, not edit-mode-only.
 
-⚠ **`AGC_AGCStatus` is not an Area field.** It appears in this vault's prose
-([applying-a-dispatch-to-a-case](../methods/applying-a-dispatch-to-a-case.md)) as the area AGC-status field name and does not exist in
+⚠ **`AGC_AGCStatus` is not an Area field.** It appears in this knowledge base's prose
+([applying-a-dispatch-to-a-case](../methods/applying-a-dispatch-to-a-case.md), which now flags the name) as the area AGC-status field name and does not exist in
 esapp's schema. Do not use it. A field name read out of a prose page is a lead, not a fact
 — check it against the schema before writing it into a script.
 
@@ -109,7 +109,7 @@ not missing data. The case-auditor therefore counts a unit as priced when `GenCo
 None and `GenCostCurvePoints > 0`, says nothing about a zero-cost renewable, and flags a
 *thermal* unit whose curve reads 0 as worth a look.
 
-**Refined again 2026-10-01, measured on the public Texas2k case.** Some units on a Cubic cost
+**Refined again 2026-10-01, measured on Synth2k.** Some units on a Cubic cost
 model read `GenCostCurvePoints = 0` with `GenMCost > 0` (others carry curve points): a cubic model is evaluated from its
 coefficients, not from curve points, so a zero point count there is not missing data. The
 auditor counts a unit as priced when `GenCostModel` is not None and it has curve points or a
@@ -163,7 +163,7 @@ places, and applies them in this order of precedence:
 
 **Global solution options rank last.** Setting DC once at the top of an aux does not make it
 true during contingency analysis — anything the contingency record or `CTG_Options` carries
-overrides it. This is why esa pp llm backend's SCOPF sequence sets both
+overrides it. This is why a research pipeline's SCOPF sequence sets both
 `Sim_Solution_Options.DCApprox` *and* `CTG_Options.CTG_CalculationMethod`.
 
 ### Super areas count, and a refusal through SimAuto does not raise
@@ -200,6 +200,23 @@ Bare `SolvePrimalLP;` has no failure handler. A refused or non-converged OPF the
 one line in the log while every later stage runs against an **unsolved case** and writes
 plausible numbers into correctly-named files. `SolveSinglePrimalLPOuterLoop` and
 `SolveFullSCOPF` carry the same slots. See [aux-only-powerworld](aux-only-powerworld.md).
+
+### "Successful Solution" can still leave a limit unenforced
+
+`OPFSolutionSummary.LPOPFSolutionStatus = "Successful Solution"` does not mean every limit
+holds. When no controllable unit can relieve a branch, the LP relaxes that constraint, prices it
+at the penalty cost, and reports success anyway. Measured 2026-09-24 on Synth40: two 69 kV lines
+were left at 138% and 120%. The only AGC-able units sat on the far side of the network, so no
+dispatch could unload those lines. Check after every OPF:
+
+```python
+b = pw[Branch, ["LineLPUnenforceableMVA", "LinePercent", "LinePercent:1"]]
+unenforced = b[b["LineLPUnenforceableMVA"].astype(str).str.strip() == "YES"]
+```
+
+A non-empty result is a network limit (transmission, or dispatchable generation on the wrong
+side), not a dispatch finding. `OPFSolutionSummary.LPOPFMC` reading the penalty price is the same
+signal from the other end.
 
 ### Flipping condition 2 globally is blunt
 

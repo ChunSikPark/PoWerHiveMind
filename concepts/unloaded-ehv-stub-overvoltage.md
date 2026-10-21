@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: cross-cutting
+topic: design
 aliases: [unloaded-ehv-stub-overvoltage, floating-stub, ehv-stub-overvoltage, ferranti-rise,
   dead-end-ehv-overvoltage, line-charging-overvoltage, radial-ehv-line, open-end-rise]
 tags: [powerworld, voltage, overvoltage, reactive-power, line-charging, topology, radial,

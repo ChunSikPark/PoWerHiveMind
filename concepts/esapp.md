@@ -1,6 +1,7 @@
 ---
 type: tool
 domain: tooling
+topic: scripting
 aliases: [ESA++, esa_pp, esapp-api]
 tags: [esapp, powerworld, simauto, python, tool]
 ---
@@ -13,10 +14,10 @@ tags: [esapp, powerworld, simauto, python, tool]
 
 ## Connections
 
-- **Up:** [Home](../index.md) · esapp package
-- **Across:** [powerworld-simauto](powerworld-simauto.md) · [esapp-overview](../methods/esapp-overview.md) · esa pp llm · time step simulation · dynamic line rating · reactive power planning · real power planning · synthetic creation · [gic](gic.md)
+- **Up:** [Home](../index.md)
+- **Across:** [powerworld-simauto](powerworld-simauto.md) · [esapp-overview](../methods/esapp-overview.md) · [timestep-simulation](timestep-simulation.md) · [gic](gic.md)
 - **Field schema + commands:** [esapp-schema-reference](../references/esapp-schema-reference.md) — exact object key/identifier fields + SimAuto command catalog for writing esapp code
-- **SCRIPT action catalog:** aux script catalog — task-organized PowerWorld SCRIPT-command index (198 actions), for anything not yet wrapped by a named SAW method
+- **SCRIPT action catalog:** [aux-script-commands](../references/aux-script-commands.md) — task-organized PowerWorld SCRIPT commands, for anything not yet wrapped by a named SAW method
 - **House rule for calling them:** [esapp-script-command-wrappers](esapp-script-command-wrappers.md) — call `pw.esa.TimeStepDoRun()`, never `RunScriptCommand("TimeStepDoRun;")`; also the 0.2.1 change that made a bad write warn instead of raise
 
 ## Content
@@ -26,7 +27,6 @@ interface to **PowerWorld Simulator's Automation Server (SimAuto)** over COM
 (see [powerworld-simauto](powerworld-simauto.md)). It is **Windows-only** (depends on `pywin32` for
 COM interop) and requires PowerWorld Simulator installed locally. This page is
 *what it is* — the API map. For *how to drive it*, start at [esapp-overview](../methods/esapp-overview.md).
-The project that maintains/extends the package is esapp package.
 
 > Source of truth: `C:\path\to\esapp`. Every symbol below was
 > read out of that tree. Validate against `esapp` source (or the `esapp` skill)
@@ -174,7 +174,8 @@ the SAW was opened with `CreateIfNotFound=True`.
 > ```
 - **Solve** — `pw.pflow(getvolts=True, method=SolverMethod.POLARNEWT)` returns a
   complex voltage Series; `pw.ts_solve(ctgs, fields)` runs transient stability
-  and returns `(metadata, timeseries)` DataFrames.
+  and returns `(metadata, timeseries)` DataFrames — outside what these pages cover, see
+  the note under *Transient stability* below.
 - **Voltages / power** — `pw.voltage(complex=True, pu=True)`,
   `pw.set_voltages(V)`, `pw.mismatch(asComplex=False)`, `pw.netinj(...)`,
   `pw.violations(v_min=0.9, v_max=1.1)`.
@@ -190,9 +191,11 @@ the SAW was opened with `CreateIfNotFound=True`.
 - **Quick props** — `pw.n_bus`, `pw.n_branch`, `pw.n_gen`, `pw.sbase`,
   `pw.summary()` (dict of counts + totals + v_min/v_max).
 - **Solver options as descriptors** — set them like attributes:
-  `pw.flat_start = True`, `pw.max_iterations = 30`, `pw.convergence_tol = 1e-4`,
-  `pw.dc_mode = True`, … (each is a `SolverOption` mapping to a PowerWorld
-  Sim_Solution_Options field).
+  `pw.max_iterations = 30`, `pw.convergence_tol = 1e-4`, … (each is a `SolverOption`
+  mapping to a PowerWorld Sim_Solution_Options field). ⚠️ `pw.dc_mode = True` and
+  `pw.flat_start = True` exist too, but a scripted solve ignores both (live-tested
+  2026-09-23). Use `pw.pflow(method="DC")` for a DC solve and `pw.flatstart()` for a flat
+  start — see [handling-errors](../methods/handling-errors.md).
 
 ## Embedded modules
 
@@ -219,6 +222,10 @@ the SAW was opened with `CreateIfNotFound=True`.
 > `TSPFWModelString` field's "TS" likewise means *TimeStep*, not Transient Stability.
 > These two never reference each other.
 
+> 🚫 **Transient stability is outside what these pages cover** (see *Reporting back* in
+> `AGENTS.md`). The API below is listed so you can recognise it, not as a recipe. If asked
+> for a transient stability study, say it is out of scope and stop; do not run `ts_solve`.
+
 ```python
 from esapp.utils import TSWatch, ContingencyBuilder
 tsw = TSWatch().watch(Gen, [TS.Gen.P, TS.Gen.W])
@@ -239,12 +246,10 @@ Every component class exposes `@classmethod` schema accessors (call with `()`):
 
 ## Used across
 
-esapp package · esa pp llm · time step simulation ·
-reactive power planning · real power planning · synthetic creation ·
-dynamic line rating — most PowerWorld work in this wiki routes through it.
+[timestep-simulation](timestep-simulation.md) and most other PowerWorld work in this knowledge base
+route through it.
 
 ## Related
 
 - How-to entry: [esapp-overview](../methods/esapp-overview.md) · underlying COM server: [powerworld-simauto](powerworld-simauto.md)
 - Writing devices + DC OPF + N-1 (write-side mechanics): [adding-devices-esapp](../methods/adding-devices-esapp.md)
-- Feeds the esa pp llm agent's knowledge base.

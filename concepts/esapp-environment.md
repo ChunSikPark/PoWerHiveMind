@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: tooling
+topic: scripting
 aliases: [esapp-environment, esapp-setup, esapp-install, esapp-package]
 tags: [esapp, powerworld, simauto, setup, environment, install]
 ---
@@ -116,11 +117,14 @@ failure surfaces somewhere further down looking like something else entirely.
 Solver settings are the opposite: they are **assignable options**, not methods.
 
 ```python
-pw.dc_mode = True          # NOT pw.dc_mode(True) -> TypeError: 'bool' object is not callable
-pw.flat_start = True
 pw.max_iterations = 50
 pw.enforce_gen_mw_limits = True
 ```
+
+Two of them do not do what their names say. `pw.dc_mode = True` and `pw.flat_start = True`
+are accepted, but a scripted solve ignores both (live-tested 2026-09-23). For a DC solve
+call `pw.pflow(method="DC")`; for a flat start call `pw.flatstart()` and then solve. See
+[handling-errors](../methods/handling-errors.md).
 
 Reach for a raw SCRIPT action only when no helper covers what you need.
 
@@ -131,7 +135,7 @@ When you do need a raw SCRIPT action, the SimAuto wrapper is on the `.esa` attri
 
 ```python
 pw.esa.RunScriptCommand('SolvePowerFlow(RECTNEWT)')
-pw.esa.RunScriptCommand(r'SaveCase("C:\out\case.pwb", PWB, YES)')
+pw.esa.RunScriptCommand(r'SaveCase("C:\out\case.pwb", PWB)')
 ```
 
 `pw.RunScriptCommand(...)` raises `AttributeError`. This is the single most common
@@ -162,6 +166,8 @@ it simply does nothing.
 A second, related trap: `pw[Obj, field] = values` is **positional over the entire
 table**. Assigning to a filtered subset writes nothing at all, silently. See
 [applying-a-dispatch-to-a-case](../methods/applying-a-dispatch-to-a-case.md).
+[AGENTS.md](../AGENTS.md) code rule 2 describes the same trap differently: a list built from
+a filtered subset lands on the wrong rows. Not settled here; either way, build the full column.
 
 These two are responsible for more wasted debugging than every other esapp behaviour
 combined, because both fail without raising.

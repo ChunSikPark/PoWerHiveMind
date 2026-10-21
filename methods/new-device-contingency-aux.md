@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: contingency
 aliases: [contingency-aux, ctgautoinsert, bgreportlimits, monitored-areas, ctgelement-subdata, new-device-contingency]
 tags: [esapp, powerworld, simauto, contingency, aux, n-1, limit-monitoring, areas, synth2k]
 ---
@@ -40,14 +41,12 @@ answer, not an error:
 
 ## Connections
 
-- **Up:** [esapp](../concepts/esapp.md) · esapp package
-- **Input from:** identify differences — produces the device list this method turns into a contingency set
+- **Up:** [esapp](../concepts/esapp.md)
+- **Input from:** [comparing-planning-cases](../demos/comparing-planning-cases.md) — produces the device list this method turns into a contingency set
 - **Across:** [reading-violationctg](reading-violationctg.md) (what you read back after solving this set) ·
   [powerworld-limitset-setdata](powerworld-limitset-setdata.md) (the limit *thresholds*; this page is the limit *scope*) ·
   [save-powerworld-case](save-powerworld-case.md) · [adding-devices-esapp](adding-devices-esapp.md) · [parallel-contingency-solve](../concepts/parallel-contingency-solve.md)
-- **Deeper:** aux script catalog for the full SCRIPT action list; the working
-  implementation is `Power_System/regional-contingency/main.py`, which consumes the
-  `new_devices_for_contingencies*.xlsx` produced by `identify_differences`.
+- **Deeper:** [aux-script-commands](../references/aux-script-commands.md) for the SCRIPT actions.
 
 ## Content
 
@@ -62,6 +61,24 @@ pw.esa.RunScriptCommand(
 pw.esa.RunScriptCommand("CTGAutoInsert;")
 pw.esa.RunScriptCommand("EnterMode(RUN);")
 ```
+
+> **On Simulator 25, build dated 2026-09-25, this exact block inserted 0 contingencies and
+> reported success.** Suspected PowerWorld issue, not yet confirmed: the cause may still turn
+> out to be a setting. The workaround below holds either way. The condition is
+> `CTGAutoInsert` run straight after `Delete(Contingency)`. Measured 2026-10-19 on a public
+> synthetic grid. The same block gave
+> the full branch set on 2026-08-17 (the counts below), so the page's recipe changed under a
+> newer build. It was not misused.
+> [powerworld-study-options](../references/powerworld-study-options.md) saw zero inserts on a
+> Simulator 25 build on 2026-09-28 as well.
+>
+> **Assert the count. Never trust the return.** Read `Contingency` back after every
+> `CTGAutoInsert` and fail on zero, or on any count far below the case's in-service branches
+> above 69 kV. When it comes back empty, build the set yourself. Write the contingency aux
+> in the Step 3 shape, one record per branch, with every `CTGElement` action string quoted.
+> `LoadAux` it with an absolute path, then assert the loaded `CTGLabel` count equals the
+> number you wrote. That path worked on the same build. Your labels will not be
+> autoinsert's, so match devices by unordered bus pair plus circuit (Step 2), never by label.
 
 `ElementType` is `BRANCH` or **`GENERATOR`** — **never `GEN`**. `GEN` is accepted by the
 parser, silently ignored, and leaves the previous value in place:
@@ -155,6 +172,34 @@ region are included automatically, which is the opposite of the `ViolationCTG.Ar
 in [reading-violationctg](reading-violationctg.md), where a naive filter *drops* them. Related knobs found in the
 same field-list dig: `Area.BGReportLimMinKV` / `BGReportLimMaxKV` (monitor only a kV band)
 and `Branch.LineMonEle` / `Bus.BusMonEle` (switch off one device).
+
+**Monitoring a region is not testing it.** `BGReportLimits` decides where violations are
+*reported*; the contingency list decides what is *tripped*. A case often ships with a list
+built for one area. Turn monitoring on for a second area, solve, and you get a clean report
+for an area none of whose elements was ever outaged. That is a silent wrong answer, and it
+reads exactly like a passing N-1. Before solving "N-1 for area X":
+
+```python
+import pandas as pd
+from esapp.components import Bus
+
+el = pw.esa.GetParametersMultipleElement("ContingencyElement", ["CTGLabel", "BusNum", "BusNum:1"])
+area = {int(r["BusNum"]): int(r["AreaNum"]) for _, r in pw[Bus, ["AreaNum"]].iterrows()}
+hit = {}                                   # area -> contingencies with an element touching it
+for _, r in el.iterrows():
+    for b in (r["BusNum"], r["BusNum:1"]):  # BusNum:1 reads None for a generator
+        if pd.notna(b) and int(b) in area:
+            hit.setdefault(area[int(b)], set()).add(r["CTGLabel"])
+for x in asked_areas:
+    assert hit.get(x), f"no outage touches area {x}: the list does not test it"
+```
+
+Non-zero is the floor, not the test. Measured 2026-10-20 on a 2,000-bus synthetic case whose
+shipped list of 176 outages was built for one area: a neighbouring area still counted 12,
+all tie lines on the boundary. So compare each count with that area's in-service branches
+above 69 kV. A count that is a small fraction of them means the area is not tested. When the
+list does not cover an area, build the area's set (Step 1) and load it alongside the
+shipped one.
 
 ### Verify it worked
 

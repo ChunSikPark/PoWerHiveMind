@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: contingency
 aliases: [demo-contingency, n-1-demo, aux-generation-demo, ctg-demo, filter-demo]
 tags: [demo, contingency, n-1, aux, filter, esapp, worked-example]
 ---
@@ -9,14 +10,14 @@ tags: [demo, contingency, n-1, aux, filter, esapp, worked-example]
 
 ## Abstract
 
-Running N-1 from nothing on a real 37-bus case, then **writing a filter and contingency
+Running N-1 from nothing on the public synthetic Synth40 case (37 buses), then **writing a filter and contingency
 `.aux` automatically** from the analysis result and loading it back. All numbers are from
 an actual run: 89 auto-inserted contingencies, 12 violations, then 5 targeted
 contingencies generated and merged.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md) · [index](../index.md)
 - **Across:** [reading-violationctg](../methods/reading-violationctg.md) · [new-device-contingency-aux](../methods/new-device-contingency-aux.md) · [aux-script-commands](../references/aux-script-commands.md) · [handling-errors](../methods/handling-errors.md)
 
 ## Content
@@ -41,7 +42,7 @@ pw.esa.RunScriptCommand("CTGClearAllResults")   # do not skip this
 pw.esa.RunScriptCommand("CTGAutoInsert")
 pw.esa.RunScriptCommand("CTGSolveAll")
 
-print("contingencies:", len(pw[Contingency]))
+print(f"auto-inserted {len(pw[Contingency])} contingencies")
 ```
 
 ```
@@ -152,7 +153,7 @@ CONTINGENCY (Name, Skip)
 before = len(pw[Contingency])
 pw.esa.RunScriptCommand(f'LoadAux("{out}", YES)')
 after = len(pw[Contingency])
-print(f"contingencies {before} -> {after}  (added {after - before})")
+print(f"contingencies before: {before}\nafter: {after}  (added {after - before})")
 ```
 
 ```

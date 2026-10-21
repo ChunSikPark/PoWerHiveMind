@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: design
 aliases: [demo-adding-device, add-line-demo, createdata-demo, silent-no-op-demo]
 tags: [demo, esapp, createdata, branch, n-1, worked-example]
 ---
@@ -9,14 +10,14 @@ tags: [demo, esapp, createdata, branch, n-1, worked-example]
 
 ## Abstract
 
-A complete worked run on a real 37-bus case. **Everything below actually happened**,
+A complete worked run on the public synthetic Synth40 case (37 buses). **Everything below actually happened**,
 including three failed attempts that raised no error at all. This is the single most
 important demo in the kit: `CreateData` accepts a malformed call, reports success, and
 creates nothing. If you read only one demo, read this one.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md) · [index](../index.md)
 - **Across:** [adding-devices-esapp](../methods/adding-devices-esapp.md) · [handling-errors](../methods/handling-errors.md) · [esapp-environment](../concepts/esapp-environment.md)
 
 ## Content
@@ -138,6 +139,7 @@ ASSERTION PASSED - device really created
 ### Step 4 — always assert the count
 
 ```python
+expected = 1
 assert n1 - n0 == expected, "CreateData silently skipped the device"
 ```
 

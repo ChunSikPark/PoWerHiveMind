@@ -1,6 +1,7 @@
 ---
 type: tool
 domain: weather
+topic: timestep
 aliases: [grid-workshop-auto-pfw, auto-pfw, pfw-insertion-script, grid-workshop-pfw, pfw_eia,
   PFW_EIA.py, attach-pfw-models, missing-pfw-models]
 tags: [pfw, weather, renewables, wind, solar, timestep, aux, powerworld, tool]

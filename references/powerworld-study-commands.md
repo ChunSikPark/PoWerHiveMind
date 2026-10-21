@@ -1,6 +1,7 @@
 ---
 type: reference
 domain: tooling
+topic: scripting
 aliases: [powerworld-study-commands, study-commands, script-commands-by-study, aux-commands, solvepowerflow-parameters, ctgsolveall-parameters, aux-option-syntax]
 tags: [powerworld, aux, script, commands, contingency, opf, reference]
 ---
@@ -327,7 +328,7 @@ Datetimes are ISO8601 in UTC or with an offset, e.g. `2025-06-01T00:00:00-05:00`
 
 | command | syntax | parameters | page |
 |---|---|---|---|
-| TimeStepLoadPWW | `TimeStepLoadPWW("FileName", "SolutionTypeString");` | **Deletes existing timepoints.** Solution type default "Single Solution" | pp.143-144 |
+| TimeStepLoadPWW | `TimeStepLoadPWW("FileName", "SolutionTypeString");` | **Deletes existing timepoints.** Solution type default "Single Solution". Suspected glitch 2026-10-20-timestep-loadpww-plain: on builds dated 2026-09-20 and 2026-09-25 plain `TimeStepLoadPWW` failed with `Error With Loading PWWFile` while `TimeStepLoadPWWRange` loaded the same files; see [timestep-workflow](../concepts/timestep-workflow.md) | pp.143-144 |
 | TimeStepLoadPWWRange | `TimeStepLoadPWWRange("FileName", Start, End, "SolutionType");` | Empty or out-of-range start/end means the file's own bounds. Deletes existing | p.144 |
 | TimeStepLoadPWWRangeLatLon | `(..."FileName", Start, End, minLat, maxLat, minLon, maxLon, "SolutionType")` | Lat -90..90, lon -180..180 defaults. No date-line crossing. Added Nov 3 2025 | pp.144-145 |
 | TimeStepAppendPWW / ...Range / ...RangeLatLon | same parameters as Load* | **Appends** to existing timepoints | pp.141-142 |
@@ -407,7 +408,7 @@ Datetimes are ISO8601 in UTC or with an offset, e.g. `2025-06-01T00:00:00-05:00`
 
 TSAutoCorrect (auto-fix parameters, aborts the script if errors remain, p.129); TSAutoInsertDistRelay (p.129); TSAutoInsertZPOTT (p.129); TSAutoSavePlots (p.129); TSCalculateCriticalClearTime (p.130); TSCalculateSMIBEigenValues (p.130); TSClearAllModels (p.130); TSClearModelsforObjects (p.130); TSClearResultsFromRAM (p.130); TSDisableMachineModelNonZeroDerivative (p.131); TSGetVCurveData (p.131); TSGetResults (export results, p.131); TSInitialize (p.132); TSJoinActiveCTGs (p.132); TSLoadBPA / TSLoadGE / TSLoadPTI / TSLoadRDB / TSLoadRelayCSV (load dynamics/relays, pp.133-134); TSPlotSeriesAdd (p.134); TSResultStorageSetAll (p.135); TSRunResultAnalyzer (p.135); TSRunUntilSpecifiedTime (p.135); TSSaveBPA / TSSaveGE / TSSavePTI (pp.135-136); TSSaveTwoBusEquivalent (p.136); TSSolve (one TS contingency, p.136); TSSolveAll (p.137); TSSolveContinue (p.137); TSTransferStateToPowerFlow (p.137); TSValidate (p.137); TSWriteModels (p.137); TSWriteOptions (p.137); TSSetSelectedForTransientReferences (p.138); TSSaveDynamicModels (p.138).
 
-#### GIC (names only, out of scope)
+#### GIC (names only here; see [gic](../concepts/gic.md))
 
 GICCalculate(MaxField, Direction, SolvePF) single snapshot (p.110); GICClear (p.110, duplicated at p.111); GICLoad3DEfield (p.110); GICReadFilePSLF / GICReadFilePTI (p.110); GICSaveGMatrix (p.110); GICSensitivitiesCalculate (Simulator 25, p.111); GICSetupTimeVaryingSeries (p.111); GICShiftOrStretchInputPoints (p.111); GICTimeVaryingCalculate (p.112); GICTimeVaryingAddTime (p.112); GICTimeVaryingDeleteAllTimes (p.112); GICTimeVaryingEFieldCalculate (p.112); GICTimeVaryingElectricFieldsDeleteAllTimes (p.112); GICWriteFilePSLF / GICWriteFilePTI (p.112); GICWriteOptions (p.113).
 

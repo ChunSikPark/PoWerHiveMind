@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: power-flow
 aliases: [applying-a-dispatch, apply-dispatch, dispatch-to-case, scenario-case-build, write-genmw, open-unused-generators]
 tags: [esapp, powerworld, simauto, dispatch, scenario, dcpf, genmw, genstatus, slack, load-scaling]
 ---
@@ -20,12 +21,12 @@ filtered subset writes nothing, silently. Live-verified on Synth9k/Synth8k 2031,
 
 ## Connections
 
-- **Up:** [esapp](../concepts/esapp.md) · dispatch
+- **Up:** [esapp](../concepts/esapp.md)
 - **Across:** [save-powerworld-case](save-powerworld-case.md) (the `SaveCase` no-op trap this depends on) ·
   [adding-devices-esapp](adding-devices-esapp.md) (same key-field discipline, and the `CreateData` silent no-op) ·
   [converting-lines-to-transformers](converting-lines-to-transformers.md) (the other place esapp's static whitelist is wrong) ·
   [case-impedance-completeness](../concepts/case-impedance-completeness.md) (**check this before promising anyone AC** — the cases
-  these scenarios are built from are DC-only skeletons) · artifact-level validation
+  these scenarios are built from are DC-only skeletons) · validating the saved file
   (reopen the saved `.pwb` cold; a save that "succeeded" is not evidence)
 
 ## Content
@@ -38,9 +39,9 @@ filtered subset writes nothing, silently. Live-verified on Synth9k/Synth8k 2031,
 
 2. **Scale load to the scenario level.** Write `LoadSMW` (and `LoadSMVR` by the same factor,
    to hold power factor — DC ignores Q, but the case stays usable later). Do **not** assume
-   every load scales: on the 2031 planning cases the 224 buses named `*_DataCenter` /
-   `*_LargeLoad` (41,465.0 MW) are flat 24/7 and are held fixed, so the scenario % applies
-   only to the 6,880 ordinary loads. That tag lives **only in `Load.BusName`** — `Label`,
+   every load scales: on the 2031 planning cases the few hundred buses named `*_DataCenter` /
+   `*_LargeLoad` (about 29% of peak load) are flat 24/7 and are held fixed, so the scenario % applies
+   only to the several thousand ordinary loads. That tag lives **only in `Load.BusName`** — `Label`,
    `CustomString*` are empty and `Interruptible` is `NO` on every record.
 
 3. **Write `GenMW` and `GenStatus` together, as full-length columns.**
@@ -56,7 +57,7 @@ filtered subset writes nothing, silently. Live-verified on Synth9k/Synth8k 2031,
    service for this scenario" means.
 
 4. **Keep every generator on the slack BUS closed**, even at 0 MW, or the solve has nothing
-   to swing. Note *bus*, not unit: bus 7738 hosts **11** generators on both the 8k and 9k
+   to swing. Note *bus*, not unit: the slack bus hosts **about a dozen** generators on both the 8k and 9k
    planning cases, and a naive "keep the first gen at the slack bus" rule under-reports the
    swing by 10×.
 
@@ -76,13 +77,13 @@ filtered subset writes nothing, silently. Live-verified on Synth9k/Synth8k 2031,
 scheduled dispatch cannot meet the load, PowerWorld closes the gap by driving the slack bus's
 generators as far past their own `GenMWMax` as it takes.
 
-Measured on `Synth8k_draft`, Scenario 4 (High Load – No Solar), short **31,248.5
-MW**: each of the 11 generators at bus 7738 was pushed **+2,840.8 MW over nameplate** — a
-44.5 MW unit landed at 2,885 MW — producing **366 branches over 100% and a 683.4% maximum**.
+Measured on `Synth8k_draft`, in a high-load, no-solar scenario, short **~31
+GW**: each of the generators at the slack bus was pushed **+2,840.8 MW over nameplate** — a
+44.5 MW unit landed at 2,885 MW — producing **hundreds of branches over 100% and a 683.4% maximum**.
 Those overloads are entirely an artifact of 31 GW injected at one 345 kV bus.
 
-It is **not** AGC doing this, so do not go looking there: area `AGC_AGCStatus` is `0` on all
-8 zones and exactly **1 of 1,467** generators is `GenAGCAble`.
+It is **not** AGC doing this, so do not go looking there: area `AGC_AGCStatus` is `0` on all 8 zones (recorded under the nonexistent name `AGC_AGCStatus`; the area field is `Area.BGAGC`, see [opf-preconditions](../concepts/opf-preconditions.md))
+and exactly **1** of roughly 1.5k generators is `GenAGCAble`.
 
 The check that actually works, before reading a single flow:
 
@@ -120,12 +121,12 @@ and check all five:
 
 ### Worked result (2026-08-18)
 
-Five scenarios × two fleets, same loads (143,590.9 MW peak, same 41,465.0 MW fixed block):
+Five scenarios × two fleets, same loads (~140 GW peak, same ~40 GW fixed block):
 
 | Fleet | Conventional | Outcome |
 |---|---|---|
-| Synth9k 2031 (post-swap, +thermal) | 102,099.4 MW | **5 of 5 balance at exactly 0.0 MW** |
-| Synth8k 2031 draft (pre-swap) | 65,313.9 MW | 3 of 5; **Sce2 short 4,283.0 MW, Sce4 short 31,248.5 MW** |
+| Synth9k 2031 (post-swap, +thermal) | ~100 GW | **5 of 5 balance at exactly 0.0 MW** |
+| Synth8k 2031 draft (pre-swap) | ~65 GW | 3 of 5; **one scenario short ~4 GW, another short ~31 GW** |
 
 The 8k shortfalls are genuine nameplate deficits — the whole conventional fleet runs flat out
 — consistent with an earlier real-hour dispatch rebuild, larger here only because the datacenter block is held at full load while the rest scales down.

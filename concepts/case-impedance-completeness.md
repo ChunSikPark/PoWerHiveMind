@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: cross-cutting
+topic: case-audit
 aliases: [case-impedance-completeness, dc-only-skeleton, missing-r-and-b, impedance-health-check]
 tags: [technique, cross-cutting, validation, powerworld, impedance, case-quality, acpf]
 ---
@@ -26,10 +27,10 @@ trusting any case you did not build**, and especially before promising anyone an
   scenario cases built from them in [applying-a-dispatch-to-a-case](../methods/applying-a-dispatch-to-a-case.md) inherit it
 - **💡 Applies to:** any study whose input is exactly such a case · synthetic case
   construction, where the handoff between build stages is where this is introduced · case
-  diffing, since a diff that ignores R/C will not see it · grid statistics · any project
+  diffing, since a diff that ignores R/C will not see it · any statistics computed over a case's branches · any project
   that receives a `.pwb` from another project or vintage
 - **Across:** deriving a quantity by ratio (a ratio on a placeholder zero stays zero —
-  check this first) · artifact-level validation (same family: the artifact exists, but is
+  check this first) · validating any produced artifact (same family: the artifact exists, but is
   it real?)
 
 ## Content
@@ -49,7 +50,7 @@ xr = (br.LineX / br.LineR.replace(0, np.nan)).median()      # closed, non-transf
 | **74,195** | what the Synth9k 2031 case actually measured |
 
 Alongside it, count `LineC == 0`. Legitimate zeros exist — genuine intra-substation bus ties,
-3,474 of them in this case — so compare the count against the number of zero-length branches
+thousands of them in this case — so compare the count against the number of zero-length branches
 rather than expecting zero.
 
 ### Why it survives so long
@@ -65,13 +66,13 @@ different project, months later, who then debugs *their* code.
 ### The trap inside the trap
 
 A conductor-resizing or reinforcement loop **does not fix this**, even though it writes
-impedance. It only writes R/X/C on the lines it upgrades — 335 of 11,888 in the Aug-13
-Synth9k run, 2.8%. Running it and declaring the case AC-ready is exactly wrong: you get a case
+impedance. It only writes R/X/C on the lines it upgrades — 2.8% of the lines in the Aug-13
+Synth9k run. Running it and declaring the case AC-ready is exactly wrong: you get a case
 that is 97% DC-skeleton and 3% real, with **no way to tell the two apart** by inspection.
 
 ### The fix is usually a restore, not a model
 
-Do not model R and B back in if they exist somewhere. In this case the same 13,470 branch keys
+Do not model R and B back in if they exist somewhere. In this case the same branch keys (more than 10k)
 had healthy impedance in an older vintage of the same network, whose `X` agreed with the
 current case on **96.2%** of lines — so the repair was a keyed copy of R and C, not a
 reconstruction. Median X/R went 74,195 → 5.40.
@@ -82,8 +83,8 @@ Checklist for a restore:
 2. **Assert zero unmatched rows on both sides.** A partial join silently leaves placeholders.
 3. **Check the donor's `X` agrees** with the target's. If it does not, you are transplanting
    R and C onto a different network's reactance — count and list those lines rather than
-   hiding them (448 of 11,888 here).
-4. **Prefer a donor untouched by known-buggy code.** 352 lines in the chosen donor carried R/C
+   hiding them (3.8% of lines here).
+4. **Prefer a donor untouched by known-buggy code.** About 3% of the lines in the chosen donor carried R/C
    written by a defective recomputation and were sourced from its pre-upgrade ancestor instead.
 
 ### Do not confuse "solves" with "is physical"

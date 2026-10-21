@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: contingency
 aliases: [rank-new-devices, contingency-severity-ranking, base-case-subtraction,
   configuring-a-rank-run, min-kv, only-new, transmission-only-violations,
   worsening-tolerance, three-way-ranking, relative-severity, fraction-beyond-limit, devices-csv, ranking-new-devices-by-severity]
@@ -59,17 +60,13 @@ Six things here decide whether the ranking means anything, and each fails silent
 
 ## Connections
 
-- **Up:** [esapp](../concepts/esapp.md) · esapp package
+- **Up:** [esapp](../concepts/esapp.md)
 - **Input from:** [new-device-contingency-aux](new-device-contingency-aux.md) — builds the AUX this solves;
-  identify differences — decides which devices are new
+  [comparing-planning-cases](../demos/comparing-planning-cases.md) — decides which devices are new
 - **Across:** [reading-violationctg](reading-violationctg.md) (the read this ranks, and its traps) ·
   [powerworld-limitset-setdata](powerworld-limitset-setdata.md) (the thresholds it ranks against) ·
   [parallel-contingency-solve](../concepts/parallel-contingency-solve.md) (solving the set across processes) ·
-  [lodf](../concepts/lodf.md) (the unbuilt fix for the islanding gap) · critical branch screening ·
-  percentile auc scoring (a different severity-scoring approach, for comparison)
-- **Deeper:** the implementation is `Power_System/regional-contingency` —
-  `rank_main.py` (batch driver), `regional_contingency/rank.py`, `baseline.py`,
-  `ranking.py`, `parallel.py`.
+  [lodf](../concepts/lodf.md) (the unbuilt fix for the islanding gap)
 
 ## Content
 
@@ -341,10 +338,10 @@ rather than just cutting.
 
 ### Configuring a run
 
-**Two CONFIG blocks answering different questions.** `main.py`'s decides WHICH DEVICES get
-a contingency and is baked into the AUX. `rank_main.py`'s decides WHAT COUNTS AS A
+**Two CONFIG blocks answering different questions.** The study script's decides WHICH DEVICES get
+a contingency and is baked into the AUX. The ranking script's decides WHAT COUNTS AS A
 VIOLATION when that AUX is solved. Changing the second never needs the AUX rebuilt;
-changing the first always does. Every `rank_main.py` setting also has a flag and **the flag
+changing the first always does. Every ranking-script setting also has a flag and **the flag
 wins** — CONFIG is the study's standing answer, a flag is a one-off.
 
 | setting | flag | default | decides |
@@ -512,8 +509,7 @@ zero diverged contingencies (so `converged=False` and the NaN-ranks-first rule),
 `voltage_high` rows — all 4,238 voltage rows were `voltage_low`, leaving the polarity half
 of the severity function unmeasured on real data.
 
-Measured 2026-08-17 by `C:\path\to\regional-contingency`
-(`rank_main.py`, `regional_contingency/rank.py`, `baseline.py`), on
+Measured 2026-08-17 by a ranking script written for the purpose, on
 `Synth2k_case` with the 890-contingency new-device AUX, and against
 the regional planning models for the base-subtraction and parallel figures. The 38%
 pre-existing figure comes from a deliberately squeezed band (`[0.99, 1.01]` pu, 25% thermal)

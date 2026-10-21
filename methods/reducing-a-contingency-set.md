@@ -1,6 +1,7 @@
 ---
 type: method
 domain: cross-cutting
+topic: contingency
 aliases: [ctgskip, ctg-skip, reducing-the-ctg-set, contingency-subset, skip-column]
 tags: [powerworld, contingency, ctg, esapp, simauto, n-1]
 ---
@@ -16,11 +17,13 @@ pass, which is how the parallel solver gives each worker a slice. **`Delete` wit
 a violation filter is the only thing that actually reduces the set**, and it is
 destructive, so it needs a backup first. This page collects the mechanism, the
 three places it is used, and the three silent failures around it; before this,
-`CTGSkip` was mentioned on five pages and owned by none.
+`CTGSkip` was mentioned on five pages and owned by none. **A parallel sweep driver overwrites
+`CTGSkip` in every worker**, so for a parallel loop keep every label in the case and scope by the
+active-label list, never by `Delete`.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · contingency remediation
+- **Up:** [Home](../index.md) · [violation-remediation](../demos/violation-remediation.md)
 - **Across:** [parallel-contingency-solve](../concepts/parallel-contingency-solve.md) — the chunking use ·
   [new-device-contingency-aux](new-device-contingency-aux.md) — writing a subset to `.aux` ·
   [reading-violationctg](reading-violationctg.md) — where the violation columns the filter uses come from
@@ -64,9 +67,9 @@ To shrink the set to what actually violated, filter on the violation counts that
 the previous solve wrote:
 
 ```
-Delete(Contingency, "CTGNVoltViol = 0")    # drop those with no voltage violation
-Delete(Contingency, "CTGNBranchViol = 0")  # drop those with no overload
-Delete(Contingency, "CTGViol = 0")         # drop those with neither
+Delete(Contingency, "CTGNVoltViol = 0");    // drop those with no voltage violation
+Delete(Contingency, "CTGNBranchViol = 0");  // drop those with no overload
+Delete(Contingency, "CTGViol = 0");         // drop those with neither
 EnterMode(RUN);
 ```
 
@@ -76,9 +79,9 @@ delete twice or use `CTGViol`.
 **Back up first, because this is destructive:**
 
 ```
-CTGWriteAuxUsingOptions("<path>", NO);   # save the full set
-Delete(Contingency);                      # ... work ...
-LoadAux("<path>");                        # restore
+CTGWriteAuxUsingOptions("<path>", NO);   // save the full set
+Delete(Contingency, "CTGViol = 0");  // your filtered delete
+LoadAux("<path>");                        // restore
 ```
 
 ### Multi-round: full sweep, then violations only
@@ -96,6 +99,61 @@ Step 3 reads violation counts populated by step 1, so the ordering is not
 optional. [parallel-contingency-solve](../concepts/parallel-contingency-solve.md) explicitly scopes *out* per-contingency
 remediation walks that mutate state between rounds, so do not expect its parallel
 helper to carry this loop for you.
+
+### The parallel driver is scoped by neither mechanism
+
+Step 3 above assumes `Delete` is what makes later rounds cheaper. **For a chunked parallel sweep
+it is not, and `Delete` buys nothing there.** A parallel driver of the kind in
+[parallel-contingency-solve](../concepts/parallel-contingency-solve.md) reads every label off the
+`Contingency` object itself, and each worker **overwrites `CTGSkip`** to scope itself to its own
+chunk. A skip list saved in the `.pwb` speeds up a serial solve and the GUI, and does nothing at
+all here.
+
+Scoping the parallel path happens through **its active-label argument or not at all**. Two
+consequences:
+
+- **`Delete` saves no sweep time** that passing the surviving labels does not already save.
+- **It costs something.** The case you eventually ship carries a mutilated contingency set, and a
+  set that can only shrink is one where a contingency missed on an early round can never be found
+  again. A contingency clean at round 0 does not stay clean.
+
+So for a parallel loop: **keep every label in the case, pass the survivors as the active set,
+and never call `Delete`.** Write the round's `.aux` with *every* label and its skip flag, not
+only the survivors, so the round is a snapshot rather than a one-way door.
+
+### A re-check set that deletes nothing
+
+To re-check a fix without rerunning the whole N-1, keep every contingency and skip all but the
+ones that mattered:
+
+1. From the full sweep, list every outage that produced a violation row or did not solve, in
+   **any** dispatch.
+2. Write two aux files: one that sets `Skip = NO` on that list and `YES` on every other
+   contingency, and one that sets `Skip = NO` on all of them. `LoadAux` the first, solve,
+   `LoadAux` the second to go back.
+3. Load-test both on a scratch copy first: each must leave exactly its set unskipped, and no
+   contingency or element may be added or lost.
+4. After a fix, add every outage within two or three substation hops of the change and the
+   outages of any new element. A fix can create a violation elsewhere, and the old list cannot
+   see it.
+
+Two limits. A rating change needs the **full** N-1 again, because lowered ratings create rows
+that were never on the list. And a thermal value read off an outage that did not solve describes
+no solved state; do not rank it.
+
+**Screen three-winding internal buses before building the list, or it is the whole list.** A
+three-winding bank is modelled as three windings meeting at a star bus (nominal 1 kV), often with
+an unloaded tertiary. Measured 2026-10-20 on a ~9k-bus synthetic case: in a light-load dispatch
+one bank's star and empty tertiary sat at 1.1055 pu **before any outage**, while the bank's
+terminals read 1.034 and 0.995 pu. Above the 1.10 post-outage limit, PowerWorld listed both buses
+under all but two of the outages: tens of thousands of rows for two buses that are not network
+buses. With them screened out, the real re-check set was under two outages in a thousand.
+
+So: drop star, tertiary, unit-terminal (step-up low side) and ≤1 kV buses from every violation
+count; tag the outages whose only rows are on them as internal-only; and report those rows apart,
+per bank, with the terminal voltages next to them. Screening hides the symptom, not the cause. A
+star sitting above both its terminals is a model fault in the bank's data, so log it and fix it
+there.
 
 ### Three silent failures
 

@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: contingency
 aliases: [violationctg, per-contingency-violations, limviolcat, limviolpct, areanum-tie-line, branch-amp]
 tags: [esapp, powerworld, simauto, contingency, violations, limitset, n-1, synth2k]
 ---
@@ -15,9 +16,9 @@ and interface, keyed by `CTGLabel` — by reading the `ViolationCTG` object afte
 single solve; the per-bus envelope (`BusMin/MaxVoltageContingency`) collapses everything to
 one worst case and cannot say *which* outage did it.
 
-Five traps, each of which produces a **plausible wrong answer rather than an error**. The
-first four were live-measured on `Synth2k_case` on 2026-08-16; the
-fifth only appears on a case Synth2k cannot produce, which is the point of it:
+Six traps, each of which produces a **plausible wrong answer rather than an error**. The
+first four were live-measured on `Synth2k_case` on 2026-08-16; the fifth and sixth only
+appear on cases Synth2k cannot produce, which is the point of them:
 
 1. **`AreaNum` is the branch's OWN area and reads `0` on a tie-line.** Filtering on it
    silently drops every cross-area violation. The endpoint areas are `AreaNum:1` / `:2`.
@@ -31,13 +32,16 @@ fifth only appears on a case Synth2k cannot produce, which is the point of it:
    reports `Branch Amp`, which Synth2k never emits — so a classifier measured there drops
    every one of those overloads as an unknown category and still completes, still writes
    plausible CSVs, and still reports a grid it never screened.
+6. **`LimViolID:1` identifies a monitored END, not an element.** A branch monitored at both
+   ends appears under two ids, so grouping on the raw string counts ends and reports them as
+   distinct violated elements.
 
 Also settled here: the claim in `contingency_esapp.py`'s module docstring that esapp's typed
 read of `ViolationCTG` errors *"interface unknown"* on Synth2k **does not reproduce**.
 
 ## Connections
 
-- **Up:** [esapp](../concepts/esapp.md) · esapp package
+- **Up:** [esapp](../concepts/esapp.md)
 - **Across:** [new-device-contingency-aux](new-device-contingency-aux.md) (building the set you solve, and scoping
   monitoring to an area) · [powerworld-limitset-setdata](powerworld-limitset-setdata.md) · [parallel-contingency-solve](../concepts/parallel-contingency-solve.md) · [lodf](../concepts/lodf.md) ·
   [powerworld-simauto](../concepts/powerworld-simauto.md) · critical-branch screening
@@ -149,12 +153,56 @@ returned **148 rows** from some previous run, full of real-looking numbers.
 Call `CTGClearAllResults()` before every solve, and assert every returned `CTGLabel` is in
 the set you meant to solve.
 
+### Trap 3b — the contingency reference does not follow the case
+
+`CTGSolveAll` applies each outage to the **stored contingency reference**, not to the state
+the case is in now. Move the operating point (a TimeStep hour, a new dispatch, an edit) and
+solve without `pw.esa.CTGSetAsReference()`, and every contingency is solved against the old
+reference. Nothing errors, and the rows look real.
+
+Measured 2026-10-20 on Simulator build 2026-09-25, on the public Texas2k grid with a weather
+file: three TimeStep hours with renewable output from about 2.7 GW to 7.6 GW, each set with
+`TimeStepDoSinglePoint` and then solved with `CTGClearAllResults()` + `CTGSolveAll()`,
+returned identical results. Calling `CTGSetAsReference()` after each `TimeStepDoSinglePoint`
+turned two of the three hours into more than 170 violation rows each.
+
+```python
+for hour in hours:                         # ISO 8601, e.g. "2023-08-10T19:00:00Z"
+    pw.esa.TimeStepDoSinglePoint(hour)
+    pw.esa.CTGSetAsReference()             # without this every hour reuses the old reference
+    pw.esa.CTGClearAllResults(); pw.esa.CTGSolveAll()
+```
+
+If every hour returns the same results while the hours' generation differs, the reference was
+not reset.
+
 ### Trap 4 — never use a bare read
 
 ```python
 pw[ViolationCTG]                    # -> 2 columns: CTGLabel, LimViolID:1
 pw[ViolationCTG, VIOLATION_FIELDS]  # -> everything you asked for
 ```
+
+### Trap 6 — one identity per MONITORED END, not per element
+
+A branch appears under a **separate `LimViolID:1` per monitored end**. The two strings differ
+only in the monitored-bus token, and the direction token does **not** discriminate — both ends
+can report the same direction. Measured 2026-09-14 on a real planning-model export: about one
+id in a hundred was the second end of a branch already counted, and the two ends reported
+materially different percentages.
+
+So **grouping on the raw id string counts monitored ends, not elements.** Any "distinct violated
+elements" figure produced that way is an end count wearing an element count's name.
+
+The element key is `(min(from, to), max(from, to), circuit)` — drop the monitored-end and
+direction tokens, normalise the endpoint order — and severity is the **max across ends**,
+because the end is where the measurement was taken and not part of the identity. This matters
+most under a one-element-per-round remediation loop: ungrouped, the loop targets one branch on
+two separate rounds, and the second round sizes an action against a branch it already upgraded.
+
+Endpoints are available as real columns on the same row, so only the circuit and monitored end
+need to come from the string — which also makes the parse self-checking, since the string's
+own endpoint tokens must agree with those columns.
 
 ### The per-category column contract
 
@@ -252,7 +300,7 @@ else that was probed against eight outages that provably island a bus:
 If you need islanding detection, `ViolationCTG` alone will not give it to you — **and
 [lodf](../concepts/lodf.md) will, for free and without a solve.** When the LODF denominator `1 − ψ_kk → 0`
 there is no alternate path, i.e. outaging that branch splits the network; the math flags it
-before any solve is attempted. Measured on Synth8k: **420 of 13,470** outages, found in the
+before any solve is attempted. Measured on Synth8k: **about 3%** of outages (roughly 1 in 30), found in the
 ~6 s it takes to build the PTDF. That page reached the same conclusion from the other
 direction — *"in a PowerWorld CTG sweep, islanded buses read 0 and get skipped, so stranding
 a 138 kV pocket reports CLEAN"* — and this page is the independent confirmation of that hole
@@ -277,6 +325,15 @@ the stranded pocket carries MW. The LODF denominator above remains the solve-fre
 `ViolationCTG` alone still ranks every one of these outages harmless — read the island checks
 alongside it.
 
+### Branch loading: read the worse end
+
+`Branch.LinePercent` is the **from end** only; `LinePercent:1` is the to end (PowerWorld's field
+export: "% of MVA Limit at From Bus" / "at To Bus"). The contingency monitor, and so every
+`ViolationCTG` row, uses whichever end is larger. An N-0 maximum built from `LinePercent` alone
+understates it: measured by up to ~3.5 points on a stressed 69 kV branch (recorded
+2026-09-24). Use `max(LinePercent, LinePercent:1)` whenever an N-0 number sits
+next to N-1 results.
+
 ### Rate sets on Synth2k series-24
 
 Only rate set **A** carries any limit — 3,911 branches, median 221 MVA, max 4,352. `LineAMVA:1`
@@ -296,10 +353,7 @@ replace a regional study — but they are a free whole-system cross-check on a r
 ## Provenance
 
 Measured live on 2026-08-16 against
-`Synth2k_case.PWB` by the Stage-0 spike of
-`C:\path\to\regional-contingency` — `spike/stage0_spike.py` and
-`spike/stage0b_spike.py`, with the full output tables in that repo's
-`docs/stage0_findings.md` and `docs/stage0b_findings.md`.
+`Synth2k_case.PWB` by a pair of spike scripts written for the purpose.
 
 Numbers quoted here come from a run with the bands deliberately squeezed
 (`LSLinePercent=25`, band `[0.99, 1.01]`) so that every category was forced to appear.

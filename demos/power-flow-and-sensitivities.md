@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: power-flow
 aliases: [demo-power-flow, dcpf-demo, ptdf-demo, lodf-demo, sensitivities-demo]
 tags: [demo, powerflow, dcpf, ptdf, lodf, esapp, worked-example]
 ---
@@ -9,14 +10,14 @@ tags: [demo, powerflow, dcpf, ptdf, lodf, esapp, worked-example]
 
 ## Abstract
 
-Solving a case and asking the three standard sensitivity questions, on a real 37-bus
-system. Includes the `1e8` sentinel that makes LODF results look insane, and a PTDF
+Solving a case and asking the three standard sensitivity questions, on the public synthetic
+Synth40 case (37 buses). Includes the `1e8` sentinel that makes LODF results look insane, and a PTDF
 failure whose obvious recovery **also fails** — both encountered in an actual run, both
 recovered without asking the user.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md) · [index](../index.md)
 - **Across:** [esapp-overview](../methods/esapp-overview.md) · [lodf](../concepts/lodf.md) · [handling-errors](../methods/handling-errors.md) · [esapp-environment](../concepts/esapp-environment.md)
 
 ## Content
@@ -31,7 +32,7 @@ recovered without asking the user.
 
 ```python
 from esapp import PowerWorld
-from esapp.components import Bus, Branch, Gen, Load
+from esapp.components import Bus, Branch, Gen, Load, Area
 
 pw = PowerWorld(r"C:\path\to\Synth40.pwb")
 pw.pflow()
@@ -66,23 +67,22 @@ top = br.sort_values("LinePercent", ascending=False).head(5)
 Four identical rows for 19→23 are four **parallel circuits**, not duplicates. Check the
 circuit id before reporting a repeated bus pair as a data error.
 
-### DC power flow — an option, not a method
+### DC power flow — pass the method, do not set the flag
 
 ```python
-pw.dc_mode = True      # NOT pw.dc_mode(True)
-pw.pflow()
+pw.pflow(method="DC")      # NOT pw.dc_mode = True
 print(f"max loading {pw[Branch, 'LinePercent']['LinePercent'].max():.2f}%")
-pw.dc_mode = False     # put it back
-pw.pflow()
+pw.pflow()                 # an AC method puts the case back to AC
 ```
 
-```
-max loading 80.96%  |  branches >90%: 0
-```
-
-`pw.dc_mode(True)` raises `TypeError: 'bool' object is not callable`. It is an assignable
-solver option. Same for the other solver flags: `flat_start`, `max_iterations`,
-`enforce_gen_mw_limits`.
+`pw.dc_mode(True)` raises `TypeError: 'bool' object is not callable`, and
+`pw.dc_mode = True` is no better: PowerWorld ignores it on a scripted solve (live-tested
+2026-09-23), so the next `pw.pflow()` still runs AC. An earlier version of this demo did
+exactly that and printed `max loading 80.96%`, the same figure as the AC ranking above.
+To confirm a solve really ran DC, check that every bus sits at exactly 1.0 pu
+([lodf](../concepts/lodf.md)). `flat_start` is
+the same trap: call `pw.flatstart()` instead. See
+[handling-errors](../methods/handling-errors.md).
 
 **A DC solve always reports zero mismatch.** It cannot tell you generation is short — the
 slack bus absorbs the shortfall silently. Check the schedule against load directly, and

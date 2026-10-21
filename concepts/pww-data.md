@@ -1,6 +1,7 @@
 ---
 type: dataset
 domain: weather
+topic: timestep
 aliases: [pww, pww-file, powerworld-weather, powerworld-weather-data]
 tags: [pww, weather, dataset, binary-format, era5, hrrr, noaa]
 ---
@@ -9,22 +10,22 @@ tags: [pww, weather, dataset, binary-format, era5, hrrr, noaa]
 
 ## Abstract
 
-PWW (PowerWorld Weather) is a custom byte-packed binary format produced by weather auto and consumed by PowerWorld Simulator's TimeStep Simulation engine. It encodes gridded weather variables as uint8 values (0–254) per timestep and grid point, with 255 as the NaN sentinel. This page covers the VERSION 2 binary spec, variable encoding formulas, per-source production pipelines (ERA5, HRRR, GFS, WRF), and verification procedures. Drill deeper when writing or debugging a PWW file, or tracing weather data into a timestep study.
+PWW (PowerWorld Weather) is a custom byte-packed binary format produced by the weather pipeline that writes PWW files and consumed by PowerWorld Simulator's TimeStep Simulation engine. It encodes gridded weather variables as uint8 values (0–254) per timestep and grid point, with 255 as the NaN sentinel. This page covers the VERSION 2 binary spec, variable encoding formulas, per-source production pipelines (ERA5, HRRR, GFS, WRF), and verification procedures. Drill deeper when writing or debugging a PWW file, or tracing weather data into a timestep study.
 
 ## Connections
 
 - **Up:** [Home](../index.md)
-- **Across:** weather sources · weather auto · [timestep-simulation](timestep-simulation.md) · dynamic line rating · extreme temperature · pfw copperplate · flagship step 3 — prev: [timestep-simulation-setup](../methods/timestep-simulation-setup.md) · next: [how-to-analyze-results](../methods/how-to-analyze-results.md)
+- **Across:** [teamoverbyeweather-client](../methods/teamoverbyeweather-client.md) (downloading PWW files) · [timestep-simulation](timestep-simulation.md) · dynamic line rating · extreme-temperature studies · [copper-plate](copper-plate.md) · step 3 of this reading sequence — prev: [timestep-simulation-setup](../methods/timestep-simulation-setup.md) · next: [how-to-analyze-results](../methods/how-to-analyze-results.md)
 
 ## Content
 
-**Step 3 of the flagship trail.** ← prev: [timestep-simulation-setup](../methods/timestep-simulation-setup.md) · next: [how-to-analyze-results](../methods/how-to-analyze-results.md).
+**Step 3 of this reading sequence.** ← prev: [timestep-simulation-setup](../methods/timestep-simulation-setup.md) · next: [how-to-analyze-results](../methods/how-to-analyze-results.md).
 
-> **Firewall: PWW ≠ PFW.** PWW = weather *data* files (this page). PFW = the PowerFlow Weather *model* used in pfw copperplate. Never cross-link their aliases.
+> **Firewall: PWW ≠ PFW.** PWW = weather *data* files (this page). PFW = the PowerFlow Weather *model* used in [copper-plate](copper-plate.md) studies. Never cross-link their aliases.
 
-PWW is a **custom byte-packed binary format** produced by weather auto and consumed by PowerWorld Simulator's TimeStep Simulation engine. It encodes gridded weather variables at discrete timesteps as uint8 values, one byte per variable per grid point per timestep.
+PWW is a **custom byte-packed binary format** produced by the weather pipeline that writes PWW files and consumed by PowerWorld Simulator's TimeStep Simulation engine. It encodes gridded weather variables at discrete timesteps as uint8 values, one byte per variable per grid point per timestep.
 
-## Binary Format (VERSION 2)
+### Binary Format (VERSION 2)
 
 All values are **little-endian**. Types: `h`=int16, `i`=int32, `d`=float64, `u8`=uint8.
 
@@ -61,7 +62,7 @@ n_lon = round((lon_max - lon_min) / 0.25) + 1
 
 **OLE epoch:** 1899-12-30. Timestamps before this date encode as negative and PowerWorld rejects the file — pre-1900 data must be re-based forward (the WRF 1899 job shifted to 1999, +100 years, preserving month/day/hour).
 
-## VERSION 2 Traps (undocumented — the spec doc only covers VERSION 1)
+### VERSION 2 Traps (undocumented — the spec doc only covers VERSION 1)
 
 Three requirements that are silently missing from the format doc but are critical for PowerWorld to parse the file correctly:
 
@@ -71,7 +72,7 @@ Three requirements that are silently missing from the format doc but are critica
 
 Without all three, PowerWorld misaligns the byte stream: station block bytes are read as valid counts, producing nonsense `ValidPercent*` values (e.g. 1267%, 990%) and shifted variable readings (temperature showing cloud cover bytes, etc.).
 
-## Variable Codes and Encoding
+### Variable Codes and Encoding
 
 All values stored as **uint8 (0–254)**; **255 = NaN sentinel** (excluded from valid counts).
 
@@ -95,9 +96,9 @@ All values stored as **uint8 (0–254)**; **255 = NaN sentinel** (excluded from 
 
 **Code-112 PowerWorld bug:** PowerWorld's TimeStep loader throws an access violation on code 112 (no loadable 80 m wind field in PowerWorld). HRRR pipelines deliberately keep 112 because their wind is genuinely 80 m — this is a confirmed vendor bug under pursuit. Do NOT remap 112→110.
 
-## How PWW Is Produced
+### How PWW Is Produced
 
-weather auto runs four Docker pipelines, each writing a different PWW flavor:
+The weather pipeline that writes PWW files runs four Docker pipelines, each writing a different PWW flavor:
 
 | Pipeline | SAMPLE_sec | Variables | Output naming |
 |----------|-----------|-----------|---------------|
@@ -106,30 +107,31 @@ weather auto runs four Docker pipelines, each writing a different PWW flavor:
 | HRRR Forecast | 3600 | 10 | `{YYYY-MM-DD}T{HH}Z_sfc_48_CONUS.pww` |
 | HRRR History (15-min) | 900 | 10 | `{YYYY-MM-DD}_Q{1..4}_subh_15min_CONUS.pww` |
 | HRRR History (hourly) | 3600 | 10 | `{YYYY-MM-DD}_hourly_CONUS.pww` |
-| WRF (Dr. Bailey) | varies | 9 (no precip) | `WRF_{period}_{Region}.pww` |
+| WRF reanalysis | varies | 9 (no precip) | `WRF_{period}_{Region}.pww` |
 
 ERA5 also emits a human-readable `.parquet` alongside the PWW.
 
-## Who Consumes PWW
+### Who Consumes PWW
 
 - dynamic line rating — weather around each line for IEEE 738 thermal rating
-- extreme temperature — hottest/coldest scenario identification
-- pfw copperplate — weather inputs for the PFW model on renewables
+- extreme-temperature studies — hottest/coldest scenario identification
+- [copper-plate](copper-plate.md) studies — weather inputs for the PFW model on renewables
 - Any [timestep-simulation](timestep-simulation.md) study needing time-varying weather driving
 
-## Using PWW in a Study
+### Using PWW in a Study
 
-1. Pick spatial/temporal crop (via weather website API or weather extract)
+1. Pick spatial/temporal crop (via [teamoverbyeweather-client](../methods/teamoverbyeweather-client.md), which crops by region and time window)
 2. Map weather to case elements (lines, renewable units, load zones)
 3. Feed per-timestep into the run — see [timestep-simulation-setup](../methods/timestep-simulation-setup.md)
 4. Analyze → [how-to-analyze-results](../methods/how-to-analyze-results.md)
 
-## Verifying a PWW (do both before trusting a new file)
+### Verifying a PWW (do both before trusting a new file)
 
 1. **Structural + positional round-trip** (offline): parse header, assert KEY2=8066, VERSION=2, ≥1 meta string, valid_count block length == VARCOUNT, data size == COUNT × VARCOUNT × LOC. Then pick a few stations and confirm decoded bytes match the source grid cell at that (lat, lon).
-2. **PowerWorld load test:** `TimeStepLoadPWW(file, "Weather Only")` via ESA/SimAuto — exit 0 = file loads cleanly. Pass absolute paths (PowerWorld resolves relative paths against its own working dir). Script: `DrBailey_WRF_pww/pww_powerworld_smoketest.py`.
+2. **PowerWorld load test:** `TimeStepLoadPWW(file, "Weather Only")` via ESA/SimAuto — exit 0 = file loads cleanly. Pass absolute paths (PowerWorld resolves relative paths against its own working dir). Keep the smoke test as a small standalone script next to the converter that wrote the file.
+   **On Simulator 25 (builds dated 2026-09-20 and 2026-09-25) this test fails for every file**: plain `TimeStepLoadPWW` raises `Error With Loading PWWFile`. `TimeStepLoadPWWRange(file, start, end, "Weather Only")` over the file's full span loads the same files (72 and 2,064 timepoints on two files, reproduced 2026-09-24). On those builds, run the smoke test with the Range form and assert the timepoint count. A failure of the plain form says nothing about the file.
 
-## Does the file cover the units? (the case auditor's footprint check)
+### Does the file cover the units? (the case auditor's footprint check)
 
 A renewable whose nearest station in the file is far away still runs: it takes that station's
 weather, and the time step gives no warning. The case auditor (`ts.pww_footprint`) reads only the
@@ -139,8 +141,8 @@ file's header station list and flags every located renewable whose nearest stati
 grid puts every point inside its footprint within about 12 miles of a station, so 25 miles leaves
 margin and still catches a unit outside the grid.
 
-## Related
+### Related
 
-- weather sources — upstream ERA5 / HRRR / NOAA feeds
-- weather auto — pipeline that builds and stores PWW
+- upstream weather feeds — ERA5 / HRRR / NOAA
+- the weather pipeline that writes PWW files — builds and stores PWW
 - [Home](../index.md)

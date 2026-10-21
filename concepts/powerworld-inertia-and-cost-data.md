@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: cross-cutting
+topic: case-audit
 aliases: [TSH, GenMCost, GenInertia, inertia constant]
 tags: [powerworld, inertia, cost-curve, dynamics, gotcha]
 ---
@@ -76,8 +77,8 @@ unit.
 > Writing assumed H straight into a column named `TSH` silently asserts every generator is
 > 100 MVA. **This exact regression happened** on 2026-07-27, on a Synth8k
 > case with *no* measured `TSH` — so all three notebook builders took the assumed-data path,
-> which this page's original wording did not cover. Fleet inertia came out 240.5 GW·s
-> instead of 470.3, nuclear 2.04 instead of 22.58; and because the error scales with machine
+> which this page's original wording did not cover. Fleet inertia came out about 51% of its
+> true GW·s value, nuclear about 9%; and because the error scales with machine
 > size it was **non-uniform**, so unit *commitment order* was wrong too, not just totals.
 >
 > Physically: **H alone is not an inertia quantity.** System inertia is defined as

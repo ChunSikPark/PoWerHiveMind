@@ -1,6 +1,7 @@
 ---
 type: method
 domain: weather
+topic: timestep
 aliases: [demo-timestep, pfw-demo, weather-to-mw-demo, timestep-demo]
 tags: [demo, timestep, pfw, pww, weather, renewables, esapp, worked-example]
 ---
@@ -16,7 +17,7 @@ wrong is why TimeStep runs "successfully" and produces nothing.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md) · [index](../index.md)
 - **Across:** [timestep-workflow](../concepts/timestep-workflow.md) · [timestep-simulation-setup](../methods/timestep-simulation-setup.md) · [teamoverbyeweather-client](../methods/teamoverbyeweather-client.md) · [pww-data](../concepts/pww-data.md) · [how-to-analyze-results](../methods/how-to-analyze-results.md)
 
 ## Content

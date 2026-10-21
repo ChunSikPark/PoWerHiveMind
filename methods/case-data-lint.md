@@ -1,6 +1,7 @@
 ---
 type: method
 domain: cross-cutting
+topic: case-audit
 aliases: [case-data-lint, lint-profile, data-quality-checks, case-sanity, shunt-steps,
   gen-below-min, missing-emergency-ratings, negative-reactance, islands-and-slacks, nominal-kv]
 tags: [powerworld, esapp, case-quality, validation, switched-shunt, generator, ratings,

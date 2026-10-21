@@ -1,6 +1,7 @@
 ---
 type: method
 domain: weather
+topic: timestep
 aliases: [teamoverbyeweather, team-overbye-weather, weather-client, weather-sdk, TeamOverbyeWeather]
 tags: [weather, pww, era5, hrrr, noaa, python, client, download]
 ---
@@ -14,7 +15,8 @@ portal. One call downloads a weather dataset, crops it to a region, and crops it
 time window, returning `.pww` files ready for PowerWorld. This is the kit's front door
 for getting the `.pww` files PowerWorld's TimeStep feature consumes, and the **one part
 that needs no PowerWorld licence** — the client, the PWW reader, and the cropping tools
-are pure Python. Verified against version 0.4.0.
+are pure Python. Verified against version 0.4.0; the `bbox` order and the `download()`
+signature were re-checked against 0.4.2's installed source on 2026-10-19.
 
 ## Connections
 
@@ -79,7 +81,7 @@ Four mutually exclusive ways, in increasing order of precision:
 ```python
 client.download("era5", "2021-02", region="TX")                       # a state
 client.download("era5", "2021-02", iso="<ISO>")                        # an ISO footprint
-client.download("era5", "2021-02", bbox=(25.8, -106.7, 36.5, -93.5))  # lat/lon box
+client.download("era5", "2021-02", bbox=(36.5, -106.7, 25.8, -93.5))  # lat/lon box: N, W, S, E
 client.download("era5", "2021-02")                                    # everything, usually too much
 ```
 
@@ -90,7 +92,14 @@ client.regions()                    # every layer the server knows
 client.region_ids("states")         # ['AL', 'AK', 'AZ', 'AR', 'CA', ...]
 ```
 
-`bbox` is `(lat_min, lon_min, lat_max, lon_max)`. West longitudes are negative.
+`bbox` is `(lat_max, lon_min, lat_min, lon_max)`: **north, west, south, east**, in client
+0.4.2. West longitudes are negative. This is not the min-then-max order most libraries use,
+and getting it wrong fails two different ways:
+
+- `download()` checks the order and raises `ValueError: bbox (...) is inverted`.
+- `pww_io.crop_to_bbox` and `localcrop.crop_file` take the same order but **do not check
+  it**. A south-first box slices zero latitude rows and returns an empty crop with no error.
+  Check the station count of a cropped file before you load it.
 
 **A too-large request raises `RegionTooLargeError` rather than silently truncating.**
 That is the server protecting itself; narrow the region or shorten the window.
@@ -118,9 +127,10 @@ client.download(
     source,                # 'era5' | 'hrrr' | 'noaa' | 'extreme'
     dates,                 # date, month string, or list
     type=None,             # from client.types(source)
+    *,                     # everything below is keyword-only
     region=None,           # state/region id
     iso=None,              # ISO footprint
-    bbox=None,             # (lat_min, lon_min, lat_max, lon_max)
+    bbox=None,             # (lat_max, lon_min, lat_min, lon_max) = N, W, S, E
     time_start=None,
     time_end=None,
     dest=".",              # output directory
@@ -160,7 +170,7 @@ from TeamOverbyeWeather import pww_io
 header, stations, arr = pww_io.read_pww_file("weather/era5_texas_2021-02.pww")
 print(header)              # metadata: fields, time base, counts
 print(len(stations))       # weather stations in the file
-print(arr.shape)           # (time, station, field) numpy array
+print(arr.shape)           # (time, field, lat, lon) uint8 grid, 0.25-degree cells
 ```
 
 Crop, concatenate, and write back:
@@ -170,11 +180,12 @@ from TeamOverbyeWeather import pww_io, localcrop
 
 # crop an existing file on disk in one call
 localcrop.crop_file("big.pww", "texas_only.pww",
-                    bbox=(25.8, -106.7, 36.5, -93.5))
+                    bbox=(36.5, -106.7, 25.8, -93.5))   # N, W, S, E
 
 # or work in memory
 header, stations, arr = pww_io.crop_to_bbox(header, stations, arr,
-                                            (25.8, -106.7, 36.5, -93.5))
+                                            (36.5, -106.7, 25.8, -93.5))
+assert stations, "empty crop: bbox order is (lat_max, lon_min, lat_min, lon_max)"
 header, arr = pww_io.crop_to_timerange(header, arr, t_start, t_end)
 
 # stitch several downloads into one continuous series
@@ -198,6 +209,6 @@ then spend a long time on stations you do not care about.
 ### What this client is not
 
 It serves the Team Overbye portal specifically. It is not a general ERA5 or HRRR client
-— for raw upstream access, see weather sources. Its value is that the region crop,
+— for raw upstream access, go to the ERA5, HRRR or NOAA services directly. Its value is that the region crop,
 the time crop, and the PWW conversion are already done, which is normally the tedious
 part.

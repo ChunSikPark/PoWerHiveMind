@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: contingency
 aliases: [violation-remediation, remediation, fix-violations, reinforcement-study, n-1-remediation]
 tags: [demo, remediation, contingency, n-1, reinforcement, esapp, worked-example]
 ---
@@ -11,13 +12,13 @@ tags: [demo, remediation, contingency, n-1, reinforcement, esapp, worked-example
 
 The full study, not a readout: find the N-1 violations, work out *why* they happen,
 propose candidate reinforcements, test each one independently, and rank them by measured
-effect. Real numbers from a real 37-bus case. The headline result is one you cannot reach
+effect. Real numbers from the public synthetic Synth40 case (37 buses). The headline result is one you cannot reach
 by intuition — **two of five plausible reinforcements made the system worse**, and a
 third reduced the violation count while making the worst violation more severe.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md) · [index](../index.md)
 - **Across:** [reading-violationctg](../methods/reading-violationctg.md) · [adding-devices-esapp](../methods/adding-devices-esapp.md) · [ranking-new-devices-by-severity](../methods/ranking-new-devices-by-severity.md) · [contingency-and-aux](contingency-and-aux.md) · [handling-errors](../methods/handling-errors.md)
 
 ## Content

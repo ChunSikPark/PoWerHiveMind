@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: tooling
+topic: scripting
 aliases: [glossary, terminology, acronyms, definitions, jargon]
 tags: [glossary, terminology, powerworld, esapp, reference]
 ---
@@ -62,7 +63,7 @@ rather than errors.
 | **kcmil** | Thousand circular mils — a conductor size unit |
 | **LODF** | Line Outage Distribution Factor. How flow redistributes onto other branches when one branch is outaged |
 | **Mismatch** | Residual power imbalance at a bus after solving. Near zero means converged — but see *DC solve* |
-| **MOC** | Map of Content — a hub page linking a domain's pages. A convention from the source wiki, not a PowerWorld term |
+| **MOC** | Map of Content — a hub page linking a domain's pages. Not a PowerWorld term |
 | **MVA / MW / MVAR** | Apparent, real, and reactive power. Branch limits are usually MVA; dispatch is in MW |
 | **N-1** | The reliability criterion that the system must survive the loss of any single element |
 | **OPF / SCOPF** | Optimal Power Flow, and its Security-Constrained form which additionally respects contingency limits |

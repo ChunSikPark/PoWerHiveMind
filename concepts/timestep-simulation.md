@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: cross-cutting
+topic: timestep
 aliases: [timestep-simulation, time-step-simulation-concept, temporal-simulation]
 tags: [timestep, simulation, powerworld, weather, renewables, concept]
 ---
@@ -9,11 +10,11 @@ tags: [timestep, simulation, powerworld, weather, renewables, concept]
 
 ## Abstract
 
-A timestep simulation (in this project's sense) is PowerWorld's built-in TimeStep feature run over a weather time series: each renewable generator's hourly solar or wind MW output is computed quasi-statically from PWW weather data via its embedded PFW model. This is not a transient-stability study — it has nothing to do with faults or rotor angles. For how to set one up and run it see [timestep-simulation-setup](../methods/timestep-simulation-setup.md); for the code see time step simulation.
+A timestep simulation (in this project's sense) is PowerWorld's built-in TimeStep feature run over a weather time series: each renewable generator's hourly solar or wind MW output is computed quasi-statically from PWW weather data via its embedded PFW model. This is not a transient-stability study — it has nothing to do with faults or rotor angles. For how to set one up and run it see [timestep-simulation-setup](../methods/timestep-simulation-setup.md); for the code see [time-step-simulation-backend](../references/time-step-simulation-backend.md).
 
 ## Connections
 
-- **Up:** [Home](../index.md) · time step simulation
+- **Up:** [Home](../index.md) · [time-step-simulation-backend](../references/time-step-simulation-backend.md)
 - **Across:** [pww-data](pww-data.md) · [timestep-simulation-setup](../methods/timestep-simulation-setup.md) · [how-to-analyze-results](../methods/how-to-analyze-results.md)
 
 ## Content
@@ -26,12 +27,13 @@ transient-stability / dynamics study and has nothing to do with faults or rotor
 angles — it is a quasi-static, hour-by-hour weather-to-generation evaluation.
 
 This page is **what it is**; for **how to set one up and run it** see the method
-[timestep-simulation-setup](../methods/timestep-simulation-setup.md); for the engine/code see the project
-time step simulation.
+[timestep-simulation-setup](../methods/timestep-simulation-setup.md); for the engine/code see
+[time-step-simulation-backend](../references/time-step-simulation-backend.md).
 
 ## How it works conceptually
 1. A weather time series ([pww-data](pww-data.md)) is loaded into the case
-   (`TimeStepLoadPWW`).
+   (`TimeStepLoadPWWRange`; plain `TimeStepLoadPWW` fails on Simulator 25 builds dated
+   2026-09-20 and 2026-09-25).
 2. Each renewable generator carries an embedded **PFW (PowerFlow Weather) model**
    that maps weather (irradiance, wind speed, etc.) to MW.
 3. PowerWorld walks every timestep, applies the weather, and records each
@@ -45,7 +47,7 @@ time step simulation.
 - Feeds extreme-scenario and renewable-integration analysis.
 
 ## Series vs parallel
-The time step simulation project runs it **series** (slow, for testing) and
+The timestep simulation pipeline runs it **series** (slow, for testing) and
 **parallel** (fast, many sims at once). Output resolution is currently
 **generator-level** — area/substation-level aggregation is a noted future extension.
 

@@ -1,6 +1,7 @@
 ---
 type: method
 domain: cross-cutting
+topic: timestep
 aliases: [viz-renewable, plot-solar-wind, visualize-timestep-output]
 tags: [powerworld, analysis, visualization, matplotlib, solar, wind, renewables, pandas]
 ---
@@ -9,17 +10,16 @@ tags: [powerworld, analysis, visualization, matplotlib, solar, wind, renewables,
 
 ## Abstract
 
-How to write matplotlib code that visualizes the solar/wind CSVs produced by the timestep simulation. Covers loading the 8-row metadata + hourly data structure, parsing timestamps, and the four key plot patterns: fleet total solar+wind stacked over time, per-ISO or per-State totals, capacity factor curves, and peak/trough hour identification. This is Step 5 (final) of the flagship trail.
+How to write matplotlib code that visualizes the solar/wind CSVs produced by the timestep simulation. Covers loading the 8-row metadata + hourly data structure, parsing timestamps, and the four key plot patterns: fleet total solar+wind stacked over time, per-ISO or per-State totals, capacity factor curves, and peak/trough hour identification. This is step 5 (final) of this reading sequence.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · time step simulation
+- **Up:** [Home](../index.md) · [timestep-simulation](../concepts/timestep-simulation.md)
 - **Across:** prev in flow: [how-to-analyze-results](how-to-analyze-results.md) · [pww-data](../concepts/pww-data.md) · start: [esapp-overview](esapp-overview.md)
 
 ## Content
 
-**Step 5 (final) of the flagship trail.** ← prev: [how-to-analyze-results](how-to-analyze-results.md).
-Owning project: time step simulation.
+**Step 5 (final) of this reading sequence.** ← prev: [how-to-analyze-results](how-to-analyze-results.md).
 
 This page teaches you to write visualization code for the CSVs that come out of the timestep simulation. The data format is described fully in [how-to-analyze-results](how-to-analyze-results.md); this page focuses on the plotting patterns.
 

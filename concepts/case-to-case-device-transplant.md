@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: cross-cutting
+topic: design
 aliases: [AUX transplant, device delta transplant, LoadAux create]
 tags: [powerworld, esapp, aux, technique, case-diff]
 ---
@@ -15,15 +16,15 @@ stranded behind unscripted stages. Carve a **filtered AUX out of the source case
 `SaveCase(AUX)` dump** so the field lists are PowerWorld's rather than hand-written, and load it
 with `LoadAux(create_if_not_found=True)`. To *move* a device between buses, carve its record out
 of the **target** case and re-point the bus number, so the whole schema transfers by construction.
-Proven 2026-09-01 on four Synth9k scenarios: 869 buses, 1,207 shunts, 1,019 branches, 724 gen
-moves, 147 load moves, criterion-10 clean on all four.
+Proven 2026-09-01 on four Synth9k scenarios: hundreds of buses, over a thousand shunts, about a
+thousand branches, hundreds of gen moves, over a hundred load moves, criterion-10 clean on all four.
 
 ## Connections
 
-- Used in a scenario-envelope study, to answer an accepted migration risk.
-- Complements reading a case diff — that is about *reading* a diff across two model
+- Used in a study spanning several scenarios, to answer an accepted migration risk.
+- Complements [comparing-planning-cases](../demos/comparing-planning-cases.md) — that is about *reading* a diff across two model
   vintages, this one is about *applying* one.
-- Depends on the same key-field constraint as circuit-ID renaming: some fields can only be changed
+- Depends on the same key-field constraint as renaming a branch's circuit ID: some fields can only be changed
   through an AUX text round-trip, never by a write.
 - 💡 **Could transfer to:** any study where one scenario got a
   feature and the rest need it, or where a chain is unreproducible and only the *result* survives.
@@ -51,7 +52,7 @@ argues for generally.
 ### Moving a device between buses
 
 There is no move operation. Delete-and-recreate risks dropping fields silently — the
-`LoadGrounded` bug hit all 147 loads in the original migration and was invisible to a diff over
+`LoadGrounded` bug hit every moved load in the original migration and was invisible to a diff over
 the write set, because a dropped field is by definition absent from it.
 
 **Carve the record out of the TARGET case's own aux and re-point only the leading bus-number
@@ -63,7 +64,7 @@ donor's.
 ### Always undo the text rounding
 
 The aux writes R/X/C to 6 decimals and MW / limits to 3. Snapshot exact values before the
-round-trip and write them back afterwards, confirming on read-back. Skipping this left 147 moved
+round-trip and write them back afterwards, confirming on read-back. Skipping this left the moved
 loads 7.3e-3 MW light — small enough to pass a loose tolerance and wrong enough to poison a
 conservation check later.
 
@@ -77,6 +78,6 @@ conservation check later.
 
 ### When the numbering cooperates, check for it first
 
-The Synth9k transplant needed **no renumbering at all**, because the target topped out at bus 8528
-and every new bus in the source was 8529–9397. That is worth two minutes of checking before
+The Synth9k transplant needed **no renumbering at all**, because the target's highest bus number
+sat below every new bus number in the source, which formed one contiguous block above it. That is worth two minutes of checking before
 designing a remap: disjoint ranges turn a hard problem into a copy.

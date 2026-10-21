@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: cross-cutting
+topic: contingency
 aliases: [parallel-contingency-solve, parallel-ctg, os-process-n1-sweep, contingency-parallel]
 tags: [contingency, n-1, ctgsolveall, esapp, powerworld, multiprocessing, technique, cross-cutting]
 ---
@@ -14,10 +15,10 @@ environment: instead of relying on PowerWorld's DS server + registered compute h
 spawn workers here — it silently degrades to single-process serial), split the case's contingency
 set into N chunks and run N independent `pwrworld.exe`/esapp instances as separate OS processes
 (Python `concurrent.futures.ProcessPoolExecutor`), each solving a plain serial `CTGSolveAll` on
-only its own chunk, then merge the per-bus voltage envelopes. Built for reactive power planning
+only its own chunk, then merge the per-bus voltage envelopes. Built for a reactive power planning study
 to unblock a Synth8k N-1 sweep, which was timing out at 7200s
 (2 hrs) serial. Live-measured: **~6-7x faster on the 8k case** (18.4 min vs. the 2-hr timeout,
-13,470+ contingencies), but only **~1.7-1.8x on a smaller 2k case** (5,344 contingencies) — the
+more than 10k contingencies), but only **~1.7-1.8x on a smaller 2k case** (5,344 contingencies) — the
 speedup scales with per-contingency solve cost because each worker pays a fixed ~20-45 sec
 `open()` overhead that does not parallelize away.
 
@@ -41,7 +42,7 @@ speedup scales with per-contingency solve cost because each worker pays a fixed 
 compute hosts already set up in PowerWorld Simulator. On this machine, `VerifyDistributedComputersAvailable`
 confirms the server is reachable but **zero workers ever actually spawn** — PowerWorld silently
 falls back to single-process serial. That's a real, previously-diagnosed blocker: the Synth8k
-case's ~13,470-contingency N-1 set was timing out at 7200s (2 hrs) running serial. Distributed
+case's N-1 set of more than 10k contingencies was timing out at 7200s (2 hrs) running serial. Distributed
 computing settings are also GLOBAL Simulator settings, not serialized into the `.pwb` — so there is
 no case-level fix, only an infrastructure one (standing up a real DS server), which is out of scope.
 
@@ -109,7 +110,7 @@ sweeps run back to back on the same case + same contingency set):
 | Case | Contingencies | Serial | Parallel | Workers | Speedup | Match? |
 |---|---|---|---|---|---|---|
 | Synth2k series25 summerpeak | 5,344 (3,993 line + 1,351 xfmr) | 196-266 s | 107-152 s | 10 | 1.75-1.84x | Yes, exact violating-bus set |
-| Synth8k (a ~13.5k-bus working model) | ~13,520 | ~7200 s (prior timeout, never completed) | 1,101 s (18.4 min) | 10 | ~6-7x vs. the timeout budget | 149 violating buses found |
+| Synth8k (an ~8k-bus working model, see [lodf](lodf.md)) | more than 10k | ~7200 s (prior timeout, never completed) | 1,101 s (18.4 min) | 10 | ~6-7x vs. the timeout budget | violating buses found (about 2% of buses) |
 
 The speedup ratio is **not constant** — it grows with case size / per-contingency solve cost,
 because the fixed per-worker `open()` overhead (20-45 sec, does not parallelize away) is a much
@@ -120,8 +121,8 @@ for a big sweep.
 
 ### Scope limitation (deliberate)
 
-This technique parallelizes ONLY the base N-1 voltage sweep, not any per-contingency remediation
-walk that mutates a shared base fleet sequentially (e.g. an after-removal security loop) —
+This technique parallelizes ONLY the base N-1 voltage sweep, not any remediation walk over
+contingencies that mutates a shared base fleet sequentially (e.g. an after-removal security loop) —
 that kind of loop can't be split this way since each fix changes state the next step depends on.
 It also does not autoinsert contingencies itself — the case must already carry its N-1 set before
 the parallel sweep opens it (autoinsert once, save, then hand that saved case path to the workers).

@@ -1,6 +1,7 @@
 ---
 type: reference
 domain: tooling
+topic: scripting
 aliases: [aux-script-commands, script-commands, aux-actions, script-action-index, powerworld-script-actions]
 tags: [powerworld, aux, script, commands, reference, simauto]
 ---
@@ -13,8 +14,10 @@ A task-organized index of the PowerWorld SCRIPT actions this kit's workflows act
 use, plus their close neighbours — 198 of the ~370 that Simulator defines. Look
 here to find *which* command does a job; look in Simulator's own *Auxiliary File Format*
 manual for argument lists and exact syntax, which this page deliberately does not
-reproduce. Every command runs the same way: `pw.esa.RunScriptCommand("ActionName(args)")`,
-or inside a `SCRIPT { }` block in an `.aux` file. Start at [esapp-overview](../methods/esapp-overview.md) for the
+reproduce. To run one from Python, call the esapp method of the same name; use
+`pw.esa.RunScriptCommand("ActionName(args)")` only where none exists
+([esapp-script-command-wrappers](../concepts/esapp-script-command-wrappers.md)). In an `.aux`
+file, put it inside a `SCRIPT { }` block. Start at [esapp-overview](../methods/esapp-overview.md) for the
 Python side.
 
 ## Connections
@@ -35,7 +38,7 @@ Python side.
 
 ```python
 pw.esa.RunScriptCommand('SolvePowerFlow(RECTNEWT)')
-pw.esa.RunScriptCommand('SaveCase("C:\\out\\case.pwb", PWB, YES)')
+pw.esa.RunScriptCommand('SaveCase("C:\\out\\case.pwb", PWB)')
 ```
 
 Two rules that cause most first-attempt failures, both documented at
@@ -96,7 +99,7 @@ Two rules that cause most first-attempt failures, both documented at
 
 | Action | What it is for |
 |---|---|
-| `SolvePowerFlow` | Solve. Takes the method: `RECTNEWT`, `POLARNEWT`, `GAUSSSEIDEL`, `FASTDEC`, `DC` |
+| `SolvePowerFlow` | Solve. Takes the method: `RECTNEWT`, `POLARNEWTON` (often written `POLARNEWT`; see [powerworld-study-commands](powerworld-study-commands.md)), `GAUSSSEIDEL`, `FASTDEC`, `DC` |
 | `ResetToFlatStart` | Reset voltages to 1.0 pu / 0 degrees before a hard solve |
 | `EstimateVoltages` | Seed a starting voltage profile when flat start will not converge |
 | `ZeroOutMismatches` | Force mismatches to zero — diagnostic, not a fix |
@@ -150,11 +153,11 @@ Building a contingency set for a chosen device list is its own procedure with se
 silent failure modes (`ElementType=GEN` is ignored; the action string must be quoted;
 labels get whitespace-trimmed on load) — see [new-device-contingency-aux](../methods/new-device-contingency-aux.md).
 
-### Time step simulation and weather
+### Timestep simulation and weather
 
 | Action | What it is for |
 |---|---|
-| `TimeStepLoadPWW` | Load a `.pww` weather file for the simulation |
+| `TimeStepLoadPWW` | Load a `.pww` weather file for the simulation. Suspected glitch 2026-10-20-timestep-loadpww-plain: on builds dated 2026-09-20 and 2026-09-25 plain `TimeStepLoadPWW` failed with `Error With Loading PWWFile` while `TimeStepLoadPWWRange` loaded the same files; see [timestep-workflow](../concepts/timestep-workflow.md) |
 | `TimeStepLoadPWWRange` | Load a time range from a PWW |
 | `TimeStepLoadPWWRangeLatLon` | Load a time range cropped to a lat/lon box — the usual entry point |
 | `TimeStepAppendPWW`, `TimeStepAppendPWWRange`, `TimeStepAppendPWWRangeLatLon` | Append further weather to what is already loaded |

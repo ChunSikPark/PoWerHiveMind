@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: scripting
 aliases: [aux-file-mode, aux-mode, no-python-mode, powerworld-llm-interaction,
   llm-interaction-programming, drop-file-mode, agent-operating-mode]
 tags: [powerworld, aux, script-transfer, llm, agent, operating-mode, template]

@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: tooling
+topic: scripting
 aliases: [aux-only, aux-without-esapp, aux-without-simauto, headless-aux, pure-aux]
 tags: [powerworld, aux, script, simauto, esapp, provenance, house-rule]
 ---
@@ -24,12 +25,10 @@ never from the manual and never from memory. Read before writing any `.aux` by h
 
 ## Connections
 
-- **Up:** [powerworld-simauto](powerworld-simauto.md) · esapp package · [Home](../index.md)
-- **Across:** aux script catalog (the 344-action name index) ·
+- **Up:** [powerworld-simauto](powerworld-simauto.md) · [Home](../index.md)
+- **Across:** [aux-script-commands](../references/aux-script-commands.md) (the SCRIPT actions, a working subset) ·
   [esapp-script-command-wrappers](esapp-script-command-wrappers.md) (the inverse house rule for the *Python* side) ·
-  [opf-preconditions](opf-preconditions.md) (the first real study run this way) ·
-  artifact level validation (the "it reported success and wrote nothing" family this
-  page's read-back rule belongs to) · esapp settable vs enterable
+  [opf-preconditions](opf-preconditions.md) (the first real study run this way) 
 - **Applied in:** [new-device-contingency-aux](../methods/new-device-contingency-aux.md) · [case-to-case-device-transplant](case-to-case-device-transplant.md)
 - **Across:** [powerworld-script-transfer](powerworld-script-transfer.md) (the same aux text, delivered by drop file instead of a launcher)
 - **Deeper:** [esapp-schema-reference](../references/esapp-schema-reference.md) · Simulator's *Auxiliary File Format* manual (Help menu)
@@ -159,8 +158,8 @@ the November 6, 2025 edition is missing four that exist by September 2026,
 you to *Window → Export Case Object Fields* in the GUI instead. It therefore cannot confirm
 or refute a field name, ever.
 
-So do not guess field names, and do not take them from prose pages in this vault either —
-one such page in this wiki carried an Area field name that does not exist in the schema.
+So do not guess field names, and do not take them from prose pages in this knowledge base either —
+one such page in PowerWorldHiveMind carried an Area field name that does not exist in the schema.
 
 **Verify against esapp's generated schema first, then emit the aux.** This costs seconds,
 needs no PowerWorld session, and is the correct workflow for authoring aux by hand:
@@ -190,7 +189,7 @@ variable name, field, column header and description — straight from the runnin
 | The `ALL` keyword is documented as usable "instead of a list of fields" on the Save commands, but the manual gives **no worked example anywhere** — bare `ALL` vs `[ALL]` is undocumented | use an explicit field list |
 | Every file path must be **absolute**; a relative path resolves against `pwrworld.exe`'s working directory, not yours | — |
 | **Smart quotes silently break a script.** Straight quotes only | never paste from Word or a PDF |
-| Solver token is `POLARNEWTON`, not the commonly written `POLARNEWT` | `RECTNEWT`, `POLARNEWTON`, `GAUSSSEIDEL`, `FASTDEC`, `ROBUST`, `DC` |
+| Solver token is `POLARNEWTON`, not the commonly written `POLARNEWT`. esapp's `pflow(method=)` takes `"POLARNEWT"` ([handling-errors](../methods/handling-errors.md)), not `POLARNEWTON` | `RECTNEWT`, `POLARNEWTON`, `GAUSSSEIDEL`, `FASTDEC`, `ROBUST`, `DC` |
 | `EnterMode(EDIT)` is required only to **create** topology objects. Modifying an existing one is not documented as needing it | keep the wrapper anyway; it costs nothing and the manual never positively blesses modify-in-RUN |
 
 `DATA (Object, [fields]) { rows }` is the legacy header form and is correct; omitting the
@@ -206,4 +205,4 @@ per-object values, or assert anything beyond "read it back and look".
 
 The middle path costs five lines and keeps both: author the whole study as `.aux` text and
 use Python purely as the launcher via `exec_aux`, which buys back the read-back assertion
-without moving any logic into Python. stochastic model backend already runs this way.
+without moving any logic into Python. A stochastic-model study backend already runs this way.

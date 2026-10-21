@@ -1,6 +1,7 @@
 ---
 type: concept
 domain: tooling
+topic: scripting
 aliases: [esapp-wrappers, runscriptcommand-vs-named-method, esapp-named-methods]
 tags: [esapp, powerworld, simauto, script-commands, runscriptcommand, api-drift, house-rule]
 ---
@@ -16,15 +17,15 @@ PowerWorld SCRIPT command, and both forms reach the same COM call — the named 
 buys a Python-side signature check, correct argument-string construction, and, above all,
 **one place the maintainer can patch when PowerWorld changes a command's syntax**. This
 page records the rule, the exact mechanism (so nobody overclaims it as runtime
-validation), the two live-probed exceptions already settled elsewhere in this wiki, and
+validation), the two live-probed exceptions already settled elsewhere in this knowledge base, and
 the related 0.2.1 change that turned a write-time `ValueError` into a warning. Origin:
 feedback from the esapp author on the author's `pw.esa.RunScriptCommand` usage, verified
 against the 0.2.1 source on 2026-09-08.
 
 ## Connections
 
-- **Up:** [esapp](esapp.md) · esapp package · [Home](../index.md)
-- **Across:** [powerworld-simauto](powerworld-simauto.md) · aux script catalog (raw SCRIPT name index) ·
+- **Up:** [esapp](esapp.md) · [Home](../index.md)
+- **Across:** [powerworld-simauto](powerworld-simauto.md) · [aux-script-commands](../references/aux-script-commands.md) (SCRIPT names) ·
   [esapp-overview](../methods/esapp-overview.md) · the "it reported success and wrote
   nothing" family this belongs to
 - **Exceptions to this rule:** [save-powerworld-case](../methods/save-powerworld-case.md) (COM `SaveCase` is a silent
@@ -98,7 +99,7 @@ largely oneline/GUI actions (`OpenOneline`, `ExportOneline`, `Animate`), dialogs
 (`ATCWriteToExcel`, `SaveDataUsingExportFormat`).
 
 Look the command up in the **SCRIPT command → esapp method index** at the bottom of the
-esapp package's own method list before concluding one is missing — absence from
+esapp's own method list before concluding one is missing — absence from
 [aux-script-commands](../references/aux-script-commands.md) proves nothing, since that
 page is a task-organized working subset rather than a complete index.
 

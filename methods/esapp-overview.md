@@ -1,6 +1,7 @@
 ---
 type: method
 domain: tooling
+topic: scripting
 aliases: [esapp-howto, using-esapp, esapp-getting-started]
 tags: [esapp, powerworld, simauto, python, getting-started]
 ---
@@ -9,16 +10,16 @@ tags: [esapp, powerworld, simauto, python, getting-started]
 
 ## Abstract
 
-The entry-point how-to for driving PowerWorld from Python with `esapp`: open a case, read and write data with the bracket interface, solve power flow, inspect results, and use `snapshot()` for safe experimentation. All code snippets are verified against the `esapp` source at `C:\path\to\esapp`. This is Step 1 of the flagship trail; for the full API map see [esapp](../concepts/esapp.md).
+The entry-point how-to for driving PowerWorld from Python with `esapp`: open a case, read and write data with the bracket interface, solve power flow, inspect results, and use `snapshot()` for safe experimentation. All code snippets are verified against the `esapp` source at `C:\path\to\esapp`. This is step 1 of this reading sequence; for the full API map see [esapp](../concepts/esapp.md).
 
 ## Connections
 
-- **Up:** [Home](../index.md) · esapp package
-- **Across:** [esapp](../concepts/esapp.md) · [powerworld-simauto](../concepts/powerworld-simauto.md) · esa pp llm · flagship step 1 — next: [timestep-simulation-setup](timestep-simulation-setup.md) · [pww-data](../concepts/pww-data.md) · [how-to-analyze-results](how-to-analyze-results.md)
+- **Up:** [Home](../index.md)
+- **Across:** [esapp](../concepts/esapp.md) · [powerworld-simauto](../concepts/powerworld-simauto.md) · step 1 of this reading sequence — next: [timestep-simulation-setup](timestep-simulation-setup.md) · [pww-data](../concepts/pww-data.md) · [how-to-analyze-results](how-to-analyze-results.md)
 
 ## Content
 
-**Step 1 of the flagship trail** → next: [timestep-simulation-setup](timestep-simulation-setup.md).
+**Step 1 of this reading sequence** → next: [timestep-simulation-setup](timestep-simulation-setup.md).
 What esapp *is* (the full API map): [esapp](../concepts/esapp.md). The COM server underneath:
 [powerworld-simauto](../concepts/powerworld-simauto.md).
 
@@ -29,7 +30,7 @@ All snippets below are verified against `C:\path\to\esapp`.
 
 Windows + PowerWorld Simulator installed (SimAuto is a COM server). Use the
 project venv `C:\path\to\.venv` (Python 3.13, `esapp` editable).
-See esapp package for the exact environment.
+See [esapp-environment](../concepts/esapp-environment.md) for the exact environment.
 
 ## 1. Open a case
 
@@ -37,7 +38,7 @@ See esapp package for the exact environment.
 from esapp import PowerWorld
 from esapp.components import Bus, Gen, Load, Branch, Shunt, Area, Zone
 
-pw = PowerWorld(r"D:\path\to\case.pwb")   # opens via SAW(..., CreateIfNotFound=True)
+pw = PowerWorld(r"C:\path\to\case.pwb")   # opens via SAW(..., CreateIfNotFound=True)
 pw.summary()          # dict: n_bus, n_branch, n_gen, n_load, total_gen_mw,
                       #       total_load_mw, v_min, v_max, sbase
 pw.n_bus, pw.n_gen    # quick integer properties
@@ -74,7 +75,7 @@ pw[Load] = loads                      # bulk update; must carry primary keys
 Bulk `pw[Type] = df` can also create new objects — but only in EDIT mode
 (`pw.edit_mode()`) with `CreateIfNotFound=True`, and the DataFrame must carry a complete
 key set. A filtered subset is fine: PowerWorld matches rows by key, so writing 3 rows
-touches 3 objects.
+touches 3 objects (the positional `pw[Obj, field]` form differs; see [AGENTS.md](../AGENTS.md) code rule 2).
 
 On esapp 0.1.x a read-only column made the whole write raise. **On 0.2.1 it only emits
 `UserWarning: Read-only field(s)` and the write is attempted anyway** — and that warning is
@@ -115,13 +116,15 @@ with pw.snapshot():             # auto-saves/restores case state
 ```
 
 Tune the solver via descriptor attributes before solving:
-`pw.flat_start = True`, `pw.max_iterations = 30`, `pw.dc_mode = True`, etc.
+`pw.max_iterations = 30`, etc. Not `pw.dc_mode = True` or `pw.flat_start = True`: a
+scripted solve ignores both. Use `pw.pflow(method="DC")` for a DC solve and
+`pw.flatstart()` for a flat start — see [handling-errors](handling-errors.md).
 
 ## Where to go next
 
 > **Note:** Older repos import `esa`; esapp is the updated, better-documented version of the same thing — write esapp. (Library choice only — unrelated to the TimeStep-vs-Transient-Stability distinction.)
 
-- Run a study over time → [timestep-simulation-setup](timestep-simulation-setup.md) (then time step simulation)
+- Run a study over time → [timestep-simulation-setup](timestep-simulation-setup.md) (then [timestep-simulation](../concepts/timestep-simulation.md))
 - Pull weather into the study → [pww-data](../concepts/pww-data.md)
 - Make sense of the outputs → [how-to-analyze-results](how-to-analyze-results.md)
 - Full tool reference (matrices, GIC, network, TS) → [esapp](../concepts/esapp.md)
