@@ -308,7 +308,7 @@ violations".
 returns one start line and ends, the run-supervisor watches, and the agent is started again on the
 results. Between gates the output folder is its memory.
 
-**The page is local (2026-09-30, Brian).** The Design Compare page is a local file for the agent
+**The page is local (2026-09-30, maintainer decision).** The Design Compare page is a local file for the agent
 and the engineer. The agent never publishes it; sharing it with teammates is the engineer's call.
 With no store behind a local file, Choose marks the card and copies "I pick <name>", and the pick
 comes back through the chat. On a restricted case the agent says once that the page embeds bus

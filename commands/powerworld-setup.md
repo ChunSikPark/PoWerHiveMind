@@ -39,17 +39,40 @@ python -m pip install --upgrade esapp TeamOverbyeWeather pywin32 openpyxl
 
 If pip is missing, `python -m ensurepip --upgrade` first.
 
+Then confirm the install landed in **the same interpreter**, using the same `python` command
+that ran pip:
+
+```bash
+python -c "import sys, esapp; print(sys.executable); print(esapp.__file__)"
+```
+
+If that raises `ModuleNotFoundError`, pip installed somewhere else: stop and report both
+paths. Run this, and the preflight below, with plain `python`, never `python -I`. Isolated
+mode hides the user site-packages, where a `--user` install puts esapp, and reports it
+missing when it is there.
+
 ## 3. Run the preflight
 
 Call `preflight_machine()` from the script in
-`${CLAUDE_PLUGIN_ROOT}/methods/preflight-powerworld.md`. It runs checks 1 to 4 — the
+`${CLAUDE_PLUGIN_ROOT}/methods/preflight-powerworld.md`, with the same `python` as step 2. It runs checks 1 to 4 — the
 platform, `pywin32`, `esapp`, and the SimAuto COM server — and needs no case file. **Read
 that page and use its script**; do not write your own version from memory. Leave check 5
 (`preflight_case`) alone: the user has not given you a case yet.
 
-**Report the Simulator build date the preflight prints.** PowerWorld's behaviour shifts
-between versions and it shifts silently, so the build date belongs in every session's
-opening report. See `${CLAUDE_PLUGIN_ROOT}/concepts/version-requirements.md`.
+**Report the Simulator version, not only the build date the preflight prints.** PowerWorld's
+behaviour shifts between versions and it shifts silently, so the version belongs in every
+session's opening report. On the same SimAuto object the preflight opened, read
+`sa.ProgramInformation[0]`: it returns `('version', <major>, <build date>, <release label>)`,
+such as `('version', 24, 2026-09-25, '25 beta')`. Report the **release label**, because a beta
+keeps the previous major number (see way 1 in
+`${CLAUDE_PLUGIN_ROOT}/concepts/version-requirements.md`). Compare it with the versions that
+page lists as tested, and tell the user in one line:
+
+- **A tested major version:** "You're on Simulator <n>, which HiveMind was tested on."
+- **Any other:** "You're on Simulator <n>. HiveMind was tested on <tested versions>. Most of it
+  should work, but if a command fails, the version is a likely cause."
+
+Do not name commands that will fail: the page has no per-command list, only what was tested.
 
 ## 4. Say what the result means
 
@@ -97,6 +120,6 @@ If they say yes:
 
 ## 6. Then stop
 
-Say what passed, what the build date is, and — if it failed — which check and what it
+Say what passed, the Simulator version and build date, and — if it failed — which check and what it
 means. Do not begin an analysis. Ask the user what they want to do next; if they have a
 case file, `${CLAUDE_PLUGIN_ROOT}/methods/esapp-overview.md` is the next page.

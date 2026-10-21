@@ -4,6 +4,12 @@ You have a knowledge base for **PowerWorld Simulator automation**: driving Power
 from Python with `esapp`, including PowerWorld's own weather features (PWW files and
 TimeStep simulation).
 
+**Start here:**
+1. [Run the preflight](#when-the-user-hands-you-a-case-file) before any analysis code.
+2. [Search the pages](#how-to-find-the-page--and-how-much-of-it-to-read) on both the plain-English and the identifier phrasing.
+3. [Task routing](#task-routing) when search comes back thin.
+4. [Rules that fail silently](#rules-that-apply-to-every-line-of-code-you-write) before writing any code.
+
 ## The rule that overrides your defaults
 
 **Consult this knowledge base before you reason. Do not work it out yourself.**
@@ -38,7 +44,7 @@ knew.
 
 ## How to find the page — and how much of it to read
 
-The kit is 50 pages — 20 in `concepts/`, 18 in `methods/`, 8 in `demos/`, 4 in
+HiveMind is 68 pages — 26 in `concepts/`, 27 in `methods/`, 8 in `demos/`, 7 in
 `references/` — and you will need three to five of them. The ladder below is about
 **finding** the right page cheaply. It is not a budget on how much of that page you read.
 
@@ -108,6 +114,10 @@ Do this in order. Do not skip step 1.
    [concepts/version-requirements.md](concepts/version-requirements.md).
 2. **Open and summarize** the case using [methods/esapp-overview.md](methods/esapp-overview.md).
    Report bus/branch/generator counts and whether it solves before doing anything else.
+   **Count the load and generation on buses that are not connected**, and the MW they
+   carry. A 0 pu bus is not "just a dead bus" until you have checked: an islanded load
+   keeps a closed status, the solve still converges, and the case quietly serves less
+   than it says (seen 2026-10-20 on a 2,000-bus synthetic case). If that count is not zero, it is your first finding.
 3. **Then** find the page for the actual task in the table below.
 
 ## You are here to run studies, not answer queries
@@ -128,6 +138,47 @@ user's call, not yours.
 
 Say what you tested, what you rejected, and what you did **not** save.
 
+## Scope the work before you start
+
+Studies here are slow: one N-1 pass takes minutes, and a search over designs takes hours.
+An agent that keeps going after the answer is in hand ends with nothing to show. These
+rules decide how much to do.
+
+1. **Answer the question asked, then offer.** Once the question is answered with evidence,
+   report it. The diagnosis and quick checks that make the answer trustworthy are part of it
+   (see *You are here to run studies*). A new long study is not: list it as a one-line offer
+   and do not run it unasked.
+2. **Estimate before any long study.** Before a study or search, estimate its minutes. Over
+   15 minutes, say so and ask first. If you cannot ask (a headless run), spend at most half
+   your time on it, then report the best result so far. Never spend the whole budget on a
+   search and report nothing.
+3. **Design requests: one design that works, first.** For "connect these loads", "design
+   …", "the cheapest …", first build one design that solves in AC, serves the load (read the
+   MW back), and passes N-1. Cost it and report it. That is a deliverable. Improving it is an
+   offer. If the user explicitly wants the cheapest, search only a candidate set you name,
+   and report "best of the N tried, not proven optimal".
+4. **Vague requests get an audit and one question.** For "fix my case", "check this" or
+   "improve it", run the [case audit](skills/case-audit/SKILL.md), list what it found grouped
+   by cause, and ask one question with a default ("fix the islanded loads first?"). Do not
+   pick a criterion yourself and run a study on it.
+5. **Out of scope means stop.** If the task needs something this base does not cover (see
+   *Reporting back*), say so in your first lines and stop **before running anything**.
+   "Not covered" means theory with no procedure page here. If a page shows how to run it
+   (N-1 contingency analysis, a DC or AC OPF, a time step), it is in scope.
+   Offer what you can do instead. Starting it anyway costs the user time and a working
+   answer.
+6. **A wrong premise: show the evidence, propose the fix, ask.** If the request rests on
+   something false ("the contingency list is huge" when it is in fact incomplete), say so in
+   the first line and **prove it with a table**: the counts, and the specific items behind
+   them (for example every in-service branch in the area that has no outage). Then propose
+   the concrete fix ("I can build the complete N-1 set for Far West and West, about N
+   outages. Go ahead?") and wait for approval before building it. If asked for something
+   safe that still makes sense (a smaller list), deliver it, verified, beside the evidence.
+7. **N-1 for a region needs that region's outages.** Monitoring an area is not testing it.
+   Before solving "N-1 for West", count the outages whose elements sit in each area asked
+   about, and assert each count is non-zero and plausible against that area's in-service
+   branches. See [methods/new-device-contingency-aux.md](methods/new-device-contingency-aux.md).
+
 ## Task routing
 
 | The user wants… | Read |
@@ -136,6 +187,15 @@ Say what you tested, what you rejected, and what you did **not** save.
 | To know what a term or acronym means | [concepts/glossary.md](concepts/glossary.md) |
 | To compare two cases / find what a plan builds | [demos/comparing-planning-cases.md](demos/comparing-planning-cases.md) |
 | To fix violations, not just report them | [demos/violation-remediation.md](demos/violation-remediation.md) |
+| To make a large case N-1 clean, round after round | [methods/remediating-n1-contingency-violations.md](methods/remediating-n1-contingency-violations.md) |
+| To fix intact-case (N-0) voltage or thermal violations cheaply | [methods/remediating-base-case-violations.md](methods/remediating-base-case-violations.md) |
+| Why a contingency did not solve | [methods/diagnosing-a-non-converging-contingency.md](methods/diagnosing-a-non-converging-contingency.md) |
+| Who picks up lost generation in a contingency (participation factors) | [concepts/agc-participation-factors.md](concepts/agc-participation-factors.md) |
+| How big a new transformer should be | [concepts/sizing-a-device-whose-impedance-determines-its-own-flow.md](concepts/sizing-a-device-whose-impedance-determines-its-own-flow.md) |
+| To delete dead buses that inflate islanding or N-1 counts | [methods/removing-empty-buses.md](methods/removing-empty-buses.md) |
+| To review a design against a brief before presenting it | [methods/reviewing-a-design.md](methods/reviewing-a-design.md) |
+| Which loads go radial or get cut off by one outage | [methods/finding-and-fixing-radial-by-n1-pockets.md](methods/finding-and-fixing-radial-by-n1-pockets.md) |
+| Load served differs from the load entered | [methods/zone-load-multiplier-trap.md](methods/zone-load-multiplier-trap.md) |
 | To see violations or islanding on a map | [methods/violation-network-map.md](methods/violation-network-map.md), built by the `violation-map` skill |
 | Which object, field or command to use, and what the kit says about it | `python "$KIT/skills/schema-lookup/engine/lookup.py"`, see [skills/schema-lookup/SKILL.md](skills/schema-lookup/SKILL.md) |
 | Whether a case is sane and ready for a study, with a case summary | `python "$KIT/skills/case-audit/engine/audit.py"`, see [skills/case-audit/SKILL.md](skills/case-audit/SKILL.md) |
@@ -156,7 +216,7 @@ Say what you tested, what you rejected, and what you did **not** save.
 | To change limit-monitoring thresholds | [methods/powerworld-limitset-setdata.md](methods/powerworld-limitset-setdata.md) |
 | To reclassify lines as transformers | [methods/converting-lines-to-transformers.md](methods/converting-lines-to-transformers.md) |
 | To drive Simulator without SimAuto, by dropping aux files | [methods/aux-file-mode.md](methods/aux-file-mode.md) for the rules and a working template; [concepts/powerworld-script-transfer.md](concepts/powerworld-script-transfer.md) for how the channel itself works. Read the first one before writing a script |
-| A SCRIPT action but does not know its name | [references/aux-script-commands.md](references/aux-script-commands.md) |
+| A SCRIPT action but does not know its name | [references/aux-script-commands.md](references/aux-script-commands.md), then call the esapp method of the same name (code rule 4) |
 | Exact field names and signatures | [references/esapp-schema-reference.md](references/esapp-schema-reference.md) |
 
 ## Rules that apply to every line of code you write
@@ -252,6 +312,19 @@ just a wrong answer or a write that did nothing.
    *When something goes wrong* below). And never run under `-W error::UserWarning`: it
    converts these false alarms into hard failures on code that works.
 
+## This machine is shared
+
+Other people and other agents run PowerWorld and Python on the same machine. **Never kill a
+process by name**: no `Stop-Process -Name`, no `Get-Process python | Stop-Process`, no
+`taskkill /IM`, no `pkill`. Each of those takes down work that is not yours. Record the PID of
+anything you start and stop only those PIDs (`Stop-Process -Id <pid>`). Never kill a
+`pwrworld.exe` you did not start: you cannot tell whose it is.
+
+**Never install or upgrade packages on your own.** If an import fails, check first that you
+did not run Python with `-I` (isolated mode hides user-installed packages such as esapp),
+then tell the user to run `/powerworld-hivemind:powerworld-setup`. A `pip install` on a shared
+machine changes everyone's environment.
+
 ## When something goes wrong
 
 Read [methods/handling-errors.md](methods/handling-errors.md). The short version: most
@@ -276,7 +349,8 @@ State plainly when something is outside what these pages cover. This kit is abou
 **PowerWorld automation** — operating Simulator from Python. It does not cover
 contingency analysis fundamentals, OPF formulation, PV/QV curve studies, transient
 stability theory, or weather science such as dynamic line ratings and IEEE 738 thermal
-modelling. Say so rather than improvising.
+modelling. Say so rather than improvising, and do not run the out-of-scope study anyway
+(rule 5 of *Scope the work before you start*).
 
 ## Filing a defect against this knowledge base
 
@@ -299,7 +373,9 @@ https://github.com/ChunSikPark/PowerWorldHiveMind/issues/new?title=TITLE&body=BO
 ```
 
 Percent-encode `TITLE` and `BODY`. Use `Page wrong: methods/<page>.md` or
-`No page: <topic>` as the title and `page-defect` or `missing-page` as the label. The body
+`No page: <topic>` as the title and `page-defect` or `missing-page` as the label, plus a
+second label for the page's `topic:` slug (or, for a missing page, the topic it would belong
+under), e.g. `labels=page-defect,scripting`. The body
 should carry: the page you followed, the code you ran, what PowerWorld did instead of what
 the page predicted, the Simulator build date from preflight, and the esapp version. Keep it
 compact — a URL past roughly 8,000 characters will not open, so link to a gist or ask the
@@ -310,7 +386,7 @@ If `gh` is installed and authenticated on this machine, this files it in one ste
 ```bash
 gh issue create --repo ChunSikPark/PowerWorldHiveMind \
   --title "Page wrong: methods/save-powerworld-case.md" \
-  --label page-defect --body "..."
+  --label page-defect --label scripting --body "..."
 ```
 
 **Either way, show the user the exact text first and say that the tracker is public.** A

@@ -1,16 +1,17 @@
 ---
 name: schema-lookup
-description: "Answer which PowerWorld object, field or SCRIPT command to use, and show what the kit's study pages say about it. Use when the user asks which field holds something, what the key or required fields of an object are, how to set an option (iterations, island reporting, SCOPF loops, DC mode), what a field or concise name means, or whether a field exists at all - e.g. 'which parameter do I set for...', 'what fields does a shunt need', 'is there a setting for...'."
+description: "Answer which PowerWorld object, field or SCRIPT command to use, and show what HiveMind's study pages say about it. Use when the user asks which field holds something, what the key or required fields of an object are, how to set an option (iterations, island reporting, SCOPF loops, DC mode), what a field or concise name means, or whether a field exists at all - e.g. 'which parameter do I set for...', 'what fields does a shunt need', 'is there a setting for...'."
+topic: agents
 ---
 
 # Schema lookup
 
-Answer from the kit's own sources, never from memory. PowerWorld has about 1,000 object types
+Answer from HiveMind's own sources, never from memory. PowerWorld has about 1,000 object types
 and 100,000 fields; a guessed field name fails silently.
 
 ## 0. The kit root
 
-Installed as a Claude Code plugin, `${CLAUDE_PLUGIN_ROOT}` in this file is replaced with the kit's
+Installed as a Claude Code plugin, `${CLAUDE_PLUGIN_ROOT}` in this file is replaced with HiveMind's
 absolute path before you read it, so the commands below run as written. It is **not** an
 environment variable: in any other harness, or if you still see the literal text
 `${CLAUDE_PLUGIN_ROOT}`, type the absolute path of the directory holding `AGENTS.md` in its place.
@@ -28,6 +29,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/schema-lookup/engine/lookup.py" search "<wo
 - A field may be given by variable name (`DCPFMode`), concise name (`DCApprox`) or Python
   spelling (`MaxItr__1`); all resolve to one field.
 - Exit 2 with "pip install openpyxl": tell the user to run it (or `/powerworld-hivemind:powerworld-setup`).
+- Otherwise, relay any other exit-2 message verbatim.
 
 ## 2. Read what the tool printed about the hub
 

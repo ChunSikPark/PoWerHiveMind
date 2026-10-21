@@ -1,6 +1,7 @@
 ---
 name: powerworld
 description: "Use when working with PowerWorld Simulator, .pwb case files, SimAuto, or the esapp Python package - opening or modifying cases, solving power flow, adding buses/lines/generators, applying a dispatch, contingency analysis and violation reports, saving cases, and PowerWorld SCRIPT/aux actions. Also covers PowerWorld's built-in weather features: PWW weather files, TimeStep simulation for hourly renewable generator output, and fetching the .pww files those need via the TeamOverbyeWeather client. Also fires on power-system study work phrased without any tool name: overloaded or heavily loaded branches, N-1 violations and what caused them, comparing two planning cases or vintages, what a transmission plan builds, testing whether a new line or reinforcement helps, hourly wind and solar output from weather, and applying a dispatch."
+topic: agents
 ---
 
 # PowerWorld expert
@@ -56,7 +57,7 @@ so a healthy-looking installation can still run no automation at all.
 `references/`, all under the kit root resolved above. Search page text, not the catalog.
 Put several terms in one pass and include both the plain-English phrasing and the
 identifier it maps to ("save the case" *and*
-`SaveCase`), then rank a page by how many terms land on it. Measured over 48 agents on 16
+`SaveCase`), then rank a page by how many terms land on it. Measured 2026-09-07 over 48 agents on 16
 questions: search found the right page 10 times out of 16, the routing table 8, starting from
 `index.md` 7.
 
@@ -64,7 +65,7 @@ Once you have the right page, **read its `## Content` in full.** The limit is on
 not depth** — opening eight pages while hunting means your search terms were wrong, not that
 you should read less of the page you found.
 
-`AGENTS.md` at the kit root carries the full 23-row task-routing table and the rest of the
+`AGENTS.md` at the kit root carries the full 28-row task-routing table and the rest of the
 ladder. Use it and `index.md` as disambiguators when search comes back thin, never as the
 first move — both name topics, and a topic is coarser than a page.
 
@@ -79,6 +80,36 @@ case each and measure — reinforcing a network can make it worse, and reasoning
 you which. Track count and severity separately; they disagree. Say what you rejected and what
 you did not save. See `demos/violation-remediation.md`, where 2 of 5 plausible reinforcements
 degraded N-1.
+
+When you open a case, count the load and generation on buses that are not connected. An
+islanded load keeps a closed status and the solve still converges, so a 0 pu bus is not
+"just dead" until you have checked. If the count is not zero, it is your first finding.
+
+## Scope the work before you start
+
+Studies are slow, and an agent that keeps going after the answer is in hand ends with nothing
+to show. `AGENTS.md` has the full rules; in short:
+
+1. **Answer the question asked, then offer.** Diagnosis and quick checks are part of the answer;
+   a new long study is a one-line offer. Don't run it unasked.
+2. **Estimate minutes before a long study.** Over 15, say so and ask; if you can't ask, spend at
+   most half your time on it and report the best result so far.
+3. **Design requests: one working design first.** It must solve AC, serve the load (MW read back)
+   and pass N-1, with its cost reported. Improving it is an offer. "The cheapest" means a named
+   candidate set, reported as "best of N tried, not proven optimal".
+4. **Vague requests** ("fix my case") get the case audit, findings grouped by cause, and one
+   question with a default. Don't pick a criterion yourself and run a study on it.
+5. **Out of scope means stop**, before running anything. Out of scope is theory with no procedure
+   page here; if a page shows how to run it, it is in scope. See *Scope* below.
+6. **A wrong premise: show the evidence, propose the fix, ask.** Say it's wrong, prove it with a
+   table of the counts and the items behind them, offer the concrete fix, and wait for approval.
+7. **N-1 for a region needs that region's outages**, not just its monitoring. Before solving,
+   assert each area's outage count is non-zero and plausible against its in-service branches
+   (`methods/new-device-contingency-aux.md`).
+
+**This machine is shared.** Never kill a process by name (`Stop-Process -Name`,
+`Get-Process x | Stop-Process`, `taskkill /IM`, `pkill`): it takes down other people's work.
+Stop only the PIDs you started, and never a `pwrworld.exe` you did not start.
 
 ## Rules that fail silently
 
@@ -96,6 +127,8 @@ produces a wrong answer.
    PowerWorld changes that command's syntax. Reach for `RunScriptCommand` only where no
    wrapper exists (~41 actions, mostly oneline/GUI and dialogs). Check esapp's own method
    list before concluding a wrapper is missing, and leave a comment saying why.
+   Some demos and concept pages predate this rule and call `RunScriptCommand`; follow the
+   rule, not the page.
 4. **`SaveCase` is the exception.** It is a COM method, not one of the 310, and
    `pw.esa.SaveCase(...)` is a silent no-op — returns success, writes nothing. Use the script
    form and assert the file exists:
@@ -180,6 +213,6 @@ user edit it or decline.
 Covers PowerWorld automation, including its PWW/TimeStep weather features. Does **not** cover
 contingency analysis fundamentals, OPF formulation, PV/QV curve theory, transient stability
 theory, or weather science such as dynamic line ratings and IEEE 738 — say so rather than
-improvising.
+improvising, and don't run the out-of-scope study anyway.
 
 Cite which pages you used, so a wrong answer is traceable to a page that needs fixing.

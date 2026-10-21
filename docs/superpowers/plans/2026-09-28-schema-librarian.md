@@ -1176,7 +1176,7 @@ field asked about. If the export has no such field, say so and show what the too
 
 This needs a human in Claude Code. The published marketplace points at GitHub, which lags this working tree, so load the **local** tree:
 
-1. Start Claude Code with this working tree as a plugin: `claude --plugin-dir D:/Deployed_Projects/PowerWorldHiveMind` (check the flag name in `claude --help`; if absent, add the working tree as a local marketplace with `/plugin marketplace add D:/Deployed_Projects/PowerWorldHiveMind` and install from it).
+1. Start Claude Code with this working tree as a plugin: `claude --plugin-dir <path-to-your-clone>` (check the flag name in `claude --help`; if absent, add the working tree as a local marketplace with `/plugin marketplace add <path-to-your-clone>` and install from it).
 2. Run `/agents`. Expected: `schema-librarian` listed under `powerworld-hivemind`.
 
 If it is **not** listed, stop and report: Plans 2–4 assume `agents/` loads, and the spec's layout changes first. Record the result and the Claude Code version for the Task 8 commit message.
