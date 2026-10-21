@@ -5,6 +5,7 @@
 ---
 type: method
 domain: tooling
+topic: design
 aliases: [demo-adding-device, add-line-demo, createdata-demo, silent-no-op-demo]
 tags: [demo, esapp, createdata, branch, n-1, worked-example]
 ---
@@ -13,14 +14,14 @@ tags: [demo, esapp, createdata, branch, n-1, worked-example]
 
 ## Abstract
 
-A complete worked run on a real 37-bus case. **Everything below actually happened**,
+A complete worked run on the public synthetic Synth40 case (37 buses). **Everything below actually happened**,
 including three failed attempts that raised no error at all. This is the single most
 important demo in the kit: `CreateData` accepts a malformed call, reports success, and
 creates nothing. If you read only one demo, read this one.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md) · [index](../index.md)
 - **Across:** [adding-devices-esapp](../methods/adding-devices-esapp.md) · [handling-errors](../methods/handling-errors.md) · [esapp-environment](../concepts/esapp-environment.md)
 
 ## Content
@@ -142,6 +143,7 @@ ASSERTION PASSED - device really created
 ### Step 4 — always assert the count
 
 ```python
+expected = 1
 assert n1 - n0 == expected, "CreateData silently skipped the device"
 ```
 
@@ -189,6 +191,7 @@ silently.
 ---
 type: reference
 domain: tooling
+topic: scripting
 aliases: [aux-cookbook, two-window-workflow, script-transfer-walkthrough, first-drop,
   getting-started-aux, external-script-control-setup]
 tags: [demo, aux, script-transfer, walkthrough, getting-started, two-window]
@@ -590,6 +593,7 @@ happened once.
 ---
 type: method
 domain: tooling
+topic: design
 aliases: [comparing-planning-cases, case-diff, case-comparison, planning-delta, what-changed, new-devices]
 tags: [demo, planning, case-diff, contingency, aux, esapp, worked-example]
 ---
@@ -605,7 +609,7 @@ a scoping trap that would have made the headline answer **87% wrong**.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md)
 - **Across:** [new-device-contingency-aux](../methods/new-device-contingency-aux.md) · [ranking-new-devices-by-severity](../methods/ranking-new-devices-by-severity.md) · [contingency-and-aux](contingency-and-aux.md) · [reading-violationctg](../methods/reading-violationctg.md) · [adding-devices-esapp](../methods/adding-devices-esapp.md)
 
 ## Content
@@ -618,8 +622,9 @@ a scoping trap that would have made the headline answer **87% wrong**.
 ### Step 1 — the two cases
 
 ```python
+import os
 from esapp import PowerWorld
-from esapp.components import Bus, Branch, Gen
+from esapp.components import Bus, Branch, Gen, Contingency, ViolationCTG
 
 a = PowerWorld(r"C:\cases\Synth2k_case1.pwb")
 b = PowerWorld(r"C:\cases\Synth2k_case.PWB")
@@ -689,6 +694,73 @@ naive answer was fiction and you would never have known.
 Devices present in both but with changed parameters are a third category — **UPGRADED**
 — found by comparing ratings and impedances on the common keys, not by set difference.
 
+**When the two counts disagree, pair a removal with an addition on a second identity.** A key is a
+label, and labels get rewritten for reasons that have nothing to do with the device. Find an
+attribute that names the *thing* rather than the *record* and that the relabelling does not touch:
+for a bus, `(BusName, BusNomVolt)`, because a renumbered substation keeps its name and its voltage.
+Pair a retired-looking record with a new-looking one only when the rest of its identity matches
+(the `GenID`, the untouched far endpoint) **and** the moved key's second identity is unchanged.
+Three rules keep the pairing from hiding real findings:
+
+1. **Decline ambiguity; do not resolve it.** Several buses in one substation often share a name at
+   one voltage. If more than one candidate fits, make no pair. A guess that lands wrong turns a
+   real retirement into housekeeping, silently.
+2. **One addition can excuse only one removal.** Otherwise two devices that genuinely went away
+   both point at one new record and both vanish from the count.
+3. **Mark both halves, or neither.** Excusing the retirement while leaving its partner in the added
+   list is worse than doing nothing: the totals now disagree with each other, and the clean-looking
+   one is the wrong one.
+
+**Name what stayed behind.** Reserve "removed" for the strongest claim: the record is gone **and**
+so is the thing it named (neither number nor name survives). Everything weaker gets a verdict that
+says what is left: *bus remains, device gone*, *renumbered*, *renumbered (unpaired)*. A confirmed
+relabelling belongs in its own category, not under "removed" or "added", or the reader has to
+subtract in their head.
+
+**The two errors do not cost the same.** Calling a relabelling a retirement inflates the project
+list, which is **visible** on inspection. Calling a retirement a relabelling hides a removed device,
+which **silently never appears**. So when the evidence is suggestive but unconfirmed, let it count
+as gone and say why in the label.
+
+**Generators need their own two comparisons.** In a 2026-10-20 validation run, three agents
+reported "no generator settings changed" while voltage control (AVR) had been switched off on
+two generators. Compare status, AVR and AGC per generator on its key pair, then in-service MW
+and capacity by area, zone and fuel type. A design that quietly shifts where power comes from
+shows up in the second table.
+
+```python
+import pandas as pd
+
+def gens(pw, fields):
+    g = pw[Gen, ["BusNum", "GenID"] + fields]
+    g["GenID"] = g["GenID"].astype(str).str.strip()
+    return g.set_index(["BusNum", "GenID"])
+
+ctl = ["GenStatus", "GenAVRAble", "GenAGCAble"]
+ga, gb = gens(a, ctl), gens(b, ctl)
+common = ga.index.intersection(gb.index)
+flips = (ga.loc[common] != gb.loc[common]).any(axis=1)
+print(pd.concat({"base": ga.loc[common][flips], "design": gb.loc[common][flips]}, axis=1))
+
+mix = ["GenStatus", "GenMW", "GenMWMax", "AreaNum", "ZoneNum", "GenFuelType"]
+def by(pw, col):
+    g = gens(pw, mix)
+    return g[g.GenStatus == "Closed"].groupby(col)[["GenMW", "GenMWMax"]].sum()
+for col in ("AreaNum", "ZoneNum", "GenFuelType"):
+    t = pd.concat({"base": by(a, col), "design": by(b, col)}, axis=1).fillna(0)
+    d = t["design"] - t["base"]
+    print(t[d["GenMWMax"].abs() > 1.0])                  # capacity added, removed or switched off
+    print(d["GenMW"].sort_values(key=abs, ascending=False).head(5))  # where the new load's MW came from
+```
+
+Judge the shift on **capacity** (`GenMWMax` of in-service units), not on `GenMW`. A design that
+adds load moves dispatched MW in every area, because the slack and AGC pick it up, so a
+threshold on `GenMW` flags everything. Read the `GenMW` change as where the new load's power came
+from. Measured 2026-10-21 on a 2,000-bus synthetic case and a design copy: the control flip found
+exactly the two units with AVR switched off, while a 1 MW `GenMW` threshold flagged all 8 areas.
+`GenAVRAble` and `GenAGCAble` read back padded (`"NO "`), so strip them before comparing to a
+literal.
+
 ### Step 3 — a contingency set for only the new devices
 
 ```python
@@ -750,7 +822,7 @@ filter by the labels you actually created:
 labs = v["CTGLabel"].astype(str).str.strip()
 mine = labs.str.startswith("NEW_")
 print("from MY new-device contingencies :", int(mine.sum()))
-print("from contingencies already in the case:", int((~mine).sum()))
+print("from OTHER contingencies already in the case:", int((~mine).sum()))
 ```
 
 ```
@@ -830,6 +902,7 @@ attributing anything to the plan.
 ---
 type: method
 domain: tooling
+topic: contingency
 aliases: [demo-contingency, n-1-demo, aux-generation-demo, ctg-demo, filter-demo]
 tags: [demo, contingency, n-1, aux, filter, esapp, worked-example]
 ---
@@ -838,14 +911,14 @@ tags: [demo, contingency, n-1, aux, filter, esapp, worked-example]
 
 ## Abstract
 
-Running N-1 from nothing on a real 37-bus case, then **writing a filter and contingency
+Running N-1 from nothing on the public synthetic Synth40 case (37 buses), then **writing a filter and contingency
 `.aux` automatically** from the analysis result and loading it back. All numbers are from
 an actual run: 89 auto-inserted contingencies, 12 violations, then 5 targeted
 contingencies generated and merged.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md) · [index](../index.md)
 - **Across:** [reading-violationctg](../methods/reading-violationctg.md) · [new-device-contingency-aux](../methods/new-device-contingency-aux.md) · [aux-script-commands](../references/aux-script-commands.md) · [handling-errors](../methods/handling-errors.md)
 
 ## Content
@@ -870,7 +943,7 @@ pw.esa.RunScriptCommand("CTGClearAllResults")   # do not skip this
 pw.esa.RunScriptCommand("CTGAutoInsert")
 pw.esa.RunScriptCommand("CTGSolveAll")
 
-print("contingencies:", len(pw[Contingency]))
+print(f"auto-inserted {len(pw[Contingency])} contingencies")
 ```
 
 ```
@@ -981,7 +1054,7 @@ CONTINGENCY (Name, Skip)
 before = len(pw[Contingency])
 pw.esa.RunScriptCommand(f'LoadAux("{out}", YES)')
 after = len(pw[Contingency])
-print(f"contingencies {before} -> {after}  (added {after - before})")
+print(f"contingencies before: {before}\nafter: {after}  (added {after - before})")
 ```
 
 ```
@@ -1033,6 +1106,7 @@ An aux that fails to parse can leave the case unchanged without raising. Count.
 ---
 type: method
 domain: tooling
+topic: power-flow
 aliases: [demo-power-flow, dcpf-demo, ptdf-demo, lodf-demo, sensitivities-demo]
 tags: [demo, powerflow, dcpf, ptdf, lodf, esapp, worked-example]
 ---
@@ -1041,14 +1115,14 @@ tags: [demo, powerflow, dcpf, ptdf, lodf, esapp, worked-example]
 
 ## Abstract
 
-Solving a case and asking the three standard sensitivity questions, on a real 37-bus
-system. Includes the `1e8` sentinel that makes LODF results look insane, and a PTDF
+Solving a case and asking the three standard sensitivity questions, on the public synthetic
+Synth40 case (37 buses). Includes the `1e8` sentinel that makes LODF results look insane, and a PTDF
 failure whose obvious recovery **also fails** — both encountered in an actual run, both
 recovered without asking the user.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md) · [index](../index.md)
 - **Across:** [esapp-overview](../methods/esapp-overview.md) · [lodf](../concepts/lodf.md) · [handling-errors](../methods/handling-errors.md) · [esapp-environment](../concepts/esapp-environment.md)
 
 ## Content
@@ -1063,7 +1137,7 @@ recovered without asking the user.
 
 ```python
 from esapp import PowerWorld
-from esapp.components import Bus, Branch, Gen, Load
+from esapp.components import Bus, Branch, Gen, Load, Area
 
 pw = PowerWorld(r"C:\path\to\Synth40.pwb")
 pw.pflow()
@@ -1098,23 +1172,22 @@ top = br.sort_values("LinePercent", ascending=False).head(5)
 Four identical rows for 19→23 are four **parallel circuits**, not duplicates. Check the
 circuit id before reporting a repeated bus pair as a data error.
 
-### DC power flow — an option, not a method
+### DC power flow — pass the method, do not set the flag
 
 ```python
-pw.dc_mode = True      # NOT pw.dc_mode(True)
-pw.pflow()
+pw.pflow(method="DC")      # NOT pw.dc_mode = True
 print(f"max loading {pw[Branch, 'LinePercent']['LinePercent'].max():.2f}%")
-pw.dc_mode = False     # put it back
-pw.pflow()
+pw.pflow()                 # an AC method puts the case back to AC
 ```
 
-```
-max loading 80.96%  |  branches >90%: 0
-```
-
-`pw.dc_mode(True)` raises `TypeError: 'bool' object is not callable`. It is an assignable
-solver option. Same for the other solver flags: `flat_start`, `max_iterations`,
-`enforce_gen_mw_limits`.
+`pw.dc_mode(True)` raises `TypeError: 'bool' object is not callable`, and
+`pw.dc_mode = True` is no better: PowerWorld ignores it on a scripted solve (live-tested
+2026-09-23), so the next `pw.pflow()` still runs AC. An earlier version of this demo did
+exactly that and printed `max loading 80.96%`, the same figure as the AC ranking above.
+To confirm a solve really ran DC, check that every bus sits at exactly 1.0 pu
+([lodf](../concepts/lodf.md)). `flat_start` is
+the same trap: call `pw.flatstart()` instead. See
+[handling-errors](../methods/handling-errors.md).
 
 **A DC solve always reports zero mismatch.** It cannot tell you generation is short — the
 slack bus absorbs the shortfall silently. Check the schedule against load directly, and
@@ -1235,6 +1308,7 @@ pw.ybus(dense: bool = False)                          # csr_matrix (37, 37)
 ---
 type: method
 domain: tooling
+topic: scripting
 aliases: [demos-index, demos, demo-index, examples, worked-examples]
 tags: [demo, index, examples, prompts, getting-started]
 ---
@@ -1243,7 +1317,7 @@ tags: [demo, index, examples, prompts, getting-started]
 
 ## Abstract
 
-Worked runs on a real 37-bus case (Synth40: 37 buses, 89 branches, 45 generators).
+Worked runs on the public synthetic Synth40 case (37 buses, 89 branches, 45 generators).
 Every number on these pages came from an actual run — including the failures, which were
 left in on purpose. Start with the one-line prompts below: you should not have to know
 which page covers what.
@@ -1292,6 +1366,7 @@ If a prompt fails, that is a defect worth reporting. The routing is
 | [power-flow-and-sensitivities](power-flow-and-sensitivities.md) | AC, DC, LODF, PTDF — with the `1e8` sentinel and a two-step error recovery |
 | [contingency-and-aux](contingency-and-aux.md) | N-1 from scratch, and generating a filter + contingency `.aux` automatically |
 | [timestep-and-pfw](timestep-and-pfw.md) | Weather to megawatts: PFW models, TimeStep, and reading the output |
+| [aux-file-cookbook](aux-file-cookbook.md) | Claude in one window, Simulator in the other. Four recipes in order: turn the channel on, prove it with a four-line script, inventory a case, then take a bus out and measure it. Start here if you are working through files rather than Python. |
 
 ### Queries versus studies
 
@@ -1353,6 +1428,7 @@ so. An analysis that quietly wrote to disk is worse than one that quietly did no
 ---
 type: method
 domain: weather
+topic: timestep
 aliases: [demo-timestep, pfw-demo, weather-to-mw-demo, timestep-demo]
 tags: [demo, timestep, pfw, pww, weather, renewables, esapp, worked-example]
 ---
@@ -1368,7 +1444,7 @@ wrong is why TimeStep runs "successfully" and produces nothing.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md) · [index](../index.md)
 - **Across:** [timestep-workflow](../concepts/timestep-workflow.md) · [timestep-simulation-setup](../methods/timestep-simulation-setup.md) · [teamoverbyeweather-client](../methods/teamoverbyeweather-client.md) · [pww-data](../concepts/pww-data.md) · [how-to-analyze-results](../methods/how-to-analyze-results.md)
 
 ## Content
@@ -1508,6 +1584,7 @@ confident wrong answer this kit exists to prevent.
 ---
 type: method
 domain: tooling
+topic: contingency
 aliases: [violation-remediation, remediation, fix-violations, reinforcement-study, n-1-remediation]
 tags: [demo, remediation, contingency, n-1, reinforcement, esapp, worked-example]
 ---
@@ -1518,13 +1595,13 @@ tags: [demo, remediation, contingency, n-1, reinforcement, esapp, worked-example
 
 The full study, not a readout: find the N-1 violations, work out *why* they happen,
 propose candidate reinforcements, test each one independently, and rank them by measured
-effect. Real numbers from a real 37-bus case. The headline result is one you cannot reach
+effect. Real numbers from the public synthetic Synth40 case (37 buses). The headline result is one you cannot reach
 by intuition — **two of five plausible reinforcements made the system worse**, and a
 third reduced the violation count while making the worst violation more severe.
 
 ## Connections
 
-- **Up:** [Home](../index.md) · demos index
+- **Up:** [Home](../index.md) · [index](../index.md)
 - **Across:** [reading-violationctg](../methods/reading-violationctg.md) · [adding-devices-esapp](../methods/adding-devices-esapp.md) · [ranking-new-devices-by-severity](../methods/ranking-new-devices-by-severity.md) · [contingency-and-aux](contingency-and-aux.md) · [handling-errors](../methods/handling-errors.md)
 
 ## Content
