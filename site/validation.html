@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HiveMind Benchmark</title>
+<meta name="description" content="30 real PowerWorld study requests given to a fresh Claude, with and without PowerWorldHiveMind: how many it solved, how long it took and what it cost, task by task.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script>/* dark unless the reader chose light here before */try{if(localStorage.getItem("pwhm-theme")==="light")document.documentElement.dataset.theme="light";}catch(e){}</script>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F2F5F3; --surface:#FFFFFF; --sunk:#E6ECE9; --ink:#18201D; --muted:#56635E; --rule:#CBD3CF;
+  --live:#C4302B; --open:#2C7A4B; --accent:#0B7A6C; --web:#9AA6A1; --eng:#A8650A;
+  /* token mix: categorical s6 / s1 / s2 from the house palette, distinct hues on purpose */
+  --tc:#7B5CD6; --tn:#8F8500; --to:#D6339B;
+  --cond:"IBM Plex Sans Condensed","Arial Narrow",sans-serif;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101513; --surface:#19201D; --sunk:#202825; --ink:#E2E8E5; --muted:#9AA6A1; --rule:#34403B;
+  --live:#F2665B; --open:#6CCB8E; --accent:#4CC3AE; --web:#5E6B66; --eng:#E3A449;
+  --tc:#c7a9ff; --tn:#faff69; --to:#ff6ec7;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.55 var(--sans);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;}
+a{color:inherit;text-underline-offset:3px;}
+a:hover{color:var(--accent);}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+button{font:inherit;color:inherit;}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px;}
+@media (max-width:640px){.wrap{padding:0 16px;}}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0;border-bottom:1px solid var(--rule);flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:12px;font:600 21px/1 var(--cond);text-decoration:none;}
+.brand img{width:38px;height:38px;}
+.top nav{display:flex;gap:20px;font-size:17px;align-items:center;flex-wrap:wrap;}
+.top nav [aria-current]{color:var(--accent);font-weight:600;text-decoration:none;}
+.thm{border:1px solid var(--rule);background:none;border-radius:4px;padding:5px 11px;font-size:14px;cursor:pointer;}
+main{padding:44px 0 56px;}
+.page{display:none;gap:32px;} .page.on{display:grid;}
+
+.hero{text-align:center;display:grid;gap:16px;justify-items:center;}
+.hero h1{margin:0;font:700 clamp(44px,6.6vw,88px)/1 var(--cond);letter-spacing:-.01em;}
+.hero p{margin:0;font:400 clamp(16px,1.6vw,20px)/1.5 var(--mono);color:var(--muted);max-width:52em;}
+.btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.b1,.b2{font:600 18px var(--sans);padding:13px 22px;border-radius:6px;text-decoration:none;cursor:pointer;display:inline-block;}
+.b1{background:var(--accent);color:var(--bg);border:0;}
+.b1:hover{color:var(--bg);filter:brightness(1.08);}
+.b2{background:var(--surface);color:var(--ink);border:1px solid var(--rule);}
+
+.ecards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;}
+@media (max-width:860px){.ecards{grid-template-columns:minmax(0,1fr);}}
+.ec{border:1px solid var(--rule);border-radius:10px;padding:20px 22px;display:grid;gap:10px;background:var(--surface);align-content:start;}
+.ec h2{margin:0;font:600 20px var(--cond);}
+.ec .big{font:700 56px/1 var(--cond);color:var(--accent);}
+.ec .big small{font:400 17px var(--sans);color:var(--muted);margin-left:8px;}
+.ec .vs{font:500 17px var(--mono);color:var(--muted);}
+.ec .vs b{color:var(--ink);font-weight:600;}
+.ec p{margin:0;color:var(--muted);font-size:16px;}
+
+.cap{font:16px var(--mono);color:var(--muted);margin:0 0 -18px;}
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:8px;background:var(--surface);}
+table.lb{width:100%;border-collapse:collapse;min-width:820px;}
+.lb th{font:600 14px var(--mono);letter-spacing:.06em;text-transform:uppercase;text-align:left;padding:16px 14px;border-bottom:1px solid var(--rule);}
+.lb th.r,.lb td.r{text-align:right;white-space:nowrap;}
+.lb td{padding:18px 14px;border-bottom:1px solid var(--rule);font:18px var(--mono);}
+.lb tr:last-child td{border-bottom:0;}
+.lb td.rk{color:var(--muted);width:64px;text-align:center;}
+.lb td.nm small{color:var(--muted);font-size:15px;margin-left:6px;}
+.lb td.sc{white-space:nowrap;}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:10px;vertical-align:0;}
+.dot.hm5{background:var(--accent);} .dot.hm4{border:2px solid var(--accent);}
+.rb{position:relative;display:block;width:240px;height:14px;background:var(--sunk);border-radius:3px;}
+.rb .fill{position:absolute;inset:0 auto 0 0;border-radius:3px;background:var(--accent);}
+.rb .fill.hm4{opacity:.45;}
+.rb .ci{position:absolute;top:50%;height:2px;background:var(--ink);opacity:.6;transform:translateY(-50%);}
+.rb .ci::before,.rb .ci::after{content:"";position:absolute;top:-5px;width:2px;height:12px;background:var(--ink);}
+.rb .ci::before{left:0;} .rb .ci::after{right:0;}
+.note{color:var(--muted);font-size:16px;margin:12px 0 0;}
+.cta{text-align:center;display:grid;gap:14px;justify-items:center;padding-top:16px;border-top:1px solid var(--rule);}
+.cta h2{margin:12px 0 0;font:700 40px var(--cond);}
+
+/* tasks view */
+.back{justify-self:start;color:var(--accent);font:600 17px var(--sans);text-decoration:none;}
+h1.t{margin:0;font:700 clamp(40px,5vw,56px)/1.05 var(--cond);}
+.lede{margin:0;color:var(--muted);max-width:60em;}
+.chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chips button{border:1px solid var(--rule);background:var(--surface);font:500 16px var(--sans);padding:8px 16px;border-radius:999px;cursor:pointer;}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+.legend{display:flex;flex-wrap:wrap;gap:10px 26px;font:600 17px var(--sans);align-items:center;background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:12px 16px;}
+.legend span{white-space:nowrap;}
+.legend .lt{font:700 15px var(--mono);letter-spacing:.06em;color:var(--muted);}
+.legend .ls{color:var(--muted);font-weight:400;white-space:normal;}
+.legend i{display:inline-block;width:26px;height:14px;border-radius:3px;margin-right:8px;vertical-align:-2px;}
+.thead,.task > summary{display:grid;grid-template-columns:44px minmax(0,1fr) 92px 270px 96px 92px 92px;gap:14px;align-items:center;}
+.thead{font:600 13px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 16px;}
+.thead .r{text-align:right;}
+.tasks{display:grid;gap:8px;}
+.task{background:var(--surface);border:1px solid var(--rule);border-radius:8px;}
+.task[open]{border-color:var(--accent);}
+.task > summary{list-style:none;cursor:pointer;padding:14px 16px;}
+.task > summary::-webkit-details-marker{display:none;}
+.tn{font:500 15px var(--mono);color:var(--muted);}
+.tq{font-weight:500;font-size:18px;min-width:0;}
+.tq small{display:block;font:500 13px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.vv{display:flex;gap:6px;}
+.vb{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;color:var(--bg);font:700 15px var(--sans);flex:none;}
+.vb.pass{background:var(--open);} .vb.partial{background:var(--eng);} .vb.fail{background:var(--live);}
+.vb.timeout{background:repeating-linear-gradient(135deg,var(--muted) 0 3px,var(--sunk) 3px 6px);color:var(--ink);}
+.tk{display:grid;gap:6px;}
+.tkb{display:flex;height:12px;flex:1;background:var(--sunk);border-radius:2px;overflow:hidden;}
+.tkb i{display:block;height:100%;}
+.tkb .c{background:var(--tc);} .tkb .n{background:var(--tn);} .tkb .o{background:var(--to);}
+.tv{display:grid;gap:2px;font:15px var(--mono);text-align:right;white-space:nowrap;}
+.tbody{padding:4px 16px 18px;border-top:1px solid var(--rule);display:grid;gap:14px;}
+.tbody h3{margin:12px 0 6px;font:600 13px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;}
+.tbody h3 .vb{width:22px;height:22px;font-size:12px;}
+.tbody blockquote{margin:0;padding:12px 16px;background:var(--sunk);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:17px;white-space:pre-wrap;}
+.arm{border:1px solid var(--rule);border-radius:8px;padding:4px 14px 12px;}
+.arm.hm5{border-top:3px solid var(--accent);}
+.head{font-size:19px;font-weight:600;line-height:1.45;margin:6px 0 8px;}
+.full summary{cursor:pointer;color:var(--accent);font:600 15px var(--sans);list-style:none;}
+.full summary::-webkit-details-marker{display:none;}
+.full summary::before{content:"\25b8\00a0\00a0";}
+.full[open] summary::before{content:"\25be\00a0\00a0";}
+.full p{color:var(--muted);font-size:17px;margin:6px 0 8px;}
+.meta{font:14px var(--mono);color:var(--muted);margin:4px 0 0;}
+@media (max-width:900px){
+  .thead{display:none;}
+  .task > summary{grid-template-columns:36px minmax(0,1fr) 76px;}
+  .tk,.tv{display:none;}
+}
+footer{border-top:1px solid var(--rule);padding:28px 0 48px;color:var(--muted);font-size:15px;}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./"><img src="logo.svg" alt=""> PowerWorldHiveMind</a>
+    <nav><a href="./">Home</a><a href="validation.html" aria-current="page">Benchmark</a><a href="install.html">Install</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a><button type="button" class="thm" id="thm">Light</button></nav>
+  </header>
+
+  <main>
+    <section class="page on" id="p-main" aria-label="Benchmark summary">
+      <div class="hero">
+        <h1>PowerWorld Bench</h1>
+        <p>30 real PowerWorld study requests &middot; a fresh Claude every time &middot; graded against a key written before the run</p>
+        <div class="btns"><a class="b1" href="install.html">Install HiveMind &gt;_</a><a class="b2" href="#tasks">View the 30 tasks &rarr;</a></div>
+      </div>
+      <div class="ecards" id="cards"></div>
+      <p class="cap">Claude Opus 5.5 &middot; the same 30 tasks for every setup &middot; whiskers show the 95% interval</p>
+      <div class="tablewrap"><table class="lb">
+        <thead><tr><th>Rank</th><th>Setup</th><th>Solved</th><th><span class="vh">Solved, as a bar</span></th><th class="r">Min / task</th><th class="r">Tokens / task</th><th class="r">Cost / task</th></tr></thead>
+        <tbody id="lb"></tbody></table></div>
+      <p class="note" id="lbnote"></p>
+      <div class="cta"><h2>Wanna try it yourself?</h2><a class="b1" href="install.html">Install HiveMind &gt;_</a>
+        <p class="note">One sentence pasted into Claude Code or Codex, then try it on your own case.</p></div>
+    </section>
+
+    <section class="page" id="p-tasks" aria-label="The 30 tasks">
+      <a class="back" href="#">&larr; Back to the benchmark</a>
+      <h1 class="t">The 30 tasks</h1>
+      <p class="lede">Each one is a request typed into a fresh Claude with HiveMind installed, with the case file on disk and nothing else. Click a task for the request as typed and the answer.</p>
+      <div class="chips" role="group" aria-label="Kind of task" id="chips">
+        <button type="button" data-k="all" aria-pressed="true">All 30</button><button type="button" data-k="Question" aria-pressed="false">Questions</button><button type="button" data-k="Study" aria-pressed="false">Studies</button><button type="button" data-k="Review" aria-pressed="false">Design reviews</button><button type="button" data-k="Design" aria-pressed="false">Designs</button>
+      </div>
+      <div class="legend"><span class="lt">TOKEN MIX</span><span><i style="background:var(--tc)"></i>cached: re-reading its own context</span><span><i style="background:var(--tn)"></i>new input</span><span><i style="background:var(--to)"></i>output it wrote</span><span class="ls">Bars share one scale, so a longer bar is a task that took more tokens.</span></div>
+      <div class="thead" aria-hidden="true"><span>#</span><span>Request</span><span>Verdict</span><span>Token mix</span><span class="r">Tokens</span><span class="r">Time</span><span class="r">Cost</span></div>
+      <div class="tasks" id="tasks"></div>
+    </section>
+  </main>
+
+  <footer>PowerWorldHiveMind &middot; <a href="./">Home</a> &middot; <a href="install.html">Install</a> &middot; <a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a></footer>
+</div>
+
+<script type="application/json" id="bench-data">
+{
+ "setups": [
+  {
+   "arm": "hm5",
+   "name": "Claude Opus 5.5 + HiveMind",
+   "tag": "v0.5",
+   "solved": 30,
+   "lo": 0.8865,
+   "hi": 1.0,
+   "counts": {
+    "pass": 30,
+    "partial": 0,
+    "fail": 0,
+    "timeout": 0
+   },
+   "minutes": 8.3,
+   "cost": 1.11,
+   "tokens": 1305116,
+   "lb": false,
+   "total_minutes": 250.0
+  },
+  {
+   "arm": "hm4",
+   "name": "Claude Opus 5.5 + HiveMind",
+   "tag": "v0.4",
+   "solved": 20,
+   "lo": 0.4878,
+   "hi": 0.8077,
+   "counts": {
+    "pass": 20,
+    "partial": 3,
+    "fail": 2,
+    "timeout": 5
+   },
+   "minutes": 12.5,
+   "cost": 1.27,
+   "tokens": 1699951,
+   "lb": true,
+   "total_minutes": 376.2
+  }
+ ],
+ "tasks": [
+  {
+   "id": "R1",
+   "kind": "Question",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 0.9,
+    "cost": 0.32,
+    "lb": false,
+    "pages": 3,
+    "cached": 186847,
+    "new": 27785,
+    "out": 2849,
+    "head": "Set the keys, status, Discrete mode and block steps (e.g. 4 × 25 Mvar); don't write the Mvar limits, PowerWorld derives them.",
+    "full": "For a 100 Mvar switched cap, set the bus number and shunt ID, status Closed, mode Discrete, a nominal Mvar, the block size and number of steps (for example 4 x 25), auto control with a voltage-regulation band. Don't write the Mvar min/max fields; PowerWorld derives them from the blocks. It gave example code and a read-back check."
+   },
+   "q": "Shunt fields for a 100 Mvar switched cap",
+   "prompt": "Which fields do I set to add a shunt capacitor at a bus in PowerWorld? I want a 100 Mvar switched cap on a 230 kV bus.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 0.7,
+    "cost": 0.28,
+    "lb": false,
+    "pages": 2,
+    "cached": 134932,
+    "new": 25441,
+    "out": 2460
+   }
+  },
+  {
+   "id": "Q2",
+   "kind": "Question",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 0.6,
+    "cost": 0.33,
+    "lb": false,
+    "pages": 3,
+    "cached": 143752,
+    "new": 31738,
+    "out": 2517,
+    "head": "Attach a PFW model to every wind and solar unit, then check none was missed: a unit without one silently gives 0 MW.",
+    "full": "Attach the PFW models with a public helper tool: one script picks wind class 1 to 4 from existing unit data and gives all solar a basic PV model, another lets you choose one class per fuel type. Then load the weather file. Units with no model produce 0 MW while the run still reports success, so it gave a check that every wind and solar unit has one."
+   },
+   "q": "How to insert PFW weather models",
+   "prompt": "How do I insert a PFW model for the wind and solar units in my case so a time step simulation calculates their output from weather?",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 0.6,
+    "cost": 0.34,
+    "lb": false,
+    "pages": 3,
+    "cached": 139976,
+    "new": 32077,
+    "out": 2701
+   }
+  },
+  {
+   "id": "Q3",
+   "kind": "Question",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 0.8,
+    "cost": 0.47,
+    "lb": false,
+    "pages": 3,
+    "cached": 218468,
+    "new": 44666,
+    "out": 3611,
+    "head": "Raise the iteration limits first, then change the solver or start point; relax controls only to diagnose.",
+    "full": "Three levers: raise the iteration limits (inner loop and outer voltage-control loop, with example code), change the solver or starting point (rectangular Newton, flat start, then DC only if the study can accept it), or relax controls for diagnosis only. It flagged traps, such as flat-start being ignored on scripted solves, and said to read settings back."
+   },
+   "q": "Newton-Raphson iteration and convergence options",
+   "prompt": "What options do I have to raise the Newton-Raphson iteration limit, or otherwise get a stubborn power flow to converge in PowerWorld?",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 1.6,
+    "cost": 0.55,
+    "lb": false,
+    "pages": 4,
+    "cached": 543500,
+    "new": 44732,
+    "out": 4333
+   }
+  },
+  {
+   "id": "Q9",
+   "kind": "Question",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 0.7,
+    "cost": 0.29,
+    "lb": false,
+    "pages": 2,
+    "cached": 142079,
+    "new": 28279,
+    "out": 1674,
+    "head": "No: that is a one-mile value. 60 miles of 500 kV should be about 0.012–0.015 pu.",
+    "full": "No, it's almost certainly wrong. X = 0.0002 pu is roughly what one mile of 500 kV line has; 60 miles should be about 0.012 to 0.015 pu, 60 times larger. It checked this two ways, warned the case would still solve but make the line look far too strong, and said to check R and B for the same per-mile mistake."
+   },
+   "q": "Is X = 0.0002 pu right for a 60-mile 500 kV line",
+   "prompt": "Is the impedance on my new 500 kV line right? I entered X = 0.0002 per unit for a 60-mile line on a 100 MVA base.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 0.7,
+    "cost": 0.37,
+    "lb": false,
+    "pages": 2,
+    "cached": 184069,
+    "new": 34630,
+    "out": 2673
+   }
+  },
+  {
+   "id": "A1",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 1.0,
+    "cost": 0.37,
+    "lb": false,
+    "pages": 0,
+    "cached": 137468,
+    "new": 35557,
+    "out": 2684,
+    "head": "Not ready: buses 1100 and 1101 are disconnected, so 2,000 MW of load is left out of the solve.",
+    "full": "No, the case isn't ready for a contingency study. Two new load buses (1100 and 1101) have no connections, so 2,000 MW of load is silently left out of the solved case. Base and N-1 are both marked not ready. It also noted N-1 covers only area 1 of 8, and gave a case summary."
+   },
+   "q": "Is this case ready for a contingency study",
+   "prompt": "Scan this case for me: work\\design_case.pwb. Is it ready for a contingency study?",
+   "hm4": {
+    "verdict": "fail",
+    "minutes": 0.6,
+    "cost": 0.37,
+    "lb": false,
+    "pages": 1,
+    "cached": 148833,
+    "new": 37230,
+    "out": 2074
+   }
+  },
+  {
+   "id": "A2",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 20.1,
+    "cost": 2.14,
+    "lb": false,
+    "pages": 17,
+    "cached": 3041116,
+    "new": 117815,
+    "out": 29249,
+    "head": "The new loads were never connected, and at night Far West wind overloads Forsan–Big Spring 115 kV to 141%.",
+    "full": "The main flaw: the two new loads at buses 1100 and 1101 were never connected, so everything below leaves out 2,000 MW. It ran both studies as asked. The 176 contingencies came back clean, but the 24-hour time step showed Far West wind above about 1.5 GW at night overloading the Forsan-Big Spring 115 kV line, up to 141% before any outage. It also noted the weather file covers only Far West."
+   },
+   "q": "Catch misdesign: contingencies plus a 24-hour time step",
+   "prompt": "Catch any misdesign in this case: work\\design_case_weather.pwb. Run the contingencies and a 24-hour time step for Aug 10 2023 using the weather files in work\\weather.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 12.9,
+    "cost": 2.4,
+    "lb": false,
+    "pages": 12,
+    "cached": 3593736,
+    "new": 123142,
+    "out": 34632
+   }
+  },
+  {
+   "id": "K1",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 3.2,
+    "cost": 0.64,
+    "lb": false,
+    "pages": 3,
+    "cached": 492598,
+    "new": 44604,
+    "out": 9341,
+    "head": "Wrote and loaded back 791 single-branch outages for Area 5 (North Central is an area here, not a zone).",
+    "full": "It wrote a contingency file with 791 single-branch outages for Area 5, since North Central is an area here, not a zone, and set violation reporting to that area only. It loaded the file back to verify. It also flagged that the two new loads are islanded and that the case's own 176 outages never test Area 5."
+   },
+   "q": "Contingency aux file for the North Central zone",
+   "prompt": "Create a contingency aux file for the North Central ERCOT zone in work\\design_case.pwb.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 7.2,
+    "cost": 1.33,
+    "lb": false,
+    "pages": 3,
+    "cached": 1593900,
+    "new": 71563,
+    "out": 21753
+   }
+  },
+  {
+   "id": "Q1",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 1.6,
+    "cost": 0.58,
+    "lb": false,
+    "pages": 5,
+    "cached": 442689,
+    "new": 46980,
+    "out": 5599,
+    "head": "Done: limit monitoring on for West and Far West only (238 buses, 750 lines), saved and reopened to confirm.",
+    "full": "Done: limit monitoring is now on for West and Far West only, saved as a new case. Far West was already on, so the real change was turning West on and keeping the other six areas off. It reopened the file to confirm the setting, which covers 238 buses and 750 lines, and noted that outage coverage for West is a separate question."
+   },
+   "q": "Limit monitoring for West and Far West only",
+   "prompt": "In work\\design_case.pwb, set limit monitoring to West and Far West only, and save it as a new case.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 1.5,
+    "cost": 0.55,
+    "lb": false,
+    "pages": 5,
+    "cached": 360956,
+    "new": 44209,
+    "out": 6094
+   }
+  },
+  {
+   "id": "S1",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 4.7,
+    "cost": 1.09,
+    "lb": false,
+    "pages": 5,
+    "cached": 1053329,
+    "new": 66205,
+    "out": 17245,
+    "head": "One West problem: losing Kerrville–Ingram loads the Sabinal tie to 105.4%. Far West is clean.",
+    "full": "N-1 on West and Far West was clean except one West problem: losing the Kerrville-Ingram 115 kV line overloads the Sabinal-D Hanis tie to 105.4%, and the reverse outage loads Kerrville-Ingram to 100.8%. It's one corridor problem. Far West has no overloads. It warned that buses 1100 and 1101 are unconnected, so 1,532 MW of load isn't served."
+   },
+   "q": "N-1 for West and Far West: what's overloaded",
+   "prompt": "Run a contingency analysis for West and Far West on work\\design_case.pwb and tell me what's overloaded.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 8.0,
+    "cost": 1.42,
+    "lb": false,
+    "pages": 7,
+    "cached": 1667590,
+    "new": 81203,
+    "out": 22006
+   }
+  },
+  {
+   "id": "S2",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 11.8,
+    "cost": 0.85,
+    "lb": false,
+    "pages": 8,
+    "cached": 839063,
+    "new": 59061,
+    "out": 10666,
+    "head": "795 outages, 2 overloads in one Kerrville–Sabinal corridor (105.4%, 100.8%); it added the outages West was missing.",
+    "full": "All 795 contingencies for West and Far West solved, with 2 thermal overloads and no voltage violations. Both are one problem in the Kerrville-Sabinal corridor, 105.4% and 100.8%. The case's own list didn't test West, so it added 555 branch and 64 generator outages. It warned that buses 1100 and 1101 are unconnected, so 1,532.6 MW goes unserved."
+   },
+   "q": "N-1 for West and Far West with progress updates",
+   "prompt": "Run contingencies for West and Far West on work\\design_case.pwb and keep me posted on progress as it goes.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 14.6,
+    "cost": 1.47,
+    "lb": false,
+    "pages": 7,
+    "cached": 1774377,
+    "new": 84532,
+    "out": 21801
+   }
+  },
+  {
+   "id": "Q5",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 1.9,
+    "cost": 0.58,
+    "lb": false,
+    "pages": 4,
+    "cached": 361631,
+    "new": 47898,
+    "out": 6100,
+    "head": "Didn't cut it: the list isn't huge, it's incomplete. 152 of 245 Far West branches have no outage.",
+    "full": "It didn't cut the list, because the premise is wrong: the list is 176 entries, all Far West, and isn't huge. It is incomplete, with 152 of 245 in-service Far West branches and 25 of 63 generators having no outage. It named gaps (Odessa 500 kV ties, McCamey transformers) and offered to build the full set."
+   },
+   "q": "Cut the contingency list down for Far West",
+   "prompt": "The contingency list in work\\design_case.pwb is huge. Cut it down to the ones that matter for the Far West.",
+   "hm4": {
+    "verdict": "partial",
+    "minutes": 4.8,
+    "cost": 0.77,
+    "lb": false,
+    "pages": 5,
+    "cached": 703614,
+    "new": 53790,
+    "out": 9930
+   }
+  },
+  {
+   "id": "Q6",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 6.0,
+    "cost": 1.57,
+    "lb": false,
+    "pages": 13,
+    "cached": 2121232,
+    "new": 87889,
+    "out": 22060,
+    "head": "Worst hour is 12 AM: Forsan 115 kV at 140.8%, and only in the night wind hours.",
+    "full": "The worst Far West line hour is 12 AM on Aug 10, when the Forsan 115 kV line carries 140.8% of its limit. It overloads only in night wind hours (12 AM, 1 AM, 10 PM, 11 PM); no other Far West line passes 72%. It warned that 1,532.6 MW of new load is unserved and that load is held flat all day."
+   },
+   "q": "24-hour time step: worst hour for Far West line loading",
+   "prompt": "Run a time step for Aug 10 2023 on work\\design_case_weather.pwb with the weather in work\\weather, then read the results and tell me the worst hour for Far West line loading.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 6.0,
+    "cost": 1.24,
+    "lb": false,
+    "pages": 8,
+    "cached": 1372000,
+    "new": 83726,
+    "out": 14872
+   }
+  },
+  {
+   "id": "Q7",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 2.1,
+    "cost": 0.62,
+    "lb": false,
+    "pages": 4,
+    "cached": 553569,
+    "new": 46262,
+    "out": 6748,
+    "head": "No: all 75 Far West transformers are fixed-tap with control off. Voltages are still within limits.",
+    "full": "No: none of the 75 Far West transformers is set up to regulate. All are fixed-ratio at nominal tap with automatic control off and no regulated bus, as is every transformer in the case. Far West voltages still sit between 0.983 and 1.057 pu. Making any of them regulating is a modelling decision, so it changed nothing."
+   },
+   "q": "Are transformer taps regulating properly in Far West",
+   "prompt": "Are the transformer taps regulating properly in Far West? Case: work\\design_case.pwb",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 2.1,
+    "cost": 0.61,
+    "lb": false,
+    "pages": 3,
+    "cached": 321212,
+    "new": 49367,
+    "out": 7317
+   }
+  },
+  {
+   "id": "P2",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 2.3,
+    "cost": 0.62,
+    "lb": false,
+    "pages": 4,
+    "cached": 533032,
+    "new": 44402,
+    "out": 7779,
+    "head": "Set both loads to 1.5 GW (entered 1,149.43 MW for the zone's 1.305 multiplier), but 0 MW is served: the buses aren't connected.",
+    "full": "The case serves 0 MW of the new load either way. Buses 1100 and 1101 have no branches, so served load stays at 61,339 MW. It set both loads to 1.5 GW (entering 1,149.43 MW to offset the zone's 1.305 multiplier) and saved a new case. It flagged the Mvar entry looks understated and did not connect the buses."
+   },
+   "q": "Set each new load to 1.5 GW and report what is served",
+   "prompt": "In work\\design_case.pwb, what if each of the two new loads at buses 1100 and 1101 were 1.5 GW instead of 1 GW? Set that up and tell me what the case actually serves.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 3.9,
+    "cost": 0.7,
+    "lb": false,
+    "pages": 6,
+    "cached": 615739,
+    "new": 48686,
+    "out": 9469
+   }
+  },
+  {
+   "id": "W1",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 1.4,
+    "cost": 0.42,
+    "lb": false,
+    "pages": 4,
+    "cached": 247568,
+    "new": 38845,
+    "out": 3212,
+    "head": "Saved as a new case with the original untouched, then reopened it: the counts match.",
+    "full": "It saved the design as a new case next to the original and left the original unchanged. It reopened the copy and got the same counts: 2,003 buses, 3,920 branches, 64,699 MW generation against 63,339 MW load. It noted that if the new line was added in an open Simulator window and not yet saved, it isn't in either file."
+   },
+   "q": "Save a design as a new case file",
+   "prompt": "I added a new 500 kV line in work\\team_design.pwb. Save my design as a new case file next to it.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 4.0,
+    "cost": 0.39,
+    "lb": false,
+    "pages": 3,
+    "cached": 240600,
+    "new": 33608,
+    "out": 3407
+   }
+  },
+  {
+   "id": "X2",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 1.9,
+    "cost": 0.54,
+    "lb": false,
+    "pages": 6,
+    "cached": 366408,
+    "new": 44054,
+    "out": 5956,
+    "head": "Added the 1100–1101 line and it solves, but the two buses are a dead island: still 0 MW served.",
+    "full": "It added the 1100-1101 230 kV line (using median values from existing 230 kV lines) and the AC solve converges, but the loads are still unserved. The two buses form a dead two-bus island with 1,532.6 MW of load and no path to the grid. At least one bus needs a line to the existing network. It saved a copy."
+   },
+   "q": "Tie the two isolated load buses with a 230 kV line and solve",
+   "prompt": "In work\\design_case.pwb, connect the two new loads at buses 1100 and 1101 to each other with a 230 kV line, then solve.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 1.9,
+    "cost": 0.52,
+    "lb": false,
+    "pages": 5,
+    "cached": 370559,
+    "new": 44344,
+    "out": 4438
+   }
+  },
+  {
+   "id": "X3",
+   "kind": "Study",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 0.5,
+    "cost": 0.24,
+    "lb": false,
+    "pages": 0,
+    "cached": 56674,
+    "new": 25748,
+    "out": 985,
+    "head": "Declined: transient stability is outside HiveMind. It offered an audit or N-1 instead.",
+    "full": "It declined to run a transient stability study and didn't open the case, because that is outside what HiveMind covers and the guidance says to stop. It explained why guessing would give believable but wrong results. It offered a case audit, N-1 contingency analysis, or a radial and islanding check instead."
+   },
+   "q": "Run a transient stability study",
+   "prompt": "Run a transient stability study on work\\design_case.pwb.",
+   "hm4": {
+    "verdict": "fail",
+    "minutes": 27.1,
+    "cost": 1.18,
+    "lb": true,
+    "pages": 5,
+    "cached": 2501518,
+    "new": 84655,
+    "out": null
+   }
+  },
+  {
+   "id": "RV1",
+   "kind": "Review",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 6.1,
+    "cost": 1.21,
+    "lb": false,
+    "pages": 8,
+    "cached": 1011190,
+    "new": 78336,
+    "out": 19175,
+    "head": "Don't present it: losing the 500 kV line 1079–1100 overloads 1033–1100 to 275%.",
+    "full": "Don't present it yet. Losing the new 500 kV line 1079-1100 overloads the 230 kV line 1033-1100 to 275%, failing the brief's N-1 rule at Sub1100. That 500 kV line also ends on a 230 kV bus as a plain line, and 1033-1100 has a reactance 1/55 of the right value. Sub1101 is fine."
+   },
+   "q": "Review a team's design against the brief",
+   "prompt": "My team's design for the project is in work\\team_design.pwb (the original case before our changes is work\\design_case.pwb, and the brief is work\\project_brief.md). Review it against the brief before I present.",
+   "hm4": {
+    "verdict": "partial",
+    "minutes": 8.8,
+    "cost": 1.66,
+    "lb": false,
+    "pages": 8,
+    "cached": 1663476,
+    "new": 99331,
+    "out": 26766
+   }
+  },
+  {
+   "id": "Q4",
+   "kind": "Review",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 5.4,
+    "cost": 1.28,
+    "lb": false,
+    "pages": 8,
+    "cached": 984167,
+    "new": 84252,
+    "out": 20523,
+    "head": "One device matters: losing 1079–1100 loads 1033–1100 to 275%. The other eight are clean.",
+    "full": "One device causes real trouble. If the new 500 kV line 1079-1100 trips, the 230 kV line 1033-1100 loads to 275% of its 400 MVA rating. The other eight new devices cause no new violation. The design adds one bus (9401) and nine branches, and connects both loads serving 1,000 MW each."
+   },
+   "q": "Compare two cases and rank new devices by contingency trouble",
+   "prompt": "Compare work\\team_design.pwb with the original work\\design_case.pwb, then rank the new devices in my design by how much trouble they cause under contingencies.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 11.8,
+    "cost": 2.26,
+    "lb": false,
+    "pages": 8,
+    "cached": 2821022,
+    "new": 125868,
+    "out": 34630
+   }
+  },
+  {
+   "id": "Q8",
+   "kind": "Review",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 3.0,
+    "cost": 0.88,
+    "lb": false,
+    "pages": 4,
+    "cached": 892820,
+    "new": 58100,
+    "out": 11781,
+    "head": "One branch needed it: 1079 (500 kV) to 1100 (230 kV), now a transformer, with the power flow unchanged.",
+    "full": "Only one branch needed converting: the 1079 Odessa 500 kV to 1100 230 kV line, now a transformer. It saved a new case, left the original alone, and the power flow is identical. A 91 Mvar line-charging value remains on it, which is unrealistic for a transformer; it left that for your decision."
+   },
+   "q": "Convert 500-to-230 kV line-typed branches into transformers",
+   "prompt": "Some new branches in work\\team_design.pwb join 230 kV straight to 500 kV as lines. Convert them to transformers.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 3.0,
+    "cost": 0.53,
+    "lb": false,
+    "pages": 3,
+    "cached": 355011,
+    "new": 39758,
+    "out": 6810
+   }
+  },
+  {
+   "id": "X4",
+   "kind": "Review",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 2.7,
+    "cost": 0.92,
+    "lb": false,
+    "pages": 5,
+    "cached": 976808,
+    "new": 61966,
+    "out": 11629,
+    "head": "Bus 9401 and nine branches added, serving both loads; it flagged a 500/230 kV branch typed as a line and R/X looking swapped.",
+    "full": "The design connects the two new 1,000 MW loads that were stranded in the base case, so served load rises by 2,000 MW and generation by 2,096 MW. It added bus 9401 and nine branches. Problems to fix: the 500/230 kV 1079-1100 branch is modelled as a line, 1033-1100 looks like R and X swapped, and all new branches have zero length."
+   },
+   "q": "Compare base and design case: what changed",
+   "prompt": "Compare the base case work\\design_case.pwb and my design case work\\team_design.pwb. What changed?",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 5.1,
+    "cost": 0.75,
+    "lb": false,
+    "pages": 3,
+    "cached": 551727,
+    "new": 49181,
+    "out": 12319
+   }
+  },
+  {
+   "id": "X6",
+   "kind": "Review",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 6.2,
+    "cost": 0.61,
+    "lb": false,
+    "pages": 4,
+    "cached": 369965,
+    "new": 43202,
+    "out": 9745,
+    "head": "No single outage cuts off a load, but bus 1100's 1,000 MW hangs on one 500 kV tie.",
+    "full": "No single outage cuts off any load, but 562 outages leave some load on one remaining path (327 substations, 10.6 GW). The one that matters is the new 1,000 MW load at bus 1100, which depends on its 500 kV tie. It flagged the 500-to-230 kV branch modelled as a line and ran AC for only the two outages at bus 1100."
+   },
+   "q": "Which loads go radial if one line trips",
+   "prompt": "In work\\team_design.pwb, which loads go radial if one line trips?",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 3.5,
+    "cost": 0.68,
+    "lb": false,
+    "pages": 3,
+    "cached": 490187,
+    "new": 48638,
+    "out": 9602
+   }
+  },
+  {
+   "id": "V1",
+   "kind": "Review",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 7.4,
+    "cost": 1.01,
+    "lb": false,
+    "pages": 4,
+    "cached": 1139646,
+    "new": 69380,
+    "out": 11245,
+    "head": "Built a thermal map: losing 1079–1100 pushes McCamey–Sub1100 to 275%.",
+    "full": "It built an interactive violation map. The headline: losing the 1079-1100 line pushes the McCamey-Sub1100 line to 275% (1,101 MVA on 400). The case's own 176 contingencies show nothing because they never trip the new lines. In total 24 branches overload after some outage, including South-area branches the case doesn't monitor."
+   },
+   "q": "Show the violations on a map for a team design",
+   "prompt": "Show me the violations on a map for work\\team_design.pwb.",
+   "hm4": {
+    "verdict": "partial",
+    "minutes": 5.9,
+    "cost": 0.59,
+    "lb": false,
+    "pages": 3,
+    "cached": 483371,
+    "new": 47711,
+    "out": 5369
+   }
+  },
+  {
+   "id": "X1",
+   "kind": "Review",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 1.2,
+    "cost": 0.54,
+    "lb": false,
+    "pages": 3,
+    "cached": 332347,
+    "new": 48411,
+    "out": 4211,
+    "head": "Audited and found nothing to fix; asked whether to widen N-1 monitoring before changing anything.",
+    "full": "It found nothing to fix. The case solves, all 28 audit checks ran, and the base, N-1, time step, OPF and SCOPF profiles are ready. It noted N-1 only watches area 1, and asked whether to widen monitoring to all 8 areas and run the 176 outages, on a copy."
+   },
+   "q": "Fix my case (team design)",
+   "prompt": "Fix my case: work\\team_design.pwb",
+   "hm4": {
+    "verdict": "timeout",
+    "minutes": 27.1,
+    "cost": 1.93,
+    "lb": false,
+    "pages": 9,
+    "cached": 3065220,
+    "new": 103344,
+    "out": 24765
+   }
+  },
+  {
+   "id": "P1",
+   "kind": "Review",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 2.9,
+    "cost": 0.93,
+    "lb": false,
+    "pages": 7,
+    "cached": 872605,
+    "new": 65442,
+    "out": 11354,
+    "head": "No: losing that one line or its transformer drops a 1,000 MW load. Each load needs two paths.",
+    "full": "No: one line to each load fails N-1, since losing that line or its 500/230 kV transformer drops the 1,000 MW load behind it. AC tests confirmed each of the four devices cuts off a load. It noted 1100 and 1101 are 230 kV buses, so each needs a 500 kV bus plus a transformer, and that both would land on Odessa. Each load needs two independent paths."
+   },
+   "q": "Is one 500 kV line to each new load enough",
+   "prompt": "In work\\design_case.pwb, buses 1100 and 1101 are new 1,000 MW loads with no connection yet. Is one 500 kV line to each load enough?",
+   "hm4": {
+    "verdict": "timeout",
+    "minutes": 27.1,
+    "cost": 2.34,
+    "lb": false,
+    "pages": 8,
+    "cached": 3342575,
+    "new": 117830,
+    "out": 36567
+   }
+  },
+  {
+   "id": "C1a",
+   "kind": "Design",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 48.5,
+    "cost": 3.37,
+    "lb": false,
+    "pages": 12,
+    "cached": 5519062,
+    "new": 153711,
+    "out": 52019,
+    "head": "Cheapest build $518.96M. Best over 5 years: $561.79M to build, $133M cheaper once losses count.",
+    "full": "Design 1, cheapest to build: $518.96M with four 230 kV circuits each to Sub1101 and Sub1100 plus capacitors. Design 2, cheapest over 5 years: $561.79M to build, $385.94M after loss savings, $133M cheaper than Design 1. Both pass all N-1 checks."
+   },
+   "q": "Open-ended: design the cheapest build and cheapest 5-year interconnection",
+   "prompt": "Here's our project brief (work\\project_brief.md) and the case (work\\design_case.pwb). Give me two designs: (1) the cheapest to build that meets the N-1 rules, and (2) the cheapest over 5 years once losses are counted. Show your numbers.",
+   "hm4": {
+    "verdict": "timeout",
+    "minutes": 47.0,
+    "cost": 2.67,
+    "lb": false,
+    "pages": 14,
+    "cached": 3660351,
+    "new": 134821,
+    "out": 42952
+   }
+  },
+  {
+   "id": "C1b",
+   "kind": "Design",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 30.8,
+    "cost": 2.85,
+    "lb": false,
+    "pages": 11,
+    "cached": 3546788,
+    "new": 150633,
+    "out": 46687,
+    "head": "Cheapest build $518.96M. Best over 5 years: $561.79M to build, $401.46M once losses count.",
+    "full": "Objective 1 costs $518.96M to build, using four 230 kV circuits each from McCamey to Sub1101 and Sub1100 plus capacitors. Objective 2 costs $561.79M to build but $401.46M over five years once losses are counted. Both pass N-1 in full AC; they are the best of 48 designs tried, not a proven optimum."
+   },
+   "q": "Open-ended cheapest design (repeat)",
+   "prompt": "Here's our project brief (work\\project_brief.md) and the case (work\\design_case.pwb). Give me two designs: (1) the cheapest to build that meets the N-1 rules, and (2) the cheapest over 5 years once losses are counted. Show your numbers.",
+   "hm4": {
+    "verdict": "timeout",
+    "minutes": 47.0,
+    "cost": 3.18,
+    "lb": false,
+    "pages": 7,
+    "cached": 4981310,
+    "new": 142978,
+    "out": 52157
+   }
+  },
+  {
+   "id": "C2",
+   "kind": "Design",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 24.6,
+    "cost": 2.41,
+    "lb": false,
+    "pages": 10,
+    "cached": 2821814,
+    "new": 136284,
+    "out": 37930,
+    "head": "Layout 2 is cheapest to build ($530.36M); in low-loss without the shunt it wins over 5 years ($514.58M).",
+    "full": "Cheapest to build: Layout 2, standard conductor with a 50 Mvar shunt at bus 1100, $530.36M. Cheapest over 5 years: Layout 2 with low-loss conductor and no shunt, $514.58M total ($549.79M to build). Six of eight combinations pass N-1; Layout 1 fails with either conductor. It listed all eight and raised a solver iteration limit to converge some."
+   },
+   "q": "Evaluate 4 named layouts for cheapest build and cheapest 5-year cost",
+   "prompt": "Here's our project brief (work\\project_brief.md) and the case (work\\design_case.pwb). We've narrowed it down to four candidate layouts. Rights-of-way are the R1-R6 from the brief:\n\n- Layout 1: load 1101 gets 3 circuits of 230 kV on R2 plus 1 on R3; load 1100 gets 1 circuit of 230 kV on R5 plus 3 on R6.\n- Layout 2: load 1101 gets 3 circuits of 230 kV on R2 plus 1 on R3; load 1100 gets 4 circuits of 230 kV on R6.\n- Layout 3: load 1101 gets 4 circuits of 230 kV on R2; load 1100 gets 4 circuits of 230 kV on R6.\n- Layout 4: each load gets 2 circuits of 500 kV (R1 for 1101, R4 for 1100) with two 500/230 kV transformers at each load substation.\n\nAdd switched shunts at the load buses if a layout needs them. For each layout, try both conductor options. Tell me (1) which is cheapest to build while meeting the N-1 rules, and (2) which is cheapest over 5 years once losses are counted. Show your numbers.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 43.7,
+    "cost": 2.52,
+    "lb": false,
+    "pages": 16,
+    "cached": 3426339,
+    "new": 115234,
+    "out": 45777
+   }
+  },
+  {
+   "id": "C3a",
+   "kind": "Design",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 20.9,
+    "cost": 2.88,
+    "lb": false,
+    "pages": 15,
+    "cached": 3470951,
+    "new": 160548,
+    "out": 45070,
+    "head": "Design 1 $534.36M. Design 2 costs $33.4M more and comes out $34.6M ahead over 5 years.",
+    "full": "Two designs that solve in AC and pass N-1. Design 1 costs $534.36M to build (four standard-conductor 230 kV circuits each to Sub1101 and Sub1100, plus capacitors). Design 2 costs $33.4M more up front but comes out $34.6M ahead over five years. Neither is proven optimal; they are the best of 30 tried."
+   },
+   "q": "Two workable designs: cheap to build, and better over 5 years",
+   "prompt": "Here's our project brief (work\\project_brief.md) and the case (work\\design_case.pwb). Come up with two designs that actually work in AC power flow and pass the N-1 rules: one that's cheap to build and ignores long-term benefits, and one that costs more up front but comes out ahead over 5 years once losses are counted. They don't have to be optimal. Show your numbers.",
+   "hm4": {
+    "verdict": "pass",
+    "minutes": 21.4,
+    "cost": 2.68,
+    "lb": false,
+    "pages": 15,
+    "cached": 3216141,
+    "new": 134559,
+    "out": 47881
+   }
+  },
+  {
+   "id": "C3b",
+   "kind": "Design",
+   "hm5": {
+    "verdict": "pass",
+    "minutes": 28.8,
+    "cost": 2.72,
+    "lb": false,
+    "pages": 11,
+    "cached": 3730790,
+    "new": 134067,
+    "out": 45234,
+    "head": "Design 1 $542.6M. Design 2, in low-loss, costs $564.3M and comes out $15.6M ahead over 5 years.",
+    "full": "Design 1 costs $542.6M to build and Design 2, using low-loss conductor, $564.3M but ends up $15.6M ahead over five years. Both use 230 kV lines on the same routes with capacitor banks at both loads, serve 2,000 MW and pass N-1. It corrected an earlier $513M design after finding a line overloaded at the wrong end."
+   },
+   "q": "Two workable designs (repeat)",
+   "prompt": "Here's our project brief (work\\project_brief.md) and the case (work\\design_case.pwb). Come up with two designs that actually work in AC power flow and pass the N-1 rules: one that's cheap to build and ignores long-term benefits, and one that costs more up front but comes out ahead over 5 years once losses are counted. They don't have to be optimal. Show your numbers.",
+   "hm4": {
+    "verdict": "timeout",
+    "minutes": 26.6,
+    "cost": 1.9,
+    "lb": true,
+    "pages": 20,
+    "cached": 3882046,
+    "new": 140889,
+    "out": null
+   }
+  }
+ ]
+}
+</script>
+<script>
+(function () {
+var D = JSON.parse(document.getElementById("bench-data").textContent);
+var $ = function (s) { return document.querySelector(s); };
+var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };
+var GL = {pass:"✓", partial:"◐", fail:"✗", timeout:"⧗"};
+var WD = {pass:"Pass", partial:"Partial", fail:"Fail", timeout:"Timeout"};
+var KL = {Question:"Question", Study:"Study", Review:"Design review", Design:"Design"};
+var tok = function (n) { return n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : Math.round(n / 1e3) + "k"; };
+var usd = function (c, lb) { return (lb ? "≥ $" : "$") + c.toFixed(2); };
+var S = {}; D.setups.forEach(function (s) { S[s.arm] = s; });
+var hm = S.hm5, v4 = S.hm4;
+
+/* theme */
+var root = document.documentElement, tb = $("#thm");
+var setTb = function () { tb.textContent = root.dataset.theme === "light" ? "Dark" : "Light"; };
+setTb();
+tb.addEventListener("click", function () {
+  root.dataset.theme = root.dataset.theme === "light" ? "dark" : "light"; setTb();
+  try { localStorage.setItem("pwhm-theme", root.dataset.theme); } catch (e) {}
+});
+
+/* summary cards */
+var vs = function (txt) { return "HiveMind v0.4: <b>" + txt + "</b>"; };
+$("#cards").innerHTML =
+  '<div class="ec"><h2>Studies solved</h2><div class="big">' + hm.solved + '/30<small>with HiveMind</small></div><div class="vs">' + vs(v4.solved + "/30") + '</div><p>N-1, time steps, case audits, design reviews and designs, graded by hand against a key written before each run.</p></div>' +
+  '<div class="ec"><h2>Time per study</h2><div class="big">' + hm.minutes + '<small>min with HiveMind</small></div><div class="vs">' + vs(v4.minutes + " min") + '</div><p>Wall-clock, start to final answer. A run that hits the time cap counts at the cap.</p></div>' +
+  '<div class="ec"><h2>Cost per study</h2><div class="big">$' + hm.cost.toFixed(2) + '<small>with HiveMind</small></div><div class="vs">' + vs(usd(v4.cost, v4.lb)) + '</div><p>Claude Code’s API list price. On a subscription nothing is billed per token.</p></div>';
+
+/* leaderboard */
+var rank = 0;
+$("#lb").innerHTML = D.setups.map(function (s) {
+  rank++;
+  var p = s.solved / 30 * 100;
+  return '<tr><td class="rk">' + rank + '</td><td class="nm"><i class="dot ' + s.arm + '"></i>' + esc(s.name) + ' <small>' + esc(s.tag) + '</small></td>' +
+    '<td class="sc"><b>' + s.solved + '/30</b> · ' + Math.round(p) + '%</td>' +
+    '<td><span class="rb" role="img" aria-label="' + s.solved + ' of 30, 95% interval ' + Math.round(s.lo * 100) + ' to ' + Math.round(s.hi * 100) + '%"><span class="fill ' + s.arm + '" style="width:' + p + '%"></span><span class="ci" style="left:' + (s.lo * 100) + '%;width:' + ((s.hi - s.lo) * 100) + '%"></span></span></td>' +
+    '<td class="r">' + s.minutes + '</td><td class="r">' + (s.lb ? "≥ " : "") + tok(s.tokens) + '</td><td class="r">' + usd(s.cost, s.lb) + '</td></tr>';
+}).join("");
+$("#lbnote").textContent = "Solved means a pass on the key; partial answers don’t count. ≥ marks an average that includes runs killed at the time cap: their input is counted exactly but their output was never logged, so the true figure is somewhat higher. With 30 tasks, 30/30 means at least about 89% at 95% confidence, which is why each bar has a whisker.";
+
+/* tasks */
+var badge = function (a) {
+  return '<span class="vb ' + a.verdict + '" title="' + WD[a.verdict] + '">' + GL[a.verdict] + '</span>';
+};
+var total = function (a) { return a.cached + a.new + (a.out || 0); };
+var scale = Math.max.apply(null, D.tasks.map(function (t) { return total(t.hm5); }));
+var bar = function (a) {
+  var o = a.out || 0, t = total(a), w = t / scale * 100;
+  return '<span class="tkb" title="cached ' + tok(a.cached) + ' · new input ' + tok(a.new) + ' · output ' + (a.out == null ? "not logged" : tok(o)) + '">' +
+    '<i class="c" style="width:' + (a.cached / t * w) + '%"></i><i class="n" style="width:' + (a.new / t * w) + '%"></i><i class="o" style="width:' + Math.max(o / t * w, o ? 0.8 : 0) + '%"></i></span>';
+};
+var card = function (a, arm, name) {
+  return '<div class="arm ' + arm + '"><h3><i class="dot ' + arm + '"></i>' + name + ' ' + badge(a) + ' ' + WD[a.verdict] + '</h3>' +
+    '<p class="head">' + esc(a.head) + '</p>' +
+    '<details class="full"><summary>full answer</summary><p>' + esc(a.full) + '</p></details>' +
+    '<p class="meta">' + a.minutes + ' min · ' + usd(a.cost, a.lb) + ' · tokens: ' + tok(a.cached) + ' cached, ' + tok(a.new) + ' new input, ' + (a.out == null ? "output not logged" : tok(a.out) + " output") + '</p></div>';
+};
+$("#tasks").innerHTML = D.tasks.map(function (t, i) {
+  var h = t.hm5;
+  return '<details class="task" id="task-' + esc(t.id) + '" data-k="' + t.kind + '"><summary>' +
+    '<span class="tn">' + String(i + 1).padStart(2, "0") + '</span>' +
+    '<span class="tq">' + esc(t.q) + '<small>' + KL[t.kind] + '</small></span>' +
+    '<span class="vv">' + badge(h) + '</span>' +
+    '<span class="tk">' + bar(h) + '</span>' +
+    '<span class="tv">' + tok(total(h)) + '</span>' +
+    '<span class="tv">' + h.minutes + ' min</span>' +
+    '<span class="tv">' + usd(h.cost, h.lb) + '</span>' +
+    '</summary><div class="tbody"><div><h3>The request, as typed</h3><blockquote>' + esc(t.prompt) + '</blockquote></div>' +
+    card(h, "hm5", "Claude + HiveMind") + '</div></details>';
+}).join("");
+$("#chips").addEventListener("click", function (e) {
+  var b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll("#chips button").forEach(function (x) { x.setAttribute("aria-pressed", x === b); });
+  document.querySelectorAll("#tasks .task").forEach(function (t) { t.style.display = (b.dataset.k === "all" || t.dataset.k === b.dataset.k) ? "" : "none"; });
+});
+
+/* #tasks shows the task list; #task-<id> opens one task */
+function route() {
+  var h = decodeURIComponent(location.hash.slice(1));
+  var tasks = h === "tasks" || h.indexOf("task-") === 0;
+  $("#p-main").classList.toggle("on", !tasks); $("#p-tasks").classList.toggle("on", tasks);
+  if (h.indexOf("task-") === 0) { var d = document.getElementById(h); if (d) { d.open = true; requestAnimationFrame(function () { d.scrollIntoView({block: "start"}); }); } }
+  else window.scrollTo(0, 0);
+}
+addEventListener("hashchange", route); route();
+})();
+</script>
+</body>
+</html>

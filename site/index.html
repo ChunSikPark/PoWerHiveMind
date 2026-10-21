@@ -547,13 +547,13 @@ footer{font-size:17px;color:var(--ink-2);}
 <header class="topbar">
   <div class="wrap top">
     <a class="brand" href="#"><img src="logo.svg" alt=""> PowerWorldHiveMind</a>
-    <nav><a href="install.html">Install</a><a href="demo-has-page.html">How it works</a><a href="demo-design.html">Demo</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/CHANGELOG.md">Changelog</a></nav>
+    <nav><a href="validation.html">Validation</a><a href="install.html">Install</a><a href="demo-has-page.html">How it works</a><a href="demo-design.html">Demo</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/CHANGELOG.md">Changelog</a></nav>
   </div>
 </header>
 
 <div class="wrap">
   <section class="hero">
-    <a class="vpill" href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/CHANGELOG.md"><i aria-hidden="true"></i>v0.4.0 <span aria-hidden="true">·</span> Changelog <span aria-hidden="true">→</span></a>
+    <a class="vpill" href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/CHANGELOG.md"><i aria-hidden="true"></i>v0.5.0 <span aria-hidden="true">·</span> Changelog <span aria-hidden="true">→</span></a>
     <p class="kicker">A knowledge kit for AI coding agents</p>
     <h1>Teach your <span class="nw">coding agent</span> <span class="hl">PowerWorld.</span></h1>
     <p class="lede">Your agent reads PowerWorldHiveMind before it touches PowerWorld Simulator, so it knows the calls that report success and change nothing. Stop babysitting it, and stop being the documentation.</p>
@@ -570,7 +570,7 @@ footer{font-size:17px;color:var(--ink-2);}
     <div class="demo-tabs" id="demoTabs" role="group" aria-label="Pick a question"></div>
     <p class="demo-cap">A replay: real searches over the kit, run when this site was built. The search terms and the answer are written by hand.</p>
     <div class="console">
-      <div class="console-bar"><span class="lamps" aria-hidden="true"><i></i><i></i><i></i></span><b>[PWHM#0.4.0]</b><button type="button" id="demoReplay">Replay</button></div>
+      <div class="console-bar"><span class="lamps" aria-hidden="true"><i></i><i></i><i></i></span><b>[PWHM#0.5.0]</b><button type="button" id="demoReplay">Replay</button></div>
       <div class="console-body" id="demoBody"></div>
     </div>
   </section>
@@ -610,49 +610,143 @@ footer{font-size:17px;color:var(--ink-2);}
 
   <section class="board" aria-label="Sections">
     <div class="board-head">
-      <h2>Pick what you need</h2>
+      <h2>What's new in 0.5</h2>
       <p>Closing a breaker opens that section.</p>
     </div>
     <ul class="feeders">
-      <li class="feeder" data-id="install"><i class="brk" aria-hidden="true"></i>
-        <button class="tile" aria-controls="panel" aria-expanded="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 20h16"/></svg>
-          <b>Install</b><span>About 15 minutes, no coding. Three downloads and one sentence.</span>
-        </button></li>
-      <li class="feeder" data-id="talk"><i class="brk" aria-hidden="true"></i>
-        <button class="tile" aria-controls="panel" aria-expanded="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h8m0 0-3-3m3 3-3 3M21 17h-8m0 0 3-3m-3 3 3 3"/></svg>
-          <b>How it talks to PowerWorld</b><span>Python through SimAuto, or aux files with PowerWorld's own log.</span>
-        </button></li>
-      <li class="feeder" data-id="find"><i class="brk" aria-hidden="true"></i>
-        <button class="tile" aria-controls="panel" aria-expanded="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 6 6M8 10.5h5"/></svg>
-          <b>How it finds the answer</b><span>Your question becomes search terms, and only the matching page gets read.</span>
-        </button></li>
-      <li class="feeder" data-id="agents"><i class="brk" aria-hidden="true"></i>
-        <button class="tile" aria-controls="panel" aria-expanded="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M2 20c0-3.5 2.7-6 6-6s6 2.5 6 6M14 19c.3-2.6 1.8-4.5 3.5-4.5S21 16.4 21 19"/></svg>
-          <b>The agent team</b><span>Two live roles, four planned. Watch how each one handles a request.</span>
-        </button></li>
-      <li class="feeder" data-id="work"><i class="brk" aria-hidden="true"></i>
-        <button class="tile" aria-controls="panel" aria-expanded="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m6 10V5m6 14v-7m5 7H3"/></svg>
-          <b>See it work</b><span>Worked runs on a 37-bus case, failures included.</span>
-        </button></li>
-      <li class="feeder" data-id="bench"><i class="brk" aria-hidden="true"></i>
+      <li class="feeder" data-id="validation"><i class="brk" aria-hidden="true"></i>
         <button class="tile" aria-controls="panel" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h13M4 12h7M4 18h15"/></svg>
-          <b>Does it help?</b><span>23 questions, the kit against web search, marked blind.</span>
+          <b>Validated on real studies</b><span>A fresh agent solved 30 of 30 study requests against an answer key. v0.4 solved 20.</span>
+        </button></li>
+      <li class="feeder" data-id="scope"><i class="brk" aria-hidden="true"></i>
+        <button class="tile" aria-controls="panel" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>
+          <b>It knows when to stop</b><span>Seven rules: answer, then offer. No hunt for an optimum nobody can finish.</span>
+        </button></li>
+      <li class="feeder" data-id="audit"><i class="brk" aria-hidden="true"></i>
+        <button class="tile" aria-controls="panel" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 6 6M8 10.5l1.8 1.8 3.2-3.6"/></svg>
+          <b>case-audit catches stranded load</b><span>Load on a disconnected bus now stops the study. Plus nine data-defect checks.</span>
+        </button></li>
+      <li class="feeder" data-id="map"><i class="brk" aria-hidden="true"></i>
+        <button class="tile" aria-controls="panel" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14m6-12v14"/></svg>
+          <b>Overloads on the map</b><span>violation-map gains a thermal view and uses the case's own voltage limits.</span>
+        </button></li>
+      <li class="feeder" data-id="pages"><i class="brk" aria-hidden="true"></i>
+        <button class="tile" aria-controls="panel" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM9 11h7M9 15h7"/></svg>
+          <b>Eleven new pages</b><span>Remediation, design review, radial pockets, the zone multiplier trap and more.</span>
         </button></li>
       <li class="feeder" data-id="add"><i class="brk" aria-hidden="true"></i>
         <button class="tile" aria-controls="panel" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM12 10v7m-3.5-3.5h7"/></svg>
-          <b>Add to it</b><span>Say "write that up as a page" and it files what you learned.</span>
+          <b>Add to it, then share it</b><span>Say "write that up as a page". It files it, then hands you a pre-filled issue.</span>
         </button></li>
     </ul>
   </section>
 
   <main id="panel" class="panel" tabindex="-1">
+
+    <!-- 0.5: VALIDATION -->
+    <section data-panel="validation" hidden>
+      <h2>Validated on 30 real study requests</h2>
+      <p class="sub">Each request was typed in plain words into a fresh Claude Opus 5.5 with the kit installed and the case file on disk, and graded against an answer key written before the run.</p>
+      <div class="cols">
+        <div class="bars">
+          <div class="bar-group"><h3>Requests solved (a pass on the key; partial answers don't count)</h3>
+            <div class="bar-row"><span>v0.5</span><div class="track"><div class="fill kit" style="width:100%"></div></div><span class="n">30 of 30</span></div>
+            <div class="bar-row"><span>v0.4</span><div class="track"><div class="fill web" style="width:66.7%"></div></div><span class="n">20 of 30</span></div></div>
+          <div class="bar-group"><h3>Minutes per request</h3>
+            <div class="bar-row"><span>v0.5</span><div class="track"><div class="fill kit" style="width:66.4%"></div></div><span class="n">8.3</span></div>
+            <div class="bar-row"><span>v0.4</span><div class="track"><div class="fill web" style="width:100%"></div></div><span class="n">12.5</span></div></div>
+        </div>
+        <div>
+          <p>The 30 are 4 questions, 13 studies, 8 design reviews and 5 full designs. v0.4 timed out on 5, failed 2 and half-answered 3.</p>
+          <p>Most of those misses were not missing knowledge. The agent kept going after it had the answer, or searched for an optimum it could not finish in time. The scope rules in this release fix that.</p>
+          <p>With 30 requests, 30 of 30 means at least about 89% at 95% confidence.</p>
+          <a class="btn primary" href="validation.html">Open the benchmark: all 30 requests and answers</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 0.5: SCOPE -->
+    <section data-panel="scope" hidden>
+      <h2>It knows when to stop</h2>
+      <p class="sub">Studies are slow. An agent that keeps going after the answer is in hand ends with nothing to show, so the agent now sizes the work before it starts.</p>
+      <ol class="seq">
+        <li><div><b>Answer, then offer</b><span>Once the question is answered with evidence, it reports. A new long study is a one-line offer, not something it runs unasked.</span></div></li>
+        <li><div><b>Estimate before a long study</b><span>Over 15 minutes, it says so and asks first.</span></div></li>
+        <li><div><b>One working design first</b><span>A design that solves in AC, serves the load and passes N-1, costed and reported. Improving it is an offer.</span></div></li>
+        <li><div><b>Vague request: audit, then one question</b><span>"Fix my case" gets an audit grouped by cause and one question with a default. It does not pick a target itself.</span></div></li>
+        <li><div><b>Out of scope means stop</b><span>It says so in its first lines and runs nothing.</span></div></li>
+        <li><div><b>A wrong premise gets evidence</b><span>It proves the premise wrong with a table, proposes the fix and waits for your go.</span></div></li>
+        <li><div><b>Regional N-1 needs that region's outages</b><span>Monitoring an area is not testing it. It counts the outages in each area before solving.</span></div></li>
+      </ol>
+      <a class="more" href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/AGENTS.md#scope-the-work-before-you-start">The seven rules in AGENTS.md</a>
+    </section>
+
+    <!-- 0.5: CASE AUDIT -->
+    <section data-panel="audit" hidden>
+      <h2>case-audit catches stranded load</h2>
+      <p class="sub">An islanded load keeps a closed status and the solve still converges, so a case can quietly serve less than it says. Before 0.5, a case with 2 GW of islanded load audited as READY.</p>
+      <div class="cols even">
+        <div>
+          <h3 class="add-h">Stranded load stops the study</h3>
+          <p>Over 10 MW of load or generation on a disconnected bus now stops a study (<code>base.dead_bus_injection</code>). The stranded MW is reported after the area and zone multipliers, so it is the load the case would actually draw.</p>
+          <p>Opening a case also counts load on disconnected buses as the agent's first finding.</p>
+        </div>
+        <div>
+          <h3 class="add-h">Nine data-defect checks</h3>
+          <p>A <code>lint</code> profile flags shunts set beyond their blocks or between steps, inverted shunt bands, units below their minimum, missing or placeholder limits, negative reactance, branches with no rating, unnamed buses, stray islands and slack counts, and nominal kV that is missing or not round. None needs a solve and none stops a study.</p>
+          <a class="more" href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/case-data-lint.md">The lint rules</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 0.5: MAP -->
+    <section data-panel="map" hidden>
+      <h2>Overloads on the map</h2>
+      <p class="sub">Ask to see the violations and the violation-map skill draws them on the network, with the case's own voltage limits by default. "Show me the violations" now means intact and N-1.</p>
+      <div class="cols">
+        <figure style="margin:0"><img src="v05-thermal-map.png" alt="A dark network map. One new line between McCamey 1 and Sub1100 is drawn red and labelled 275%." style="width:100%;height:auto;border-radius:var(--r);border:1px solid var(--rule)">
+          <figcaption style="font-size:17px;color:var(--ink-2);margin-top:8px">The thermal view on a modified public 2,000-bus Texas synthetic grid: one outage loads a new line to 275% of its rating.</figcaption></figure>
+        <div>
+          <p>The thermal view paints each line red at or above its rating and orange from 90%, with its % label. It has three views: nothing out, after one outage you pick, and each line at its worst outage. The voltage view is one switch away.</p>
+          <p>Overloads are also listed in the agent's text answer, so you get the numbers without opening the map.</p>
+          <a class="more" href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/violation-network-map.md">How the map is built</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 0.5: NEW PAGES -->
+    <section data-panel="pages" hidden>
+      <h2>Eleven new pages</h2>
+      <p class="sub">Most come from fixing violations on large cases: what to try first, what to measure, and the tests that look safe and are not.</p>
+      <div class="cols">
+        <ul class="demos">
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/remediating-base-case-violations.md"><b>Fixing intact-case violations</b><span>The action ladder, cheapest first: free levers before anything is bought</span></a></li>
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/remediating-n1-contingency-violations.md"><b>Making a case N-1 clean</b><span>Sweep, classify, rank elements, fix, re-measure, round after round</span></a></li>
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/diagnosing-a-non-converging-contingency.md"><b>Why a contingency did not solve</b><span>Collapse, a bad start, an island that cannot balance, or a harness bug, in four probes</span></a></li>
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/reviewing-a-design.md"><b>Reviewing a design</b><span>Six things a design can get wrong while still solving cleanly</span></a></li>
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/finding-and-fixing-radial-by-n1-pockets.md"><b>Radial-by-N-1 pockets</b><span>Nothing islands, yet one outage leaves a pocket on a long, weak line</span></a></li>
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/zone-load-multiplier-trap.md"><b>The zone load multiplier trap</b><span>Why the load served differs from the load you entered</span></a></li>
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/removing-empty-buses.md"><b>Removing empty buses</b><span>Dead voltage levels that inflate islanding and N-1 counts</span></a></li>
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/concepts/agc-participation-factors.md"><b>Who picks up lost generation</b><span>AGC, participation factors, and why all-zero factors change nothing</span></a></li>
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/concepts/sizing-a-device-whose-impedance-determines-its-own-flow.md"><b>Sizing a transformer</b><span>A small nameplate is a high impedance, so flow routes around it</span></a></li>
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/concepts/one-device-per-voltage-pocket.md"><b>One fix per voltage pocket</b><span>Undervoltage clusters by driving outage, not by bus</span></a></li>
+          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/concepts/aggregate-clauses-cannot-bound-one-row.md"><b>Counts and maxima hide a worse element</b><span>A corridor went from 102% to 290% and passed a four-clause safety test</span></a></li>
+        </ul>
+        <div>
+          <h3 class="add-h">New traps on existing pages</h3>
+          <p><code>CTGAutoInsert</code> can insert 0 contingencies and report success on a recent Simulator 25 build. This is a suspected PowerWorld issue, not yet confirmed. The page says to assert the count and build the set yourself.</p>
+          <p>Hourly contingency runs inside TimeStep reuse the first hour unless <code>CTGSetAsReference()</code> is called. <code>TimeStepLoadPWWRange</code> replaces <code>TimeStepLoadPWW</code>, which fails on Simulator 25.</p>
+          <p>Six pages still taught <code>pw.dc_mode = True</code> and <code>pw.flat_start = True</code>, which a scripted solve ignores. They now use <code>pw.pflow(method="DC")</code> and <code>pw.flatstart()</code>.</p>
+          <a class="more" href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/CHANGELOG.md">Everything in the changelog</a>
+        </div>
+      </div>
+    </section>
 
     <!-- INSTALL -->
     <section data-panel="install" hidden>
@@ -688,7 +782,7 @@ footer{font-size:17px;color:var(--ink-2);}
           <p>Type this. It installs what the kit needs and checks that PowerWorld can be driven from this machine.</p>
           <div class="cmd"><pre>/powerworld-hivemind:powerworld-setup</pre><button type="button" data-copy>Copy</button></div>
           <p class="then">If it says SimAuto isn't licensed, that's a PowerWorld licence question for whoever manages yours, not a mistake you made.</p>
-          <p class="then">Use Claude Code in a terminal? Setup also offers a PWHM dashboard for your status line: the kit's version, the model, your usage limits and how full the context is. It asks first. If you already have a status line, it keeps yours and adds just the <code>[PWHM#0.4.0]</code> tag. The desktop app doesn't show status lines.</p>
+          <p class="then">Use Claude Code in a terminal? Setup also offers a PWHM dashboard for your status line: the kit's version, the model, your usage limits and how full the context is. It asks first. If you already have a status line, it keeps yours and adds just the <code>[PWHM#0.5.0]</code> tag. The desktop app doesn't show status lines.</p>
           <figure class="term" id="term">
             <div class="term-pick" role="group" aria-label="Show the status line when">
               <button type="button" data-term="none" aria-pressed="true">No status line yet</button>
@@ -697,7 +791,7 @@ footer{font-size:17px;color:var(--ink-2);}
             </div>
             <div class="term-win" aria-label="Claude Code in a terminal, with the status line under the prompt">
               <div class="term-prompt"><i class="d">&gt;</i> Run an N-1 contingency analysis and show me the worst violations.</div>
-              <div class="term-line" data-line="none"><b>[PWHM#0.4.0]</b><i class="d"> | </i><i class="c">Model: Opus 5.5</i><i class="d"> | </i><i class="d">5h:</i>[<i class="g">#####</i><i class="d">---</i>]<i class="g">58%</i><i class="d">(3h0m)</i> <i class="d">wk:</i>[<i class="g">#</i><i class="d">-------</i>]<i class="g">14%</i><i class="d">(6d8h)</i><i class="d"> | </i>ctx:[<i class="g">####</i><i class="d">------</i>]<i class="g">43%</i> <i class="d">431k/1M</i><i class="d"> | </i>session:<i class="g">42m $1.23</i></div><div class="term-line" data-line="omc" hidden><b>[PWHM#0.4.0]</b><i class="d"> | </i><i class="c">my status line</i><i class="d"> | </i>Opus 5.5<i class="d"> | </i>~/grid-study<i class="d"> | </i><i class="g">main</i></div><div class="term-line" data-line="update" hidden><b>[PWHM#0.4.0]</b> <i class="y">↑0.5.0 available</i><i class="d"> | </i><i class="c">Model: Opus 5.5</i><i class="d"> | </i><i class="d">5h:</i>[<i class="g">#####</i><i class="d">---</i>]<i class="g">58%</i><i class="d">(3h0m)</i> <i class="d">wk:</i>[<i class="g">#</i><i class="d">-------</i>]<i class="g">14%</i><i class="d">(6d8h)</i><i class="d"> | </i>ctx:[<i class="g">####</i><i class="d">------</i>]<i class="g">43%</i> <i class="d">431k/1M</i><i class="d"> | </i>session:<i class="g">42m $1.23</i></div>
+              <div class="term-line" data-line="none"><b>[PWHM#0.5.0]</b><i class="d"> | </i><i class="c">Model: Opus 5.5</i><i class="d"> | </i><i class="d">5h:</i>[<i class="g">#####</i><i class="d">---</i>]<i class="g">58%</i><i class="d">(3h0m)</i> <i class="d">wk:</i>[<i class="g">#</i><i class="d">-------</i>]<i class="g">14%</i><i class="d">(6d8h)</i><i class="d"> | </i>ctx:[<i class="g">####</i><i class="d">------</i>]<i class="g">43%</i> <i class="d">431k/1M</i><i class="d"> | </i>session:<i class="g">42m $1.23</i></div><div class="term-line" data-line="omc" hidden><b>[PWHM#0.5.0]</b><i class="d"> | </i><i class="c">my status line</i><i class="d"> | </i>Opus 5.5<i class="d"> | </i>~/grid-study<i class="d"> | </i><i class="g">main</i></div><div class="term-line" data-line="update" hidden><b>[PWHM#0.5.0]</b> <i class="y">↑0.6.0 available</i><i class="d"> | </i><i class="c">Model: Opus 5.5</i><i class="d"> | </i><i class="d">5h:</i>[<i class="g">#####</i><i class="d">---</i>]<i class="g">58%</i><i class="d">(3h0m)</i> <i class="d">wk:</i>[<i class="g">#</i><i class="d">-------</i>]<i class="g">14%</i><i class="d">(6d8h)</i><i class="d"> | </i>ctx:[<i class="g">####</i><i class="d">------</i>]<i class="g">43%</i> <i class="d">431k/1M</i><i class="d"> | </i>session:<i class="g">42m $1.23</i></div>
             </div>
             <figcaption data-line="none">No status line of your own: the PWHM dashboard shows the kit's version, the model, your usage limits, context and session.</figcaption><figcaption data-line="omc" hidden>Already have a status line: yours stays as it is, and only the PWHM tag is added in front of it.</figcaption><figcaption data-line="update" hidden>A new version is out: the tag says so until you update.</figcaption>
           </figure>
@@ -951,6 +1045,7 @@ pip install esapp TeamOverbyeWeather</pre><button type="button" data-copy>Copy</
           <li><div><b>File it</b><span>concepts for what a thing is, methods for how to do it, references for an API surface, demos for a worked run.</span></div></li>
           <li><div><b>Write the house shape</b><span>Abstract, Connections, Content, with links to related pages.</span></div></li>
           <li><div><b>Add the index row</b><span>A page nobody can find is a page nobody reads.</span></div></li>
+          <li><div><b>Share it, if you want</b><span>It scrubs a copy of case names and numbers, then hands you a pre-filled GitHub issue to review and submit yourself.</span></div></li>
         </ol>
         </div>
       </div>
@@ -1138,7 +1233,9 @@ DATA.then(data => {
 });
 
 /* ---------- sections ---------- */
-const IDS = $$(".feeder").map(f => f.dataset.id);
+// Every panel is routable, including the ones with no tile on the board (#install, #agents, #bench …).
+const IDS = $$("[data-panel]").map(p => p.dataset.panel);
+const HOME = $(".feeder").dataset.id;
 const started = new Set();
 // Not "open": a top-level function by that name replaces window.open, so clicking a
 // graph node ran this instead and landed on Install.
@@ -1146,7 +1243,7 @@ const started = new Set();
 // opens the default section and leaves the URL alone, so the browser's own anchor jump still works.
 function openSection(id, focus, user){
   const known = IDS.includes(id);
-  if (!known) id = "install";
+  if (!known) id = HOME;
   $$(".feeder").forEach(f => {
     const on = f.dataset.id === id;
     f.classList.toggle("on", on);
