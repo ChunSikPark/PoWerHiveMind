@@ -4,7 +4,7 @@
   <img src="assets/juiced.jpg" alt="A juiced-up pixel-art agent with glowing red eyes" width="220">
 </p>
 
-<p align="center"><strong>Your agent on PowerWorldHiveMind.</strong> Version 0.4.0</p>
+<p align="center"><strong>Your agent on PowerWorldHiveMind.</strong> Version 0.5.0</p>
 
 <p align="center"><a href="https://chunsikpark.github.io/PowerWorldHiveMind/"><strong>Open the site</strong></a>: pick a topic, read only that part, and watch the knowledge graph grow.</p>
 
@@ -55,19 +55,24 @@ separately. The agent can also drive Simulator through `.aux` files dropped in a
 folder, and read PowerWorld's own message log for each one:
 [methods/aux-file-mode.md](methods/aux-file-mode.md).
 
-## What's new in 0.4
+## What's new in 0.5
 
-- **An agent team** of six roles. Two are live: `schema-librarian` answers which object, field
-  or SCRIPT command to use, and `case-auditor` audits a case. Four are planned and not built
-  yet: running studies with your settings, comparing designs on a map, watching long runs, and
-  drawing each plan before you approve it. Each role is written up in
-  [docs/agents](docs/agents/README.md), and the site lets you
-  [watch each one handle a request](https://chunsikpark.github.io/PowerWorldHiveMind/#agents).
-- **Answers as pages**, the formats the planned roles will answer with: sample
-  [Design Compare](docs/agents/pages/design-compare.html) and
-  [Run Watch](docs/agents/pages/run-watch.html) pages, plus a swimlane picture of each plan.
-- **Study references:** every study option object and SCRIPT command in Simulator 25, and
-  which settings are traps.
+- **Validated on 30 real study requests.** A fresh agent, given only the request and the case,
+  solved 30 of 30 against an answer key written before the run. v0.4 solved 20.
+  [See every request and answer](https://chunsikpark.github.io/PowerWorldHiveMind/validation.html).
+- **It knows when to stop.** Seven rules in [AGENTS.md](AGENTS.md#scope-the-work-before-you-start):
+  answer, then offer; estimate before a long study; one working design first; audit and ask on
+  a vague request; out of scope means stop. Most v0.4 misses were the agent working past the
+  answer, not missing knowledge.
+- **case-audit catches stranded load.** Load on a disconnected bus now stops a study (before,
+  2 GW of islanded load audited as READY), and a `lint` profile checks nine kinds of bad data.
+- **Overloads on the map.** `violation-map` gains a thermal view and uses the case's own voltage
+  limits.
+- **Eleven new pages**, mostly on fixing violations in large cases: base-case and N-1
+  remediation, a non-converging contingency, reviewing a design, radial-by-N-1 pockets, the
+  zone load multiplier trap, and more. [Browse them by topic](index.md#browse-by-topic).
+- **Share what you learn.** After writing a page, the agent can scrub a copy and hand you a
+  pre-filled GitHub issue to submit.
 
 Full list in [CHANGELOG.md](CHANGELOG.md).
 

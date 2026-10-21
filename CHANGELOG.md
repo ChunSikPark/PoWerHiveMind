@@ -1,7 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 — 2026-10-21
 
+- **The site leads with what is new.** The front page board is now "What's new in 0.5", and a
+  Validation page shows all 30 graded study requests with their answers.
 - **Agents scope the work before they start.** A fresh-agent validation (41 graded runs, see the
   site's Validation page) found that most failures were not missing knowledge. The agent kept
   going after it had the answer, searched for an optimum nobody could finish in time, picked its
@@ -32,7 +34,7 @@
 - Fixed: six pages still taught `pw.dc_mode = True` and `pw.flat_start = True` as working. A
   scripted solve ignores both, so they now point at `pw.pflow(method="DC")` and
   `pw.flatstart()`. The weather client's bbox order is N, W, S, E. Pages no longer name a private
-  research project or its file paths. AGENTS.md's page count is now 60. New rule: never kill a process by name on a shared machine.
+  research project or its file paths. AGENTS.md's page count is now 68. New rule: never kill a process by name on a shared machine.
 
 - **The case-auditor lints for data defects: a `lint` profile with nine rules** (`--profiles base,lint`).
   Discrete shunts set beyond their blocks or between steps, inverted shunt bands, online units below
