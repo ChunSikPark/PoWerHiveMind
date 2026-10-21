@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+- **Agents scope the work before they start.** A fresh-agent validation (41 graded runs, see the
+  site's Validation page) found that most failures were not missing knowledge. The agent kept
+  going after it had the answer, searched for an optimum nobody could finish in time, picked its
+  own criterion for "fix my case", or ran a study it had just said was out of scope. AGENTS.md
+  and the `powerworld` skill now carry seven rules for this: answer, then offer; estimate minutes
+  before a long study; one working design first; audit and ask on a vague request; out of scope
+  means stop; a wrong premise still gets a deliverable; and N-1 for a region needs that region's
+  outages, not just its monitoring.
+- **case-audit stops a study when load or generation sits on a disconnected bus**
+  (`base.dead_bus_injection`, over 10 MW). The stranded MW is reported after the area and zone
+  multipliers. Before this, a case with 2 GW of islanded load audited as READY. Opening a case now
+  also counts load on disconnected buses as the first finding.
+- **`CTGAutoInsert` can insert 0 contingencies and report success** on a recent Simulator 25
+  build (suspected PowerWorld issue, not yet confirmed). `methods/new-device-contingency-aux.md`
+  says to assert the count and build the set yourself, and now shows how to check that a
+  contingency list covers each area asked about (live-tested).
+- **Hourly contingency runs inside TimeStep reuse the first hour** unless `CTGSetAsReference()` is
+  called (Trap 3b in `methods/reading-violationctg.md`). TimeStep's raw CSV exports are UTC.
+  `TimeStepLoadPWWRange` replaces plain `TimeStepLoadPWW`, which fails on Simulator 25.
+- New pages: `methods/reviewing-a-design.md` (a reviewer's checklist for a submitted design),
+  `methods/finding-and-fixing-radial-by-n1-pockets.md`, and
+  `methods/zone-load-multiplier-trap.md` (why the served load differs from the load entered).
+  `concepts/per-unit-basis-discipline.md` adds the per-mile impedance trap with magnitudes.
+- violation-map uses the case's own voltage limits by default, treats "show me the violations" as
+  intact plus N-1, and reports thermal overloads in text.
+- knowledge-base-page gains a "Share it" step: scrub a copy, then hand the user a pre-filled
+  GitHub issue to review and submit.
+- Fixed: six pages still taught `pw.dc_mode = True` and `pw.flat_start = True` as working. A
+  scripted solve ignores both, so they now point at `pw.pflow(method="DC")` and
+  `pw.flatstart()`. The weather client's bbox order is N, W, S, E. Pages no longer name a private
+  research project or its file paths. AGENTS.md's page count is now 60. New rule: never kill a process by name on a shared machine.
+
 - **The case-auditor lints for data defects: a `lint` profile with nine rules** (`--profiles base,lint`).
   Discrete shunts set beyond their blocks or between steps, inverted shunt bands, online units below
   their minimum, missing, placeholder or inverted unit limits, negative reactance, branches with no
