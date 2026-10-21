@@ -1,0 +1,1379 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>When The Page Exists</title>
+<meta name="description" content="An illustrated walkthrough: the agent is asked to run a time-step simulation, finds the HiveMind pages that cover it, checks the case, runs it and hands back the results.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script>
+  try { if (localStorage.getItem("hm-theme") === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
+  (function(){
+    var mo = null;
+    try { mo = localStorage.getItem("hm-motion"); } catch (e) {}
+    if (mo === "reduced") document.documentElement.classList.add("rm");
+  })();
+</script>
+<style>
+:root{
+  --bg:#F2F5F3; --surface:#FFFFFF; --sunk:#E6ECE9; --ink:#18201D; --muted:#56635E; --rule:#CBD3CF;
+  --live:#C4302B; --live-bg:#F8E3E0; --open:#2C7A4B;
+  --kit:#0B7A6C; --web:#9AA6A1; --eng:#8A5200;
+  --ink-2:#36423D; --edge:#C3CCC8; --mark:rgba(11,122,108,.18);
+  --s1:#8F8500; --s2:#D6339B; --s3:#1B8FB0; --s4:#D9622B; --s5:#4C9A2A; --s6:#7B5CD6;
+  --cond:"IBM Plex Sans Condensed","Arial Narrow",sans-serif;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#101513; --surface:#19201D; --sunk:#202825; --ink:#E2E8E5; --muted:#9AA6A1; --rule:#34403B;
+    --live:#F2665B; --live-bg:#3B1E1B; --open:#6CCB8E;
+    --kit:#4CC3AE; --web:#5E6B66; --eng:#E3A449;
+    --ink-2:#BCC6C1; --edge:#34423D; --mark:rgba(76,195,174,.25);
+    --s1:#faff69; --s2:#ff6ec7; --s3:#7bdff2; --s4:#ffa07a; --s5:#b5e48c; --s6:#c7a9ff;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101513; --surface:#19201D; --sunk:#202825; --ink:#E2E8E5; --muted:#9AA6A1; --rule:#34403B;
+  --live:#F2665B; --live-bg:#3B1E1B; --open:#6CCB8E;
+  --kit:#4CC3AE; --web:#5E6B66; --eng:#E3A449;
+  --ink-2:#BCC6C1; --edge:#34423D; --mark:rgba(76,195,174,.25);
+  --s1:#faff69; --s2:#ff6ec7; --s3:#7bdff2; --s4:#ffa07a; --s5:#b5e48c; --s6:#c7a9ff;
+}
+*{box-sizing:border-box;}
+body{overflow-x:clip;}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.6 var(--sans);-webkit-font-smoothing:antialiased;}
+a{color:inherit;text-underline-offset:3px;}
+a:hover{color:var(--kit);}
+:focus-visible{outline:2px solid var(--kit);outline-offset:3px;}
+code{font:400 max(.88em,17px)/1.4 var(--mono);background:var(--sunk);padding:1px 6px;border-radius:4px;overflow-wrap:anywhere;}
+.wrap{max-width:1440px;margin:0 auto;padding:0 24px;}
+@media (max-width:640px){.wrap{padding:0 16px;}}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 85%,transparent);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--rule);}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:16px;padding-bottom:16px;}
+.brand{display:flex;align-items:center;gap:12px;font:600 20px/1 var(--cond);text-decoration:none;}
+.brand .logo{width:38px;height:38px;flex:none;}
+.logo .h{fill:none;stroke:var(--ink);stroke-width:1.6}.logo .w{stroke:var(--kit);stroke-width:1.8;fill:none;stroke-linecap:round}.logo .n{fill:var(--ink)}.logo .c{fill:var(--live)}
+.top nav{display:flex;align-items:center;gap:22px;font-size:17px;}
+.top nav a{text-decoration:none;color:var(--ink-2);font-weight:500;}
+.themebtn{font:500 17px/1 var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:9px 14px;cursor:pointer;}
+.themebtn:hover{border-color:var(--kit);}
+@media (max-width:760px){.top{flex-wrap:wrap;gap:10px 16px;padding-top:12px;padding-bottom:12px;}.top nav{flex-wrap:wrap;gap:8px 16px;}}
+
+/* intro */
+.intro{padding:24px 0 14px;}
+.kicker{margin:0 0 10px;font:500 17px/1.3 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--kit);}
+h1{font:700 clamp(34px,3.8vw,52px)/1.05 var(--cond);letter-spacing:-.01em;margin:0 0 12px;}
+.honest{display:inline-flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:10px 16px;border:1.5px dashed var(--eng);border-radius:10px;font-size:17px;line-height:1.5;color:var(--ink-2);}
+.otherpath{margin:12px 0 0;font-size:17px;color:var(--ink-2);}
+.otherpath a{color:var(--kit);font-weight:600;}
+.honest b{font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--eng);}
+
+/* controls */
+.controls{position:sticky;top:71px;z-index:10;background:var(--bg);padding:12px 0 10px;border-bottom:1px solid var(--rule);margin-bottom:22px;}
+@media (max-width:760px){
+  .topbar{position:static;}
+  .controls{top:0;padding:8px 0;margin-bottom:16px;}
+  .ctl-row{gap:8px;}
+  .btn{min-height:44px;padding:10px 16px;}
+  .btn.play{min-width:108px;}
+  .ctl-pair{display:flex;gap:8px;width:100%;}
+  .speed{min-height:44px;}
+  .speed span{display:none;}
+  .speed button{min-width:42px;padding:8px 7px;}
+}
+.ctl-pair{display:contents;}
+@media (max-width:760px){.ctl-pair{display:flex;}}
+.ctl-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+.btn{font:600 18px/1 var(--sans);border-radius:10px;border:1.5px solid var(--rule);background:var(--surface);color:var(--ink);padding:13px 20px;cursor:pointer;min-height:48px;}
+.btn:hover{border-color:var(--kit);}
+.btn.play{background:var(--kit);border-color:var(--kit);color:var(--bg);min-width:120px;}
+.btn:disabled{opacity:.45;cursor:default;}
+.btn.mo{font:500 17px/1 var(--sans);color:var(--ink-2);padding:13px 16px;}
+.btn.mo b{font:600 17px/1 var(--mono);color:var(--kit);}
+.speed{display:inline-flex;align-items:center;gap:2px;border:1.5px solid var(--rule);border-radius:10px;padding:4px;min-height:48px;background:var(--surface);}
+.speed span{font:500 17px/1 var(--sans);color:var(--muted);padding:0 8px 0 6px;}
+.speed button{font:600 17px/1 var(--mono);border:0;background:transparent;color:var(--ink-2);padding:10px 9px;border-radius:7px;cursor:pointer;min-width:44px;}
+.speed button:hover{color:var(--kit);}
+.speed button[aria-pressed="true"]{background:var(--kit);color:var(--bg);}
+.chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0 0 0 8px;}
+.chips button{font:500 17px/1.2 var(--sans);color:var(--ink-2);background:transparent;border:1.5px solid var(--rule);border-radius:99px;padding:8px 14px;cursor:pointer;min-height:42px;}
+.chips button b{font-family:var(--mono);margin-right:6px;}
+.chips button.done{color:var(--ink);border-color:var(--muted);}
+.chips button.on{color:var(--bg);background:var(--kit);border-color:var(--kit);}
+.prog{height:5px;background:var(--sunk);border-radius:3px;margin-top:10px;overflow:hidden;}
+.prog i{display:block;height:100%;width:0;background:var(--kit);}
+@media (max-width:900px){.chips{margin:4px 0 0;width:100%;}.chips button span{display:none;}.chips button b{margin:0;}}
+
+/* panes */
+.stage-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:28px;align-items:start;padding-bottom:40px;}
+@media (max-width:1040px){.stage-grid{grid-template-columns:minmax(0,1fr);}}
+.pane{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:24px;}
+@media (max-width:640px){.pane{padding:16px;}}
+.stage-h{font:700 clamp(28px,3vw,40px)/1.1 var(--cond);margin:0 0 18px;}
+.reveal{animation:rise .6s cubic-bezier(.2,.7,.2,1) both;}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes fade{from{opacity:0;}to{opacity:1;}}
+.stage-in{animation:rise .5s cubic-bezier(.2,.7,.2,1) both;}
+
+/* prompt + keywords */
+.prompt{background:var(--bg);border:1.5px solid var(--rule);border-radius:12px;padding:18px 20px;font-size:21px;line-height:1.55;min-height:120px;}
+.prompt .who{display:block;font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px;}
+/* highlight = a wipe: two gradient layers grow left to right (fill + underline) */
+.prompt mark{background-color:transparent;color:inherit;border-radius:4px;padding:0 2px;
+  background-image:linear-gradient(var(--kit),var(--kit)),linear-gradient(var(--mark),var(--mark));
+  background-repeat:no-repeat;background-position:left bottom,left center;background-size:0% 3px,0% 100%;
+  transition:background-size .8s cubic-bezier(.65,0,.35,1);}
+.prompt mark.on{background-size:100% 3px,100% 100%;}
+.prompt .ch{opacity:0;transition:opacity .22s ease-out;}
+.prompt .ch.v{opacity:1;}
+.caret{display:inline-block;width:3px;height:1.05em;margin-right:-3px;background:var(--kit);vertical-align:-3px;animation:blink 1s steps(1) infinite;}
+@keyframes blink{50%{opacity:0;}}
+.kw{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.kw li{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;}
+.kw li > .from,.kw li > .arrow{opacity:0;transform:translateX(-6px);transition:opacity .5s cubic-bezier(.2,.7,.2,1),transform .5s cubic-bezier(.2,.7,.2,1);}
+.kw li.in > .from,.kw li.in > .arrow{opacity:1;transform:none;}
+.kw.fly .ck{opacity:0;}
+.kw.fly .ck.land{opacity:1;}
+.kw .from{font-size:18px;color:var(--ink-2);min-width:6.5em;}
+.kw .arrow{color:var(--muted);}
+.ck{display:inline-flex;align-items:center;gap:8px;font:500 17px/1 var(--mono);padding:8px 13px;border-radius:99px;border:1.5px solid var(--muted);color:var(--ink);background:var(--bg);transition:opacity .45s cubic-bezier(.4,0,.2,1),border-color .3s,box-shadow .3s,background .4s;}
+.ck.id{border-color:var(--kit);color:var(--kit);}
+.ck.now{background:var(--mark);animation:chipPulse 1.3s cubic-bezier(.2,.6,.3,1) infinite;}
+@keyframes chipPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--kit) 60%,transparent);}100%{box-shadow:0 0 0 12px color-mix(in srgb,var(--kit) 0%,transparent);}}
+@keyframes chipGlow{0%,100%{background:var(--mark);}50%{background:color-mix(in srgb,var(--kit) 36%,transparent);}}
+.ck.ping{animation:ping .7s cubic-bezier(.2,.7,.2,1);}
+@keyframes ping{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--kit) 55%,transparent);}100%{box-shadow:0 0 0 10px color-mix(in srgb,var(--kit) 0%,transparent);}}
+.ck .n{display:inline-block;font-weight:600;color:var(--muted);transition:color .4s;}
+.ck .n.hit{color:var(--eng);}
+.kwkey{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:17px;color:var(--ink-2);}
+.kwkey span{display:inline-flex;align-items:center;gap:8px;}
+.kwkey i{display:inline-block;width:30px;height:20px;border-radius:99px;border:1.5px solid var(--muted);}
+.kwkey i.id{border-color:var(--kit);}
+
+/* chat + cards */
+.msg{padding:16px 20px;border-radius:12px;font-size:20px;line-height:1.5;margin:0 0 14px;animation:rise .6s cubic-bezier(.2,.7,.2,1) both;}
+.msg .who{display:block;font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.msg.user{background:var(--sunk);border:1px solid var(--rule);margin-left:15%;}
+.msg.user .who{color:var(--ink-2);}
+.msg.agent{background:var(--bg);border:1.5px solid var(--kit);margin-right:8%;}
+.msg.agent .who{color:var(--kit);}
+.msg:nth-of-type(2){animation-delay:.7s;}
+.big{display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:12px;margin-top:14px;}
+.big b{font:700 64px/1 var(--cond);font-variant-numeric:tabular-nums;}
+.big span{font-size:19px;line-height:1.4;}
+.big.zero{border:1.5px solid var(--live);background:var(--live-bg);} .big.zero b{color:var(--live);}
+.big.zero.slam{animation:thud 1.1s cubic-bezier(.2,.8,.2,1) both;}
+.big.zero.slam b{animation:slam .75s cubic-bezier(.2,.9,.25,1.05) both;}
+.big.zero.slam .pre,.big.zero.slam .row > span{animation:rise .6s .3s cubic-bezier(.2,.7,.2,1) both;}
+.big.col{flex-direction:column;align-items:flex-start;gap:8px;}
+.big .row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.big .pre{font:600 19px/1.4 var(--sans);color:var(--ink);}
+.big .lbl{font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--open);}
+.big.ok b{white-space:nowrap;}
+.hits{margin:12px 0 0;font-size:17px;}
+.hits p{margin:0 0 6px;font-weight:600;color:var(--eng);}
+.hits summary{cursor:pointer;color:var(--ink-2);}
+.hits ul{margin:8px 0 0;padding-left:22px;font:500 17px/1.45 var(--mono);overflow-wrap:anywhere;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+@keyframes slam{0%{opacity:0;transform:scale(2);filter:blur(8px);}55%{opacity:1;transform:scale(.93);filter:blur(0);}100%{opacity:1;transform:none;filter:none;}}
+@keyframes thud{0%{opacity:0;box-shadow:0 0 0 0 color-mix(in srgb,var(--live) 70%,transparent);}25%{opacity:1;}100%{opacity:1;box-shadow:0 0 0 22px color-mix(in srgb,var(--live) 0%,transparent);}}
+.big.ok{border:1.5px solid var(--open);} .big.ok b{color:var(--open);}
+.note{font-size:17px;color:var(--muted);margin:10px 0 0;}
+.file{border:1.5px solid var(--kit);border-radius:12px;background:var(--bg);overflow:hidden;}
+.file-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;padding:10px 16px;background:color-mix(in srgb,var(--kit) 14%,var(--surface));font:500 17px/1.3 var(--mono);overflow-wrap:anywhere;}
+.file-b{padding:16px;}
+.file-b > *{animation:rise .6s cubic-bezier(.2,.7,.2,1) both;}
+.fh{font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:16px 0 8px;}
+.file-b > .fh:first-child{margin-top:0;}
+.ptitle{font:700 24px/1.2 var(--cond);margin:0;}
+.pabs{margin:0;font-size:18px;line-height:1.5;color:var(--ink-2);}
+.links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px;}
+.links li{display:inline-flex;align-items:center;gap:8px;font:500 17px/1.2 var(--mono);padding:6px 12px 6px 6px;border:1.5px solid var(--kit);border-radius:99px;overflow-wrap:anywhere;}
+.links li i{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--kit);color:var(--bg);font-style:normal;font-weight:600;flex:none;}
+.badge{display:inline-block;font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.03em;padding:6px 10px;border-radius:99px;border:1.5px solid currentColor;white-space:nowrap;}
+.b-open{color:var(--open);} .b-live{color:var(--live);} .b-kit{color:var(--kit);}
+.oks{display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:18px;}
+.oks div{display:flex;align-items:center;gap:12px;}
+.idxrow{margin-top:14px;padding:14px 16px;border-radius:12px;border:1.5px solid var(--open);background:color-mix(in srgb,var(--open) 12%,transparent);font-size:18px;line-height:1.5;}
+.idxrow .badge{margin-right:8px;}
+.issue{border:1.5px solid var(--rule);border-radius:12px;overflow:hidden;}
+.issue-h{padding:14px 16px;background:var(--sunk);font:600 20px/1.3 var(--sans);}
+.issue-b{padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;}
+ol.rules{margin:16px 0 0;padding-left:26px;font-size:19px;}
+ol.rules li{margin:0 0 8px;}
+
+/* graph */
+.g-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:10px;}
+.g-title{font:700 26px/1.1 var(--cond);margin:0;}
+.g-stats{display:flex;gap:22px;}
+.g-stats div{text-align:right;}
+.g-stats b{display:block;font:700 42px/1 var(--cond);font-variant-numeric:tabular-nums;transition:color .6s;transform-origin:100% 60%;}
+.g-stats b.up{color:var(--kit);}
+.g-stats span{font:500 17px/1.2 var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.03em;}
+.g-status{min-height:30px;font:500 18px/1.4 var(--sans);color:var(--ink);margin:0 0 10px;}
+.legend{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-wrap:wrap;gap:8px 18px;}
+.legend li{display:flex;align-items:center;gap:9px;font-size:17px;}
+.sw{width:20px;height:20px;border-radius:50%;flex:none;}
+.ring{width:22px;height:22px;border-radius:50%;flex:none;}
+#graph{display:block;width:100%;height:560px;background:var(--bg);border-radius:10px;border:1px solid var(--rule);cursor:grab;}
+@media (max-width:1040px){.gpane{order:-1;display:flex;flex-direction:column;} #graph{height:300px;}
+  .gpane > *{order:5;} .gpane .g-top{order:0;} .gpane .g-status{order:1;} .gpane #graph{order:2;} .gpane #legend{order:3;margin:12px 0 0;}}
+#graph .lk{stroke:var(--edge);stroke-width:1.2;transition:opacity .7s cubic-bezier(.4,0,.2,1),stroke .3s;}
+#graph .lk.hi{stroke:var(--ink-2);stroke-width:1.8;}
+#graph .nd{touch-action:none;stroke:var(--bg);stroke-width:1.5;cursor:pointer;transition:opacity .7s cubic-bezier(.4,0,.2,1),stroke .6s ease-out,stroke-width .6s ease-out;}
+#graph.dim .nd:not(.lit){opacity:.25;}
+#graph.dim .lk{opacity:.12;}
+#graph .nd.waking{transition:none;}
+#graph .nk{stroke:var(--kit);stroke-width:3.5;}
+#graph .nk.preview{stroke-dasharray:6 6;opacity:.8;}
+#graph .scan{stroke:var(--kit);stroke-width:2.5;}
+#graph .scanhalo{stroke:var(--kit);stroke-width:14;}
+#graph .scanglow{fill:url(#scanG);}
+#graph .ripple{fill:none;stroke:var(--eng);stroke-width:2.5;}
+#graph .rg{fill:none;}
+#graph .rg.hit{stroke:var(--eng);stroke-width:3;stroke-dasharray:5 4;}
+#graph .rg.nb{stroke:var(--kit);stroke-width:3;}
+#graph .rg.new{stroke:var(--kit);stroke-width:4;}
+#graph .rg.pulse{stroke:var(--kit);stroke-width:3;transform-box:fill-box;transform-origin:center;animation:pulse 1.6s ease-out infinite;}
+@keyframes pulse{from{transform:scale(1);opacity:.9;}to{transform:scale(2.4);opacity:0;}}
+#graph .rg.ghost{stroke:var(--kit);stroke-width:3;stroke-dasharray:6 5;}
+#graph text{font:600 17px/1 var(--mono);paint-order:stroke;stroke:var(--bg);stroke-width:5px;stroke-linejoin:round;pointer-events:none;}
+#graph text.hit{fill:var(--eng);} #graph text.nb{fill:var(--kit);} #graph text.new,#graph text.ghost{fill:var(--kit);font:700 20px/1 var(--cond);}
+#graph text.hover{fill:var(--ink);font:500 17px/1 var(--sans);}
+.keylist{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.keylist li{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:center;font:500 17px/1.35 var(--mono);overflow-wrap:anywhere;animation:rise .55s cubic-bezier(.2,.7,.2,1) both;}
+.tag{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;font:600 17px/1 var(--mono);border:2.5px dashed var(--eng);color:var(--eng);}
+.tag.nb{border:2.5px solid var(--kit);color:var(--kit);}
+.gtip{min-height:28px;margin:10px 0 0;font-size:17px;color:var(--ink-2);}
+.nod3{padding:40px 16px;text-align:center;color:var(--muted);}
+
+footer{border-top:1.5px solid var(--rule);padding:24px 0 48px;color:var(--muted);font-size:17px;line-height:1.6;}
+footer p{margin:0 0 6px;max-width:90ch;}
+
+/* ===== "has the page" stages ===== */
+#graph .rg.top{stroke:var(--open);stroke-width:3.5;}
+#graph .nk.jump{stroke-dasharray:7 6;}
+.big.ok.slam{animation:thudok 1.1s cubic-bezier(.2,.8,.2,1) both;}
+.big.ok.slam b{animation:slam .75s cubic-bezier(.2,.9,.25,1.05) both;}
+.big.ok.slam .row > span,.big.ok.slam .post{animation:rise .6s .3s cubic-bezier(.2,.7,.2,1) both;}
+@keyframes thudok{0%{opacity:0;box-shadow:0 0 0 0 color-mix(in srgb,var(--open) 70%,transparent);}25%{opacity:1;}100%{opacity:1;box-shadow:0 0 0 22px color-mix(in srgb,var(--open) 0%,transparent);}}
+.big .post{font-size:17px;color:var(--ink-2);}
+/* stage 3: reading route */
+.route{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;}
+.route li{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;opacity:.28;transition:opacity .5s cubic-bezier(.4,0,.2,1);}
+.route li.on{opacity:1;}
+.num{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;border:2.5px solid var(--kit);color:var(--kit);font:600 17px/1 var(--mono);transition:background .4s,color .4s;}
+.route li.on .num{background:var(--kit);color:var(--bg);}
+.pg{font:600 17px/1.35 var(--mono);overflow-wrap:anywhere;}
+.why{display:block;font-size:17px;line-height:1.45;color:var(--ink-2);margin-top:3px;}
+.route blockquote{margin:8px 0 0;padding:8px 12px;border-left:3px solid var(--kit);background:var(--bg);border-radius:0 8px 8px 0;font-size:17px;line-height:1.5;color:var(--ink-2);}
+/* stage 4: case check */
+.case{border:1.5px solid var(--rule);border-radius:12px;background:var(--bg);padding:16px;}
+.case-h{display:flex;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font:600 18px/1.3 var(--sans);}
+.units{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:5px;margin:0 0 10px;}
+.u{aspect-ratio:1;border-radius:4px;background:var(--web);opacity:0;transform:scale(.3);transition:opacity .35s ease-out,transform .4s cubic-bezier(.3,1.6,.5,1),box-shadow .5s;}
+.u.sun{background:var(--s1);} .u.wnd{background:var(--s3);}
+.u.in{opacity:1;transform:none;}
+.units.ren .u.in:not(.sun):not(.wnd){opacity:.22;}
+.units.pfw .u.sun,.units.pfw .u.wnd{box-shadow:0 0 0 3px var(--open);}
+.ukey{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0 0 6px;font-size:17px;color:var(--ink-2);}
+.ukey span{display:inline-flex;align-items:center;gap:8px;}
+.ukey i{width:16px;height:16px;border-radius:4px;display:inline-block;}
+.prereq{margin:12px 0 0;font-size:17px;line-height:1.5;color:var(--ink-2);}
+.checks{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:12px;}
+.checks li{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:center;font-size:18px;line-height:1.35;opacity:.32;transition:opacity .45s cubic-bezier(.4,0,.2,1);}
+.checks li.on{opacity:1;}
+.checks small{display:block;font-size:17px;color:var(--muted);}
+.checks b{font:700 34px/1 var(--cond);font-variant-numeric:tabular-nums;}
+.tick{width:30px;height:30px;border-radius:50%;border:2px solid var(--rule);display:grid;place-items:center;transition:background .35s,border-color .35s;}
+.tick svg{width:18px;height:18px;}
+.tick path{fill:none;stroke:var(--bg);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset .45s cubic-bezier(.65,0,.35,1) .1s;}
+li.ok .tick{background:var(--open);border-color:var(--open);}
+li.ok .tick path{stroke-dashoffset:0;}
+.ready{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px;padding:12px 16px;border-radius:12px;border:2px solid var(--open);background:color-mix(in srgb,var(--open) 14%,transparent);visibility:hidden;}
+.ready b{font:700 40px/1 var(--cond);letter-spacing:.02em;color:var(--open);}
+.ready span{font-size:19px;}
+.ready.slam{visibility:visible;animation:thudok 1.1s cubic-bezier(.2,.8,.2,1) both;}
+.ready.slam b{animation:slam .75s cubic-bezier(.2,.9,.25,1.05) both;}
+.rulebox{margin:14px 0 0;padding:8px 12px;border-left:3px solid var(--eng);font-size:17px;line-height:1.5;color:var(--ink-2);}
+/* stage 5: run */
+.copychip{display:inline-flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:17px;color:var(--ink-2);opacity:0;transition:opacity .45s;}
+.copychip.on{opacity:1;}
+.copychip code{border:1.5px dashed var(--kit);color:var(--kit);background:transparent;border-radius:99px;padding:5px 12px;}
+.cmds{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:12px;}
+.cmds li{display:grid;grid-template-columns:32px minmax(0,1fr);gap:12px;align-items:start;opacity:.3;transition:opacity .4s cubic-bezier(.4,0,.2,1);}
+.cmds li.run,.cmds li.ok{opacity:1;}
+.cmds li.run .tick{border-color:var(--kit);border-top-color:transparent;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.cmds .cmd{font:600 17px/1.35 var(--mono);overflow-wrap:anywhere;}
+/* stage 6: the CSV picture */
+.csv{border:1.5px solid var(--kit);border-radius:12px;background:var(--bg);overflow:hidden;}
+.csv-tabs{display:flex;flex-wrap:wrap;align-items:stretch;background:var(--sunk);border-bottom:1px solid var(--rule);}
+.csv-tab{padding:10px 14px;font:500 17px/1.25 var(--mono);color:var(--muted);overflow-wrap:anywhere;}
+.csv-tab.on{background:var(--bg);color:var(--ink);box-shadow:inset 0 3px 0 var(--s1);}
+.csv-tabs .badge{margin:8px 10px 8px auto;align-self:center;color:var(--eng);}
+.csv-scroll{overflow-x:auto;}
+table.grid{border-collapse:collapse;width:100%;font:500 17px/1.25 var(--mono);font-variant-numeric:tabular-nums;}
+.grid th,.grid td{padding:5px 10px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap;}
+.grid th:first-child,.grid td:first-child{text-align:left;}
+.grid thead th{color:var(--ink-2);background:var(--sunk);font-weight:600;}
+.grid .cap td{font:600 17px/1.3 var(--sans);text-align:left;white-space:normal;padding:8px 10px 4px;border-bottom:0;}
+.grid .cap.m td{color:var(--s6);} .grid .cap.h td{color:var(--s1);}
+.grid tr.meta td,.grid thead th{white-space:normal;}
+.grid tr.meta td{background:color-mix(in srgb,var(--s6) 11%,transparent);color:var(--muted);}
+.grid tr.meta td:first-child{color:var(--s6);}
+.grid td.z{color:var(--muted);}
+.grid td small{font-size:17px;color:var(--muted);margin-left:8px;}
+.grid tr.peak td{background:color-mix(in srgb,var(--s1) 16%,transparent);}
+.grid td.t.flag{box-shadow:inset 4px 0 0 var(--eng);}
+.grid .rw{opacity:0;transform:translateY(6px);transition:opacity .35s ease-out,transform .4s cubic-bezier(.2,.7,.2,1),background .5s;}
+.grid .rw.in{opacity:1;transform:none;}
+.spark{padding:10px 12px 12px;border-top:1px solid var(--rule);}
+.spark-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font:600 17px/1.3 var(--sans);margin-bottom:4px;}
+.spark-h span{color:var(--muted);font-weight:500;}
+#spark{display:block;width:100%;height:130px;}
+#spark .spa{fill:var(--s1);fill-opacity:.18;}
+#spark .spl{fill:none;stroke:var(--s1);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;}
+#spark .head{fill:var(--s1);stroke:var(--bg);stroke-width:2;}
+#spark .ax{stroke:var(--rule);stroke-width:1.5;}
+#spark text{font:500 17px/1 var(--mono);fill:var(--muted);}
+#spark text.pk{fill:var(--ink);font-weight:600;}
+.callout{margin:14px 0 0;padding:10px 14px;border-radius:10px;border:1.5px solid var(--eng);background:color-mix(in srgb,var(--eng) 10%,transparent);font-size:18px;line-height:1.45;opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s cubic-bezier(.2,.7,.2,1);}
+.callout.on{opacity:1;transform:none;}
+.callout b{color:var(--eng);}
+@media (max-width:640px){.grid td.t small{display:block;margin:2px 0 0;}.grid th,.grid td{padding:5px 7px;}.grid tr.meta td,.grid thead th{white-space:normal;}}
+/* stage 7: report */
+.used{margin:8px 0 0;padding-left:26px;font:500 17px/1.6 var(--mono);}
+.used a{color:var(--kit);overflow-wrap:anywhere;}
+.rm .route li,.rm .checks li,.rm .cmds li{transform:none;}
+.rm .grid .rw,.rm .callout{transform:none;}
+.rm .u{transform:none;}
+.rm .tick path{stroke-dashoffset:0;opacity:0;transition:opacity .4s;}
+.rm li.ok .tick path{opacity:1;}
+.rm .cmds li.run .tick{animation:none;border-top-color:var(--kit);}
+.rm .ready.slam,.rm .ready.slam b,.rm .big.ok.slam,.rm .big.ok.slam b,.rm .big.ok.slam .row > span,.rm .big.ok.slam .post{animation:fade .7s cubic-bezier(.4,0,.2,1) both;}
+
+/* Reduced motion (html.rm): same sequence and timing, but only opacity and colour change.
+   Nothing slides, scales, flies or sweeps. */
+@keyframes pulseFade{0%{opacity:.9;}100%{opacity:0;}}
+.rm .reveal,.rm .msg,.rm .file-b > *,.rm .stage-in,.rm .keylist li{animation-name:fade;}
+.rm .caret{animation:none;}
+.rm .prompt mark{background-image:none;transition:background-color .6s cubic-bezier(.4,0,.2,1),box-shadow .6s cubic-bezier(.4,0,.2,1);}
+.rm .prompt mark.on{background-color:var(--mark);box-shadow:inset 0 -3px 0 var(--kit);}
+.rm .kw li > .from,.rm .kw li > .arrow{transform:none;}
+.rm .ck.now{animation-name:chipGlow;}
+.rm .ck.ping{animation:none;}
+.rm .big.zero.slam,.rm .big.zero.slam b,.rm .big.zero.slam .pre,.rm .big.zero.slam .row > span{animation:fade .7s cubic-bezier(.4,0,.2,1) both;}
+.rm #graph .rg.pulse{animation-name:pulseFade;}
+.rm #graph .nd.wake{stroke:var(--kit);stroke-width:2.5;}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap top">
+    <a class="brand" href="./"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+<path class="h" d="M32.00 23.80 39.10 27.90 39.10 36.10 32.00 40.20 24.90 36.10 24.90 27.90Z M46.20 23.80 53.30 27.90 53.30 36.10 46.20 40.20 39.10 36.10 39.10 27.90Z M39.10 36.10 46.20 40.20 46.20 48.40 39.10 52.50 32.00 48.40 32.00 40.20Z M24.90 36.10 32.00 40.20 32.00 48.40 24.90 52.50 17.80 48.40 17.80 40.20Z M17.80 23.80 24.90 27.90 24.90 36.10 17.80 40.20 10.70 36.10 10.70 27.90Z M24.90 11.50 32.00 15.60 32.00 23.80 24.90 27.90 17.80 23.80 17.80 15.60Z M39.10 11.50 46.20 15.60 46.20 23.80 39.10 27.90 32.00 23.80 32.00 15.60Z"/>
+<path class="w" d="M32 32L46.20 32.00 M32 32L39.10 44.30 M32 32L24.90 44.30 M32 32L17.80 32.00 M32 32L24.90 19.70 M32 32L39.10 19.70 M46.20 32.00L39.10 44.30 M24.90 44.30L17.80 32.00 M24.90 19.70L39.10 19.70"/>
+<circle class="n" cx="46.20" cy="32.00" r="2.6"/><circle class="n" cx="39.10" cy="44.30" r="2.6"/><circle class="n" cx="24.90" cy="44.30" r="2.6"/><circle class="n" cx="17.80" cy="32.00" r="2.6"/><circle class="n" cx="24.90" cy="19.70" r="2.6"/><circle class="n" cx="39.10" cy="19.70" r="2.6"/>
+<circle class="c" cx="32" cy="32" r="4.2"/>
+</svg> <span>PowerWorldHiveMind</span></a>
+    <nav>
+      <a href="./">Home</a>
+      <a href="validation.html">Benchmark</a>
+      <a href="install.html">Install</a>
+      <a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a>
+      <button class="themebtn" id="themeBtn" type="button">Light</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <p class="kicker">PowerWorldHiveMind · demo</p>
+    <h1>HiveMind has the page. The agent follows it.</h1>
+    <p class="honest"><b>Illustration</b><span>Illustration, not a recorded run. The searches, checks, commands and file layout are real, from HiveMind's pages. The numbers in the results picture are sample values.</span></p>
+    <p class="otherpath">The other path: <a href="demo-new-page.html">no page for it →</a></p>
+  </section>
+
+  <section class="controls" aria-label="Walkthrough controls">
+    <div class="ctl-row">
+      <button class="btn play" id="playBtn" type="button">▶ Play</button>
+      <button class="btn" id="prevBtn" type="button" aria-label="Previous step">←</button>
+      <button class="btn" id="nextBtn" type="button" aria-label="Next step">Step →</button>
+      <div class="ctl-pair"><button class="btn mo" id="motionBtn" type="button">Motion: <b>full</b></button>
+      <div class="speed" id="speed" role="group" aria-label="Speed"><span>Speed</span><button type="button" data-s="0.5">0.5×</button><button type="button" data-s="1" aria-pressed="true">1×</button><button type="button" data-s="1.5">1.5×</button><button type="button" data-s="2">2×</button></div></div>
+      <ul class="chips" id="chips"></ul>
+    </div>
+    <div class="prog" aria-hidden="true"><i id="progBar"></i></div>
+  </section>
+
+  <div class="stage-grid">
+    <p class="sr" id="live" aria-live="polite"></p>
+    <section class="pane" id="stagePane"></section>
+
+    <section class="pane gpane" aria-label="Graph of HiveMind pages">
+      <div class="g-top">
+        <h2 class="g-title">HiveMind's pages</h2>
+        <div class="g-stats">
+          <div><b id="statPages">0</b><span>pages</span></div>
+          <div><b id="statLinks">0</b><span>links</span></div>
+        </div>
+      </div>
+      <p class="g-status" id="gStatus"></p>
+      <ul class="legend" id="legend" aria-label="Topic colours"></ul>
+      <svg id="graph" role="group" aria-label="Each dot is a HiveMind page, coloured by topic. Lines are links between pages."></svg>
+      <ul class="legend" style="margin:12px 0 0" aria-label="Markers">
+        <li><span class="ring" style="border:3px dashed var(--eng)"></span>Mentions a term</li>
+        <li><span class="ring" style="border:3.5px solid var(--open)"></span>Top match: 4 of the 5 terms</li>
+        <li><span class="ring" style="border:3.5px solid var(--kit)"></span>Read, in order (dashed: no link, AGENTS.md says start here)</li>
+      </ul>
+      <ul class="keylist" id="keyList"></ul>
+      <div id="hitList"></div>
+      <p class="gtip" id="gTip">Hover or tab to a dot to see the page. Click or press Enter to open it. Drag to move it.</p>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Sources: <code>AGENTS.md</code>, <code>methods/preflight-powerworld.md</code>, <code>concepts/timestep-workflow.md</code>, <code>methods/timestep-simulation-setup.md</code>, <code>demos/timestep-and-pfw.md</code>, <code>methods/how-to-analyze-results.md</code>. The graph comes from every page's <code>topic:</code> and <code>## Connections</code> links, read 2026-10-21. The search terms are written by hand; the hits are real searches over the shipped Markdown pages. The case check is from <code>demos/timestep-and-pfw.md</code>, on the public synthetic Synth40 case. The numbers in the results picture are sample values.</p>
+    <p>It plays on its own: each step moves on when its animation is done. Keys: Space plays or pauses, the arrow keys jump a step.</p>
+  </div>
+</footer>
+
+<script>
+/* one virtual clock drives every animation: Pause freezes it, Speed scales it */
+(function(){
+  var P = window.performance, real = P.now.bind(P), speed = 1, base = real(), vbase = 0;
+  function now(){ return vbase + (real() - base) * speed; }
+  try { P.now = now; } catch (e) {}
+  window.VC = {now:now, set:function(s){ vbase = now(); base = real(); speed = s; }, speed:function(){ return speed; }};
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(function(){
+"use strict";
+var G = {"nodes":[["agc-participation-factors","c",1],["aggregate-clauses-cannot-bound-one-row","c",1],["aux-only-powerworld","c",5],["case-impedance-completeness","c",4],["case-to-case-device-transplant","c",3],["copper-plate","c",0],["esapp-environment","c",5],["esapp-script-command-wrappers","c",5],["esapp","c",5],["gic","c",0],["glossary","c",5],["grid-workshop-auto-pfw","c",2],["lodf","c",1],["one-device-per-voltage-pocket","c",1],["opf-preconditions","c",0],["parallel-contingency-solve","c",1],["per-unit-basis-discipline","c",4],["powerworld-inertia-and-cost-data","c",4],["powerworld-script-transfer","c",5],["powerworld-simauto","c",5],["pww-data","c",2],["sizing-a-device-whose-impedance-determines-its-own-flow","c",3],["timestep-simulation","c",2],["timestep-workflow","c",2],["unloaded-ehv-stub-overvoltage","c",3],["version-requirements","c",5],["adding-devices-esapp","m",3],["applying-a-dispatch-to-a-case","m",0],["aux-file-mode","m",5],["case-data-lint","m",4],["converting-lines-to-transformers","m",4],["diagnosing-a-non-converging-contingency","m",1],["esapp-overview","m",5],["finding-and-fixing-radial-by-n1-pockets","m",1],["handling-errors","m",5],["how-to-analyze-results","m",2],["ltc-regulation-checks","m",4],["new-device-contingency-aux","m",1],["powerworld-limitset-setdata","m",1],["preflight-powerworld","m",5],["ranking-new-devices-by-severity","m",1],["reading-violationctg","m",1],["reducing-a-contingency-set","m",1],["remediating-base-case-violations","m",3],["remediating-n1-contingency-violations","m",1],["removing-empty-buses","m",4],["reviewing-a-design","m",3],["save-powerworld-case","m",5],["teamoverbyeweather-client","m",2],["timestep-simulation-setup","m",2],["violation-network-map","m",1],["visualize-renewable-output","m",2],["zone-load-multiplier-trap","m",4],["adding-a-device","d",3],["aux-file-cookbook","d",5],["comparing-planning-cases","d",3],["contingency-and-aux","d",1],["power-flow-and-sensitivities","d",0],["start-here","d",5],["timestep-and-pfw","d",2],["violation-remediation","d",1],["aux-script-commands","r",5],["esapp-package-backend","r",5],["esapp-schema-reference","r",5],["powerworld-option-objects-v25","r",5],["powerworld-study-commands","r",5],["powerworld-study-options","r",5],["time-step-simulation-backend","r",2]],"edges":[[0,14],[0,41],[0,44],[0,64],[0,65],[1,60],[1,40],[1,41],[1,44],[2,4],[2,7],[2,14],[2,18],[2,19],[2,37],[2,61],[2,63],[3,27],[4,55],[5,22],[8,7],[8,9],[8,19],[8,22],[8,32],[8,61],[8,63],[6,8],[6,19],[6,32],[6,39],[6,62],[6,63],[7,8],[7,19],[7,30],[7,32],[7,47],[7,61],[7,62],[9,8],[9,10],[9,19],[9,61],[10,8],[10,19],[10,20],[11,23],[11,59],[11,49],[12,8],[12,15],[12,19],[13,21],[13,26],[13,40],[13,41],[13,43],[13,44],[14,2],[14,17],[14,19],[14,27],[14,63],[15,8],[15,19],[16,8],[16,9],[16,17],[17,8],[17,16],[17,19],[18,2],[18,7],[18,19],[18,61],[18,63],[19,8],[19,7],[19,32],[19,61],[20,5],[20,22],[20,35],[20,48],[20,49],[21,13],[21,16],[21,33],[21,43],[21,46],[22,20],[22,35],[22,49],[22,67],[23,5],[23,20],[23,22],[23,35],[23,48],[23,49],[23,67],[24,3],[24,26],[24,36],[24,50],[25,6],[25,10],[25,19],[25,39],[53,6],[53,26],[53,34],[54,2],[54,18],[54,58],[54,28],[55,56],[55,26],[55,37],[55,40],[55,41],[56,34],[56,37],[56,41],[56,61],[57,6],[57,12],[57,32],[57,34],[58,32],[58,34],[58,39],[59,20],[59,23],[59,35],[59,48],[59,49],[60,56],[60,26],[60,34],[60,40],[60,41],[26,8],[26,19],[26,32],[26,62],[26,63],[27,3],[27,8],[27,26],[27,30],[27,47],[28,2],[28,8],[28,18],[28,25],[28,61],[29,3],[29,27],[29,36],[29,38],[30,8],[30,26],[30,32],[30,38],[30,47],[30,62],[31,12],[31,15],[31,33],[31,41],[31,44],[31,66],[32,8],[32,19],[32,20],[32,35],[32,49],[33,12],[33,24],[33,60],[33,26],[33,41],[33,50],[34,6],[34,53],[34,26],[34,39],[35,20],[35,22],[35,32],[35,49],[35,51],[36,24],[36,60],[36,26],[36,30],[36,40],[36,47],[37,8],[37,15],[37,55],[37,26],[37,38],[37,41],[37,47],[37,61],[38,8],[38,19],[38,26],[38,47],[38,62],[39,8],[39,19],[39,32],[40,8],[40,12],[40,15],[40,55],[40,37],[40,38],[40,41],[41,8],[41,12],[41,15],[41,19],[41,37],[41,38],[41,62],[42,15],[42,60],[42,37],[42,41],[43,13],[43,21],[43,24],[43,60],[43,26],[43,36],[43,40],[43,44],[43,47],[44,0],[44,1],[44,13],[44,15],[44,21],[44,60],[44,26],[44,31],[44,33],[44,36],[44,41],[44,42],[44,43],[44,47],[45,26],[45,29],[45,33],[45,36],[45,41],[45,47],[46,3],[46,55],[46,26],[46,29],[46,30],[46,33],[46,34],[46,37],[46,52],[47,8],[47,19],[47,26],[47,30],[47,32],[47,38],[47,62],[48,20],[48,23],[48,49],[49,8],[49,11],[49,20],[49,22],[49,32],[49,35],[49,67],[50,60],[50,26],[50,32],[50,34],[50,40],[50,41],[51,20],[51,22],[51,32],[51,35],[52,26],[52,27],[52,29],[52,46],[52,63],[61,8],[61,19],[61,62],[61,63],[62,8],[62,19],[62,61],[63,8],[63,19],[63,32],[63,61],[63,62],[64,63],[64,65],[64,66],[65,15],[65,61],[65,64],[65,66],[66,14],[66,15],[66,38],[66,40],[66,41],[66,42],[66,63],[66,64],[66,65],[67,5],[67,20],[67,22],[67,49]]};
+var GH = "https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/";
+var DIRS = {c:"concepts", m:"methods", d:"demos", r:"references"};
+var TOPICS = ["Power flow & OPF","Contingency (N-1)","TimeStep & weather","Design & planning","Case data & audit","Saving & scripting"];
+var root = document.documentElement;
+var rm = root.classList.contains("rm");   /* reduced motion: same steps and timing, fades only */
+var $ = function(s){ return document.querySelector(s); };
+var EASE = "cubic-bezier(.2,.7,.2,1)";
+
+/* theme */
+var themeBtn = $("#themeBtn");
+function paintTheme(){
+  var light = root.getAttribute("data-theme") === "light";
+  themeBtn.textContent = light ? "Dark" : "Light";
+}
+themeBtn.addEventListener("click", function(){
+  var next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+  root.setAttribute("data-theme", next);
+  try { localStorage.setItem("hm-theme", next); } catch (e) {}
+  paintTheme();
+});
+paintTheme();
+
+/* motion toggle: full motion by default, reduced if the viewer chose it (remembered per browser) */
+var motionBtn = $("#motionBtn");
+function paintMotion(){
+  motionBtn.innerHTML = 'Motion: <b>' + (rm ? "reduced" : "full") + '</b>';
+  motionBtn.setAttribute("aria-label", "Motion: " + (rm ? "reduced" : "full") + ". Switch to " + (rm ? "full" : "reduced") + " motion.");
+}
+motionBtn.addEventListener("click", function(){
+  rm = !rm;
+  root.classList.toggle("rm", rm);
+  try { localStorage.setItem("hm-motion", rm ? "reduced" : "full"); } catch (e) {}
+  paintMotion();
+  if (rm) settleAll();
+  var was = playing; go(cur); setPlay(was);
+});
+paintMotion();
+
+$("#legend").innerHTML = TOPICS.map(function(t, i){ return '<li><span class="sw" style="background:var(--s' + (i + 1) + ')"></span>' + t + '</li>'; }).join("");
+
+/* ---------- data ---------- */
+var nodes = G.nodes.map(function(a, i){ return {i:i, name:a[0], dir:DIRS[a[1]], t:a[2], id:DIRS[a[1]] + "/" + a[0]}; });
+var byId = {}; nodes.forEach(function(n){ byId[n.id] = n; });
+var oldNodes = nodes, newNode = null, NB = [];
+var oldLinks = G.edges.map(function(e){ return {source:nodes[e[0]], target:nodes[e[1]]}; });
+var deg = {}; nodes.forEach(function(n){ deg[n.id] = 0; });
+oldLinks.forEach(function(l){ deg[l.source.id]++; deg[l.target.id]++; });
+function rad(n){ return 5 + Math.sqrt(deg[n.id]) * 1.7; }
+function linked(a, b){ return oldLinks.some(function(l){ return (l.source === a && l.target === b) || (l.source === b && l.target === a); }); }
+
+/* the pages read, in order; a hop with no Connections link is drawn dashed */
+var ROUTE = ["methods/preflight-powerworld", "concepts/timestep-workflow", "methods/timestep-simulation-setup", "demos/timestep-and-pfw", "methods/how-to-analyze-results"].map(function(k){ return byId[k]; });
+var HOPS = ROUTE.slice(1).map(function(n, i){ return {source:ROUTE[i], target:n, jump:!linked(ROUTE[i], n)}; });
+
+/* the search: terms come from the prompt; hits are a grep of the shipped Markdown pages (2026-10-21) */
+var GROUPS = [
+ {
+  "from": "timestep simulation",
+  "terms": [
+   {
+    "t": "timestep",
+    "hits": [
+     "concepts/copper-plate",
+     "concepts/esapp",
+     "concepts/esapp-script-command-wrappers",
+     "concepts/glossary",
+     "concepts/grid-workshop-auto-pfw",
+     "concepts/powerworld-simauto",
+     "concepts/pww-data",
+     "concepts/timestep-simulation",
+     "concepts/timestep-workflow",
+     "concepts/version-requirements",
+     "demos/start-here",
+     "demos/timestep-and-pfw",
+     "demos/violation-remediation",
+     "methods/esapp-overview",
+     "methods/how-to-analyze-results",
+     "methods/preflight-powerworld",
+     "methods/reading-violationctg",
+     "methods/save-powerworld-case",
+     "methods/teamoverbyeweather-client",
+     "methods/timestep-simulation-setup",
+     "methods/visualize-renewable-output",
+     "references/aux-script-commands",
+     "references/esapp-package-backend",
+     "references/esapp-schema-reference",
+     "references/powerworld-option-objects-v25",
+     "references/powerworld-study-commands",
+     "references/powerworld-study-options",
+     "references/time-step-simulation-backend"
+    ]
+   },
+   {
+    "t": "time step",
+    "hits": [
+     "concepts/copper-plate",
+     "concepts/grid-workshop-auto-pfw",
+     "concepts/pww-data",
+     "methods/ltc-regulation-checks",
+     "references/powerworld-option-objects-v25",
+     "references/powerworld-study-commands",
+     "references/powerworld-study-options"
+    ]
+   },
+   {
+    "t": "TimeStepDoRun",
+    "id": true,
+    "hits": [
+     "concepts/esapp",
+     "concepts/esapp-script-command-wrappers",
+     "concepts/timestep-simulation",
+     "concepts/timestep-workflow",
+     "demos/timestep-and-pfw",
+     "methods/timestep-simulation-setup",
+     "references/aux-script-commands",
+     "references/esapp-schema-reference",
+     "references/powerworld-study-commands",
+     "references/powerworld-study-options",
+     "references/time-step-simulation-backend"
+    ]
+   }
+  ]
+ },
+ {
+  "from": "run … on this case",
+  "terms": [
+   {
+    "t": "PFW",
+    "hits": [
+     "concepts/copper-plate",
+     "concepts/esapp",
+     "concepts/glossary",
+     "concepts/grid-workshop-auto-pfw",
+     "concepts/pww-data",
+     "concepts/timestep-simulation",
+     "concepts/timestep-workflow",
+     "demos/start-here",
+     "demos/timestep-and-pfw",
+     "methods/how-to-analyze-results",
+     "methods/save-powerworld-case",
+     "methods/timestep-simulation-setup",
+     "references/aux-script-commands",
+     "references/powerworld-option-objects-v25",
+     "references/powerworld-study-commands",
+     "references/powerworld-study-options",
+     "references/time-step-simulation-backend"
+    ]
+   },
+   {
+    "t": "TSPFWModelString",
+    "id": true,
+    "hits": [
+     "concepts/esapp",
+     "concepts/grid-workshop-auto-pfw",
+     "demos/timestep-and-pfw",
+     "methods/how-to-analyze-results",
+     "methods/save-powerworld-case",
+     "methods/timestep-simulation-setup",
+     "references/time-step-simulation-backend"
+    ]
+   }
+  ]
+ }
+];
+var TERMS = []; GROUPS.forEach(function(g, gi){ g.terms.forEach(function(t){ t.g = gi; TERMS.push(t); }); });
+var UNION = [], HITN = {};
+TERMS.forEach(function(t){ t.hits.forEach(function(k){ if (UNION.indexOf(k) < 0) UNION.push(k); HITN[k] = (HITN[k] || 0) + 1; }); });
+var TOP = UNION.filter(function(k){ return HITN[k] === 4; }).sort();
+var PROMPT = [["Can you "], ["run", 1], [" a "], ["timestep simulation", 0], [" "], ["on this case", 1], ["?"]];
+
+/* ---------- timers (all cleared on every stage change) ---------- */
+var timers = [], jobs = [], busy = 0, lastV = VC.now(), lastReal = Date.now(), simAcc = 0, sim;
+function later(ms, fn){ var j = {at:VC.now() + ms, fn:fn, dead:false}; jobs.push(j); timers.push({stop:function(){ j.dead = true; }}); }
+function frames(fn){
+  var alive = true, t0 = VC.now(), id; busy++;
+  function end(){ if (alive){ alive = false; busy--; } }
+  function f(){ if (!alive) return; if (fn(VC.now() - t0) !== true) id = requestAnimationFrame(f); else end(); }
+  id = requestAnimationFrame(f);
+  timers.push({stop:function(){ end(); cancelAnimationFrame(id); }});
+}
+/* runs due jobs, and keeps CSS and Web Animations at the clock's speed (0 = paused) */
+(function pump(){
+  var t = VC.now(), due = [];
+  jobs = jobs.filter(function(j){ if (j.dead) return false; if (j.at <= t){ due.push(j); return false; } return true; });
+  due.sort(function(a, b){ return a.at - b.at; }).forEach(function(j){ if (!j.dead) j.fn(); });
+  var sp = VC.speed();
+  if (document.getAnimations) document.getAnimations().forEach(function(a){
+    if (typeof CSSTransition !== "undefined" && a instanceof CSSTransition) return;   /* theme and hover fades are not part of the walkthrough */
+    if (a.playbackRate !== sp) a.playbackRate = sp;
+  });
+  /* force layout: ~one physics step per 16.7 ms of virtual time (none while paused); a drag runs at 1x even when paused */
+  var rt = Date.now(), dt = dragging ? rt - lastReal : t - lastV;
+  lastV = t; lastReal = rt;
+  if (sim && (sim.alpha() > sim.alphaMin() || dragging)){
+    simAcc += Math.max(0, dt) / 16.7;
+    var steps = Math.min(4, Math.floor(simAcc));
+    simAcc = steps === 4 ? 0 : simAcc - steps;
+    for (var s = 0; s < steps; s++) sim.tick();
+    if (steps) tick();
+  } else simAcc = 0;
+  requestAnimationFrame(pump);
+})();
+/* is the current stage still animating? */
+function active(){
+  if (busy > 0) return true;
+  for (var i = 0; i < jobs.length; i++) if (!jobs[i].dead) return true;
+  if (document.getAnimations){
+    var as = document.getAnimations();
+    for (var k = 0; k < as.length; k++){
+      var a = as[k], tm = a.effect && a.effect.getComputedTiming ? a.effect.getComputedTiming() : null;
+      if (a.playState === "running" && tm && tm.iterations !== Infinity) return true;
+    }
+  }
+  return false;
+}
+
+/* ---------- graph ---------- */
+var svgEl = $("#graph"), hasD3 = !!window.d3;
+var svg, gL, gNL, gN, gM, gS, linkSel, nodeSel, W = 600, H = 560, firstJoin = true;
+var marks = [], lit = null, waking = {}, dragging = 0, lastPtr = "mouse", tapped = null;
+function openPage(d){ window.open(GH + d.id + ".md", "_blank", "noopener"); }
+/* after a tap, the emulated mouse events must not clear the name the tap just showed */
+function unhover(){ hover(lastPtr === "touch" && tapped ? tapped : null); }
+document.addEventListener("pointerdown", function(e){ lastPtr = e.pointerType || "mouse"; if (lastPtr !== "touch") tapped = null; }, true);
+
+if (!hasD3) { svgEl.outerHTML = '<p class="nod3">The graph needs d3, which did not load. The steps on the left still work.</p>'; }
+else {
+  svg = d3.select(svgEl);
+  var lg = svg.append("defs").append("linearGradient").attr("id", "scanG").attr("x1", 0).attr("x2", 1).attr("y1", 0).attr("y2", 0);
+  lg.append("stop").attr("offset", 0).style("stop-color", "var(--kit)").style("stop-opacity", 0);
+  lg.append("stop").attr("offset", 1).style("stop-color", "var(--kit)").style("stop-opacity", .3);
+  gL = svg.append("g"); gNL = svg.append("g"); gS = svg.append("g"); gN = svg.append("g"); gM = svg.append("g");
+  sim = d3.forceSimulation().alphaDecay(.025)
+    .force("charge", d3.forceManyBody().strength(function(){ return W < 500 ? -90 : -170; }).distanceMax(420))
+    .force("link", d3.forceLink().distance(function(){ return W < 500 ? 38 : 60; }).strength(.25))
+    .force("x", d3.forceX(function(){ return W / 2; }).strength(.06))
+    .force("y", d3.forceY(function(){ return H / 2; }).strength(.09))
+    .force("collide", d3.forceCollide(function(d){ return rad(d) + 3; }))
+    .on("tick", tick);
+  sim.stop();   /* physics is stepped by pump() from the virtual clock, so Pause and Speed apply to it */
+  sizeGraph();
+  window.addEventListener("resize", function(){ sizeGraph(); sim.alpha(.3); if (rm) settleAll(); });
+}
+function sizeGraph(){
+  W = svgEl.clientWidth || 600; H = svgEl.clientHeight || 560;
+  svg.attr("viewBox", "0 0 " + W + " " + H);
+}
+/* reduced motion: run the layout to rest off-screen, then draw once */
+function settleAll(){
+  if (!hasD3) return;
+  sim.stop();
+  var t = 0; while (sim.alpha() > sim.alphaMin() && t++ < 500) sim.tick();
+  tick();
+}
+function tick(){
+  sim.nodes().forEach(function(n){ var m = rad(n) + 4; n.x = Math.max(m, Math.min(W - m, n.x)); n.y = Math.max(m, Math.min(H - m, n.y)); });
+  if (linkSel) linkSel.attr("x1", function(d){ return d.source.x; }).attr("y1", function(d){ return d.source.y; }).attr("x2", function(d){ return d.target.x; }).attr("y2", function(d){ return d.target.y; });
+  if (nodeSel) nodeSel.attr("cx", function(d){ return d.x; }).attr("cy", function(d){ return d.y; });
+  gNL.selectAll("line").attr("x1", function(d){ return pos(d.source).x; }).attr("y1", function(d){ return pos(d.source).y; }).attr("x2", function(d){ return d.target.x; }).attr("y2", function(d){ return d.target.y; });
+  placeMarks();
+}
+function pos(n){ return n; }
+function ghostPos(){ return {x:W / 2, y:H / 2}; }
+
+/* draw a stroke in along its length; pat is the dash pattern it ends with ([1e6,0] = solid) */
+function dashStr(pat, L, p){
+  if (!(L > 0)) return "0 1";
+  var out = [], s = 0, lim = p * L, i = 0;
+  while (s < lim){ var seg = pat[i % 2]; if (s + seg > lim) seg = lim - s; out.push(seg.toFixed(2)); s += seg; i++; }
+  if (out.length % 2) out.push(L + 1); else out.push(0, L + 1);
+  return out.join(" ");
+}
+function drawIn(sel, pat, dur, delay){
+  sel.each(function(){
+    var el = this, s = d3.select(el);
+    if (rm){
+      s.style("stroke-opacity", 0).transition("draw").delay(delay || 0).duration(dur).ease(d3.easeCubicInOut)
+        .style("stroke-opacity", 1).on("end", function(){ s.style("stroke-opacity", null); });
+      return;
+    }
+    s.style("stroke-dasharray", "0 100000").transition("draw").delay(delay || 0).duration(dur).ease(d3.easeCubicOut)
+      .styleTween("stroke-dasharray", function(){ return function(p){
+        var L = 0;
+        if (el.isConnected){ try { L = el.getTotalLength ? el.getTotalLength() : 100; } catch (e) { L = 0; } }
+        return dashStr(pat, L, p);
+      }; })
+      .on("end", function(){ s.style("stroke-dasharray", null); });
+  });
+}
+
+function setGraph(){
+  var ns = nodes, ls = oldLinks;
+  var first = firstJoin; firstJoin = false;
+  linkSel = gL.selectAll("line").data(oldLinks, function(d){ return d.source.id + "|" + d.target.id; }).join(function(en){
+    var l = en.append("line").attr("class", "lk");
+    if (first) l.style("stroke-opacity", 0).transition().delay(350).duration(1000).ease(d3.easeCubicInOut).style("stroke-opacity", 1)
+      .on("end", function(){ d3.select(this).style("stroke-opacity", null); });
+    return l;
+  });
+  nodeSel = gN.selectAll("circle.nd:not(.out)").data(ns, function(d){ return d.id; }).join(
+    function(enter){
+      var c = enter.append("circle").attr("class", "nd").attr("fill", function(d){ return "var(--s" + (d.t + 1) + ")"; })
+        .on("mouseenter", function(e, d){ hover(d); }).on("mouseleave", unhover)
+        .on("click", function(e, d){
+          /* touch: the first tap shows the name, the second opens the page */
+          if (lastPtr === "touch" && tapped !== d){ tapped = d; hover(d); return; }
+          openPage(d);
+        })
+        .call(d3.drag()
+          .on("start", function(e, d){ d._moved = false; d.fx = d.x; d.fy = d.y; })
+          /* heat the layout only once the pointer really moves, so a tap does not shift the dots */
+          .on("drag", function(e, d){ if (!d._moved){ d._moved = true; dragging++; if (!e.active) sim.alphaTarget(.2); } d.fx = e.x; d.fy = e.y; })
+          .on("end", function(e, d){ if (d._moved){ dragging = Math.max(0, dragging - 1); if (!e.active) sim.alphaTarget(0); } d.fx = d.fy = null; }))
+        .attr("tabindex", 0).attr("aria-label", function(d){ return d.id; })
+        .on("focus", function(e, d){ hover(d); }).on("blur", unhover)
+        .on("keydown", function(e, d){ if (e.key === "Enter"){ e.preventDefault(); openPage(d); } });
+      if (rm){
+        c.attr("r", rad).style("fill-opacity", 0).transition("grow").delay(function(d, i){ return first ? i * 6 : 0; }).duration(600)
+          .ease(d3.easeCubicInOut).style("fill-opacity", 1).on("end", function(){ d3.select(this).style("fill-opacity", null); });
+      } else {
+        c.attr("r", 0).transition("grow").delay(function(d, i){ return first ? 120 + i * 9 : 0; }).duration(first ? 700 : 750)
+          .ease(d3.easeBackOut.overshoot(first ? 1.4 : 2.2)).attr("r", rad);
+      }
+      return c;
+    },
+    function(u){ return u; },
+    function(ex){
+      ex.classed("out", true).interrupt("grow");
+      if (rm) ex.transition().duration(400).style("fill-opacity", 0).remove();
+      else ex.transition().duration(380).ease(d3.easeCubicIn).attr("r", 0).remove();
+    });
+  sim.nodes(ns); sim.force("link").links(ls);
+  applyLit();
+}
+
+/* numbers count to their new value instead of jumping */
+function countTo(el, to){
+  var from = parseInt(el.textContent, 10) || 0;
+  if (el._raf) cancelAnimationFrame(el._raf);
+  if (from === to){ el.textContent = to; return; }
+  var t0 = performance.now(), dur = Math.min(1100, 450 + Math.abs(to - from) * 6);
+  (function f(){
+    var p = Math.min(1, (performance.now() - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * e);
+    el._raf = p < 1 ? requestAnimationFrame(f) : 0;
+  })();
+  if (!rm && el.animate && Math.abs(to - from) < 5) el.animate([{transform:"scale(1.16)"}, {transform:"none"}], {duration:500, easing:EASE});
+}
+function setStats(p, l){
+  var sp = $("#statPages"), sl = $("#statLinks");
+  countTo(sp, p); countTo(sl, l);
+  sp.classList.toggle("up", p > oldNodes.length); sl.classList.toggle("up", l > oldLinks.length);
+}
+function status(t){
+  var el = $("#gStatus");
+  if (el.textContent === t) return;
+  el.textContent = t;
+  if (el.animate) el.animate(rm ? [{opacity:0}, {opacity:1}] : [{opacity:0, transform:"translateY(5px)"}, {opacity:1, transform:"none"}], {duration:400, easing:EASE});
+}
+function setLit(list){ lit = list; applyLit(); }
+function applyLit(){
+  if (!hasD3) return;
+  svg.classed("dim", !!lit);
+  if (nodeSel) nodeSel.classed("lit", function(d){ return !!lit && lit.indexOf(d) >= 0; });
+}
+
+/* marks: rings and labels, each in a <g> that follows its node */
+function markR(d){ return (d.kind === "ghost" || d.kind === "new" || d.kind === "pulse" ? 12 : rad(d.node)) + 6; }
+function markKey(d){ return d.key || d.node.id + d.kind; }
+function setMarks(m){
+  marks = m || [];
+  if (!hasD3) return;
+  gM.selectAll("g.mk").data(marks, markKey).join(
+    function(en){
+      var g = en.append("g").attr("class", "mk");
+      g.append("circle").attr("class", function(d){ return "rg " + d.kind; }).attr("r", markR);
+      g.filter(function(d){ return d.label; }).append("text").attr("class", function(d){ return "mk " + d.kind; }).text(function(d){ return d.label; });
+      g.each(function(d){ enterMark(d3.select(this), d); });
+      return g;
+    },
+    function(up){ up.select("text").text(function(d){ return d.label; }); return up; },
+    function(ex){
+      ex.selectAll("circle,text").interrupt("draw").interrupt("shrink").interrupt("grow").interrupt("ping").interrupt();
+      ex.attr("class", "mk-out").interrupt().transition().duration(340).ease(d3.easeCubicIn).style("opacity", 0).remove();
+    });
+  placeMarks();
+}
+function enterMark(g, d){
+  var c = g.select("circle"), t = g.select("text"), dl = d.delay || 0, rr = markR(d);
+  if (rm){ g.style("opacity", 0).transition().delay(dl).duration(600).ease(d3.easeCubicInOut).style("opacity", 1); return; }
+  if (d.kind === "pulse"){ g.style("opacity", 0).transition().delay(dl).duration(500).style("opacity", 1); return; }
+  if (d.kind === "new"){
+    c.attr("r", 0).transition("grow").delay(dl).duration(700).ease(d3.easeBackOut.overshoot(2.2)).attr("r", rr);
+  } else {
+    c.attr("transform", "rotate(-90)");   /* draw from 12 o'clock */
+    if (d.kind !== "nb") c.attr("r", rr + 14).transition("shrink").delay(dl).duration(850).ease(d3.easeCubicOut).attr("r", rr);
+    drawIn(c, d.kind === "hit" ? [5, 4] : d.kind === "ghost" ? [6, 5] : [1e6, 0], d.kind === "nb" ? 650 : 850, dl);
+  }
+  if (!t.empty()) t.style("opacity", 0).transition().delay(dl + (d.kind === "new" ? 250 : 380)).duration(450).ease(d3.easeCubicOut).style("opacity", 1);
+}
+function pingMark(label){
+  if (!hasD3) return;
+  var c = gM.selectAll("g.mk").filter(function(d){ return d.kind === "hit" && d.node.id === label; }).select("circle");
+  if (rm){ c.style("opacity", .2).transition("ping").duration(650).style("opacity", 1); return; }
+  c.style("stroke-width", 3).transition("ping").duration(170).ease(d3.easeCubicOut).style("stroke-width", 7)
+    .transition().duration(650).ease(d3.easeCubicInOut).style("stroke-width", 3).on("end", function(){ d3.select(this).style("stroke-width", null); });
+}
+function placeMarks(){
+  if (!hasD3) return;
+  gM.selectAll("g.mk, g.mk-out").each(function(d){
+    var p = d.kind === "ghost" ? ghostPos() : d.node;
+    if (p.x == null) return;
+    var g = d3.select(this).attr("transform", "translate(" + p.x + "," + p.y + ")");
+    if (!d.label) return;
+    var rr = markR(d), t = g.select("text");
+    if (d.kind === "ghost" || d.kind === "new"){
+      var c = {x:0, y:0}; NB.forEach(function(n){ c.x += n.x / NB.length; c.y += n.y / NB.length; });
+      var dx = p.x - c.x, dy = p.y - c.y, len = Math.hypot(dx, dy);
+      if (len < 8){ dx = 0; dy = -1; } else { dx /= len; dy /= len; }
+      var off = rr + 26;
+      t.attr("x", dx * off).attr("y", dy * off + 6).attr("text-anchor", "middle");
+      return;
+    }
+    var right = p.x < W - 60;
+    t.attr("x", right ? rr + 6 : -rr - 6).attr("y", 6).attr("text-anchor", right ? "start" : "end");
+  });
+  gM.selectAll("text.hover").each(function(d){ d3.select(this).attr("x", d.x).attr("y", d.y - rad(d) - 10); });
+}
+function hover(d){
+  gM.selectAll("text.hover").data(d ? [d] : []).join("text").attr("class", "hover").attr("text-anchor", "middle").text(function(n){ return n.name; });
+  placeMarks();
+  linkSel.classed("hi", function(l){ return !!d && (l.source === d || l.target === d); });
+  $("#gTip").textContent = d ? d.id + " · " + TOPICS[d.t] : "Hover or tab to a dot to see the page. Click or press Enter to open it. Drag to move it.";
+}
+var lastKeys = "";
+function keys(items){
+  var html = items.map(function(it, i){ return '<li style="animation-delay:' + (i * 70) + 'ms"><span class="tag ' + (it.nb ? "nb" : "") + '">' + it.k + '</span><span>' + it.text + '</span></li>'; }).join("");
+  if (html === lastKeys) return;
+  lastKeys = html; $("#keyList").innerHTML = html;
+}
+function hitList(show){
+  $("#hitList").innerHTML = show ? '<div class="hits"><p>' + UNION.length + ' pages mention a term. Top matches, 4 of the 5 terms:</p><ul>' +
+    TOP.map(function(k){ return '<li>' + k + '</li>'; }).join("") + '</ul><details><summary>Show all ' + UNION.length + '</summary><ul>' +
+    UNION.slice().sort().map(function(k){ return '<li>' + k + '</li>'; }).join("") + '</ul></details></div>' : "";
+}
+function hitMarks(upto, ranked){
+  var seen = {}, m = [];
+  TERMS.slice(0, upto).forEach(function(t){ t.hits.forEach(function(k){ if (!seen[k]){ seen[k] = 1; m.push({node:byId[k], kind:ranked && TOP.indexOf(k) >= 0 ? "top" : "hit"}); } }); });
+  return m;
+}
+function routeMarks(n, lastDelay){ return ROUTE.slice(0, n).map(function(p, i){ return {node:p, kind:"nb", label:String(i + 1), delay:i === n - 1 ? (lastDelay || 0) : 0}; }); }
+function routeKeys(){ keys(ROUTE.map(function(n, i){ return {k:i + 1, nb:true, text:n.id}; })); }
+/* draw the first n hops of the route; hops already on screen stay put */
+function routeLines(n){
+  if (!hasD3) return;
+  var sel = gNL.selectAll("line.nk").data(HOPS.slice(0, n), function(d){ return d.source.id + ">" + d.target.id; });
+  sel.exit().attr("class", "out").interrupt("draw").transition().duration(300).style("opacity", 0).remove();
+  var en = sel.enter().append("line").attr("class", function(d){ return "nk" + (d.jump ? " jump" : ""); });
+  tick();
+  en.each(function(d){ drawIn(d3.select(this), d.jump ? [7, 6] : [1e6, 0], 700, 0); });
+}
+/* stages 4-7 share the route on the graph, with one page pulsing */
+function routeBase(focus){
+  graphBase(true); setLit(ROUTE); routeKeys(); routeLines(HOPS.length);
+  setMarks(routeMarks(ROUTE.length).concat(focus != null ? [{node:ROUTE[focus], kind:"pulse", key:"pulse"}] : []));
+}
+
+/* scan: a line sweeps the graph once per term; nodes wake as it passes; hits ripple and get their ring.
+   Reduced motion: no line; the same hits land at the same moments, as fades. */
+function cssVar(name){ return getComputedStyle(root).getPropertyValue(name).trim(); }
+function unwake(c){ c.classed("waking", false).style("stroke", null).style("stroke-width", null).style("opacity", null).attr("r", rad(c.datum())); }
+function wake(el, n, kit, bg){
+  var c = d3.select(el), o0 = svg.classed("dim") && !(lit && lit.indexOf(n) >= 0) ? .25 : 1;
+  waking[n.id] = el;
+  c.interrupt("wake").classed("waking", true)
+    .transition("wake").duration(150).ease(d3.easeCubicOut).attr("r", rad(n) * 1.3).style("stroke", kit).style("stroke-width", 3.5).style("opacity", 1)
+    .transition().duration(550).ease(d3.easeCubicInOut).attr("r", rad(n)).style("stroke", bg).style("stroke-width", 1.5).style("opacity", o0)
+    .on("end", function(){ unwake(c); delete waking[n.id]; });
+}
+function scan(term, onHit, done){
+  var hits = term.hits.map(function(k){ return {k:k, n:byId[k]}; });
+  if (!hasD3){ hits.forEach(onHit); done(); return; }
+  var dur = hits.length ? 1300 : 700;   /* a term with no hits gets a short sweep */
+  if (rm){
+    nodeSel.classed("wake", true); later(dur * .7, function(){ nodeSel.classed("wake", false); });
+    hits.slice().sort(function(a, b){ return a.n.x - b.n.x; }).forEach(function(h){ later(Math.max(100, dur * h.n.x / W), function(){ onHit(h); }); });
+    later(dur, done);
+    return;
+  }
+  var glow = gS.append("rect").attr("class", "scanglow").attr("y", 0).attr("height", H).attr("width", 150);
+  var halo = gS.append("line").attr("class", "scanhalo").attr("y1", 0).attr("y2", H);
+  var line = gS.append("line").attr("class", "scan").attr("y1", 0).attr("y2", H);
+  var passed = {}, hitBy = {}, kit = cssVar("--kit"), bg = cssVar("--bg");
+  hits.forEach(function(h){ hitBy[h.n.id] = h; });
+  var sb = true; busy++;
+  function unbusy(){ if (sb){ sb = false; busy--; } }
+  var tm = d3.timer(function(el){
+    var f = Math.min(1, el / dur), x = -30 + d3.easeCubicInOut(f) * (W + 60), op = Math.min(1, f * 7, (1 - f) * 7);
+    line.attr("x1", x).attr("x2", x).style("opacity", op);
+    halo.attr("x1", x).attr("x2", x).style("opacity", op * .18);
+    glow.attr("x", x - 150).style("opacity", op);
+    nodeSel.each(function(n){
+      if (!passed[n.id] && n.x <= x){
+        passed[n.id] = 1; wake(this, n, kit, bg);
+        var h = hitBy[n.id];
+        if (h){
+          gS.append("circle").attr("class", "ripple").attr("cx", n.x).attr("cy", n.y).attr("r", rad(n)).style("opacity", .9)
+            .transition().duration(950).ease(d3.easeCubicOut).attr("r", rad(n) + 38).style("opacity", 0).remove();
+          onHit(h);
+        }
+      }
+    });
+    if (f >= 1){ tm.stop(); unbusy(); line.remove(); halo.remove(); glow.remove(); done(); }
+  });
+  timers.push({stop:function(){ tm.stop(); unbusy(); }});
+}
+
+function clearTimers(){
+  timers.forEach(function(t){ t.stop(); }); timers = []; busy = 0;
+  if (!hasD3) return;
+  gS.selectAll("*").interrupt().remove();
+  if (nodeSel) nodeSel.classed("wake", false);
+  Object.keys(waking).forEach(function(id){ var c = d3.select(waking[id]); c.interrupt("wake"); unwake(c); });
+  waking = {};
+}
+
+/* ---------- stages ---------- */
+function esc(c){ return c === "&" ? "&amp;" : c === "<" ? "&lt;" : c; }
+function chars(s){ return s.split("").map(function(c){ return '<span class="ch">' + esc(c) + '</span>'; }).join(""); }
+function promptHTML(){
+  return '<div class="prompt"><span class="who">You</span><span id="ptext"><span class="caret"></span>' +
+    PROMPT.map(function(p){ return p[1] != null ? '<mark data-g="' + p[1] + '">' + chars(p[0]) + '</mark>' : chars(p[0]); }).join("") +
+    '</span></div>';
+}
+function termsHTML(fly){
+  return '<ul class="kw' + (fly ? " fly" : "") + '" id="kw">' + GROUPS.map(function(g, gi){
+    return '<li data-g="' + gi + '"><span class="from">“' + g.from + '”</span><span class="arrow">→</span>' +
+      g.terms.map(function(t){ return '<span class="ck' + (t.id ? " id" : "") + '" data-t="' + TERMS.indexOf(t) + '">' + t.t + '<span class="n"></span></span>'; }).join("") + '</li>';
+  }).join("") + '</ul><div class="kwkey"><span><i></i>plain-English term</span><span><i class="id"></i>PowerWorld identifier</span></div>';
+}
+function ckEl(ti){ return document.querySelector('.ck[data-t="' + ti + '"]'); }
+function setCount(ti, v, pop){
+  var el = document.querySelector('.ck[data-t="' + ti + '"] .n');
+  if (!el) return;
+  el.textContent = v; el.classList.toggle("hit", v > 0);
+  if (pop && !rm && el.animate) el.animate([{transform:"scale(1.9)"}, {transform:"none"}], {duration:520, easing:EASE});
+}
+/* the phrase's chips leave the highlighted phrase and arc down into the term list (FLIP) */
+function flyGroup(gi){
+  var mk = document.querySelector('#ptext mark[data-g="' + gi + '"]'), li = document.querySelector('#kw li[data-g="' + gi + '"]');
+  if (!li) return;
+  li.classList.add("in");
+  var mr = mk ? mk.getBoundingClientRect() : null;
+  Array.prototype.forEach.call(li.querySelectorAll(".ck"), function(ck, j){
+    later(j * 160, function(){
+      ck.classList.add("land");
+      if (rm || !mr || !ck.animate) return;
+      var cr = ck.getBoundingClientRect();
+      var dx = mr.left + mr.width / 2 - (cr.left + cr.width / 2), dy = mr.top + mr.height / 2 - (cr.top + cr.height / 2);
+      var kx = dx * .5, ky = Math.min(dy, 0) - 56, kf = [], N = 16;
+      for (var s = 0; s <= N; s++){
+        var p = s / N, q = 1 - p;
+        var x = q * q * dx + 2 * q * p * kx, y = q * q * dy + 2 * q * p * ky;
+        var sc = p < .82 ? .55 + .57 * (p / .82) : 1.12 - .12 * ((p - .82) / .18);
+        kf.push({transform:"translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) scale(" + sc.toFixed(3) + ")", opacity:Math.min(1, p * 5), offset:p});
+      }
+      ck.animate(kf, {duration:920, easing:"cubic-bezier(.45,.05,.2,1)"});
+      later(900, function(){ ck.classList.add("ping"); });
+    });
+  });
+}
+function msg(who, text){ return '<div class="msg ' + who + '"><span class="who">' + (who === "user" ? "You" : "Agent") + '</span>' + text + '</div>'; }
+
+var STAGES = [
+{ chip:"Ask", title:"1. You ask. The agent pulls out search terms.", dur:9000,
+  html:function(){ return promptHTML() + termsHTML(true); },
+  run:function(){
+    graphBase(); setMarks([]);
+    status(nodes.length + " pages, each linked to the pages it relies on.");
+    var chs = document.querySelectorAll("#ptext .ch"), caret = $("#ptext .caret"), times = [], t = 0, shown = 0;
+    for (var c = 0; c < chs.length; c++){ times.push(t); var ch = chs[c].textContent; t += 18 + (ch === "?" ? 150 : 0); }
+    function revealTo(n){
+      while (shown < n){ chs[shown].classList.add("v"); shown++; }
+      if (caret && caret.parentNode && shown) chs[shown - 1].parentNode.insertBefore(caret, chs[shown - 1].nextSibling);
+    }
+    frames(function(el){ var e = el - 250, n = shown; while (n < chs.length && times[n] <= e) n++; if (n > shown) revealTo(n); return shown >= chs.length; });
+    GROUPS.forEach(function(g, gi){
+      var at = 2000 + gi * 1700;
+      later(at, function(){
+        revealTo(chs.length);
+        if (caret && caret.parentNode) caret.parentNode.removeChild(caret);
+        Array.prototype.forEach.call(document.querySelectorAll('#ptext mark[data-g="' + gi + '"]'), function(m){ m.classList.add("on"); });
+      });
+      later(at + 650, function(){ flyGroup(gi); });
+    });
+  }
+},
+{ chip:"Scan", title:"2. Scan every page for each term.", dur:12000,
+  html:function(){ return termsHTML(false) + '<div id="verdict"><div class="big ok col" id="vbox" style="visibility:hidden"><span class="row"><b>' + UNION.length +
+    '</b><span>pages mention a term. The top ones cover it.</span></span><span class="post">The top ' + TOP.length + ' hit 4 of the 5 terms.</span></div></div>'; },
+  run:function(){
+    graphBase(); setMarks([]);
+    Array.prototype.forEach.call(document.querySelectorAll("#kw li"), function(li){ li.classList.add("in"); });
+    status("Scanning concepts, methods, demos and references…");
+    var i = 0, seen = {}, cum = [];
+    function next(){
+      if (i > 0){ var prev = ckEl(i - 1); if (prev) prev.classList.remove("now"); if (cum.length) setLit(cum.map(function(m){ return m.node; })); }
+      if (i >= TERMS.length){ finish(); return; }
+      var c = ckEl(i); if (c) c.classList.add("now");
+      status("Scanning for “" + TERMS[i].t + "”");
+      var me = i, count = 0; i++;
+      setCount(me, 0);
+      scan(TERMS[me], function(h){
+        count++; setCount(me, count, true);
+        if (!seen[h.k]){ seen[h.k] = 1; cum.push({node:h.n, kind:"hit"}); setMarks(cum.slice()); }
+        else pingMark(h.k);
+      }, function(){ setCount(me, TERMS[me].hits.length); later(250, next); });
+    }
+    function finish(){
+      for (var j = 0; j < TERMS.length; j++) setCount(j, TERMS[j].hits.length);
+      var hm = hitMarks(TERMS.length, true); setMarks(hm); setLit(hm.map(function(m){ return m.node; }));
+      hitList(true);
+      status(UNION.length + " pages mention a term. The top " + TOP.length + " hit 4 of the 5 terms.");
+      var v = $("#vbox"); if (v){ v.style.visibility = ""; v.classList.add("slam"); }
+    }
+    later(450, next);
+  }
+},
+{ chip:"Read", title:"3. Read the pages, in order.", dur:8000,
+  html:function(){
+    var why = ["Can this machine drive PowerWorld? It also prints the Simulator build date. AGENTS.md: run the preflight first.",
+      null, "The prerequisites and the run sequence.", "The worked check.", "Reading the CSVs."];
+    return '<ol class="route" id="route">' + ROUTE.map(function(n, i){
+      return '<li><span class="num">' + (i + 1) + '</span><span><span class="pg">' + n.id + '</span>' +
+        (why[i] ? '<span class="why">' + why[i] + '</span>' : '<blockquote>Open the case, load a <code>.pww</code>, select the renewable units, tell PowerWorld which fields to save, run its built-in TimeStep simulation, and export per-generator CSVs. PowerWorld does the weather-to-MW conversion itself using each unit\'s embedded PFW model.</blockquote>') +
+        '</span></li>'; }).join("") + '</ol>'; },
+  run:function(){
+    graphBase(); setMarks([]); setLit(ROUTE); routeKeys();
+    status("Following the pages, one at a time.");
+    ROUTE.forEach(function(n, i){
+      later(400 + i * 1150, function(){
+        var li = document.querySelectorAll("#route li")[i]; if (li) li.classList.add("on");
+        routeLines(i); setMarks(routeMarks(i + 1, i ? 450 : 0));
+        status("Page " + (i + 1) + " of " + ROUTE.length + ": " + n.name);
+      });
+    });
+  }
+},
+{ chip:"Check", title:"4. Check the case can run it.", dur:9000,
+  html:function(){
+    var fuel = [["", 23], ["", 12], ["sun", 6], ["wnd", 3], ["", 1]], u = "";
+    fuel.forEach(function(f){ for (var k = 0; k < f[1]; k++) u += '<i class="u ' + f[0] + '"></i>'; });
+    return '<div class="case"><div class="case-h"><span>Synth40, a public synthetic case</span><span class="badge b-kit">45 generators</span></div>' +
+      '<div class="units" id="units">' + u + '</div>' +
+      '<div class="ukey"><span><i style="background:var(--s1)"></i>SUN (Solar)</span><span><i style="background:var(--s3)"></i>WND (Wind)</span><span><i style="background:var(--web)"></i>DFO, OBL, BIT</span><span><i style="box-shadow:0 0 0 3px var(--open)"></i>has a PFW model</span></div>' +
+      '<ul class="checks" id="checks">' +
+      '<li><span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Units counted<small>23 DFO · 12 OBL · 6 SUN · 3 WND · 1 BIT</small></span><b data-n="45">0</b></li>' +
+      '<li><span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Renewable: <code>GenFuelType</code> WND or SUN<small>6 solar, 3 wind</small></span><b data-n="9">0</b></li>' +
+      '<li><span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>With a PFW model<small><code>TSPFWModelString</code> longer than 2 characters</small></span><b data-n="9">0</b></li>' +
+      '</ul><div class="ready" id="ready"><b>READY</b><span>This case is ready.</span></div></div>' +
+      '<p class="rulebox reveal" style="animation-delay:.4s"><b>If that second number were 0</b>, stop and say so. Do not run TimeStep and report zero output as a finding; report that the case has no weather models.</p>'; },
+  run:function(){
+    routeBase(3);
+    status("Checking the case, as demos/timestep-and-pfw does.");
+    var us = document.querySelectorAll("#units .u"), lis = document.querySelectorAll("#checks li");
+    Array.prototype.forEach.call(us, function(el, k){ later(300 + k * 24, function(){ el.classList.add("in"); }); });
+    function step(i, at, cls){
+      later(at, function(){
+        var li = lis[i]; if (!li) return;
+        li.classList.add("on"); countTo(li.querySelector("b"), +li.querySelector("b").getAttribute("data-n"));
+        if (cls) $("#units").classList.add(cls);
+        later(500, function(){ li.classList.add("ok"); });
+      });
+    }
+    step(0, 700, null); step(1, 2200, "ren"); step(2, 3600, "pfw");
+    later(5000, function(){ var r = $("#ready"); if (r){ r.style.visibility = ""; r.classList.add("slam"); } status("9 renewable units, all 9 with a weather model."); });
+  }
+},
+{ chip:"Run", title:"5. Run it.", dur:9000,
+  html:function(){
+    var C = [["TimeStepLoadPWWRange", "On Simulator 25 the plain TimeStepLoadPWW fails with “Error With Loading PWWFile”. Use the Range form, and assert the timepoint count."],
+      ["TimeStepSaveFieldsSet(GEN, …)", "Fields not named in TimeStepSaveFieldsSet are simply absent from the output. No warning."],
+      ["TimeStepDoSinglePoint", "Debug ONE point first. One timestamp fails in seconds; a full run fails after a long wait, with the same error."],
+      ["TimeStepDoRun", null], ["TimeStepSaveResultsByTypeCSV(…, GEN)", null]];
+    return '<p class="copychip" id="copy"><code>copy of the case</code>Work on a copy of the case. The run mutates it.</p><ol class="cmds" id="cmds">' +
+      C.map(function(c){ return '<li><span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><span class="cmd">' + c[0] + '</span>' +
+        (c[1] ? '<span class="why">' + c[1] + '</span>' : '') + '</span></li>'; }).join("") + '</ol>'; },
+  run:function(){
+    routeBase(2);
+    status("Running the sequence from methods/timestep-simulation-setup.");
+    later(300, function(){ var c = $("#copy"); if (c) c.classList.add("on"); });
+    var lis = document.querySelectorAll("#cmds li"), at = 1000;
+    Array.prototype.forEach.call(lis, function(li, i){
+      var hold = i === 3 ? 1500 : 800;
+      later(at, function(){ li.classList.add("run"); status("Running " + li.querySelector(".cmd").textContent); });
+      later(at + hold, function(){ li.classList.remove("run"); li.classList.add("ok"); });
+      at += hold + 250;
+    });
+    later(at + 100, function(){ status("Ran one point, then the full run. Two CSVs: solar and wind."); });
+  }
+},
+{ chip:"Results", title:"6. The results.", dur:10000,
+  html:function(){
+    var META = ["ISO", "PV / Wind", "PV / Wind Types", "Gen Max MW", "State", "Utility", "Latitude", "Longitude"];
+    var VAL = {"PV / Wind":"SUN", "PV / Wind Types":"&lt;PFW model&gt;"};
+    var h = '<div class="csv"><div class="csv-tabs"><span class="csv-tab on">Historical_2025_solar.csv</span><span class="csv-tab">Historical_2025_wind.csv</span><span class="badge">sample values</span></div>' +
+      '<div class="csv-scroll"><table class="grid"><thead><tr><th>DateTime<wbr>UTC<wbr>Excel<wbr>Format</th><th>gen 1</th><th>gen 2</th><th>gen 3</th></tr></thead><tbody>' +
+      '<tr class="cap m rw"><td colspan="4">8 metadata rows</td></tr>';
+    META.forEach(function(m){ var v = VAL[m] || "—"; h += '<tr class="meta rw"><td>' + m + '</td><td>' + v + '</td><td>' + v + '</td><td>' + v + '</td></tr>'; });
+    h += '<tr class="cap h rw"><td colspan="4">Then one row per UTC hour: each cell is that generator\'s MW</td></tr>';
+    SOLAR.forEach(function(r, i){
+      h += '<tr class="hr rw" data-i="' + i + '"><td class="t">' + (45809 + r[0] / 24).toFixed(4) + '<small>' + (r[0] < 10 ? "0" : "") + r[0] + ':00Z</small></td>' +
+        r.slice(1).map(function(v){ return '<td class="' + (v ? "" : "z") + '" data-v="' + v + '">0</td>'; }).join("") + '</tr>';
+    });
+    h += '</tbody></table></div><div class="spark"><div class="spark-h">Fleet total, MW <span>sample values</span></div><svg id="spark" aria-label="Fleet total MW by hour, sample values"></svg></div></div>' +
+      '<p class="callout" id="callout"><b>Hour labels run 6–7 h early:</b> re-label before joining on time.</p>';
+    return h; },
+  run:function(){
+    routeBase(4);
+    status("Reading the CSVs, as methods/how-to-analyze-results does.");
+    var rows = document.querySelectorAll(".grid .rw"), nMeta = 9, sp = spark();
+    Array.prototype.forEach.call(rows, function(tr, k){
+      var hourly = k > nMeta, at = k <= nMeta ? 300 + k * 110 : 1700 + (k - nMeta - 1) * 360;
+      later(at, function(){
+        tr.classList.add("in");
+        if (!hourly) return;
+        Array.prototype.forEach.call(tr.querySelectorAll("td[data-v]"), function(td){ countDec(td, +td.getAttribute("data-v")); });
+        if (sp) sp.to(+tr.getAttribute("data-i"));
+      });
+    });
+    var end = 1700 + SOLAR.length * 360 + 300;
+    later(end, function(){
+      var pk = PEAK; var tr = document.querySelector('.grid tr.hr[data-i="' + pk + '"]'); if (tr) tr.classList.add("peak");
+      if (sp) sp.peak();
+    });
+    later(end + 700, function(){
+      var c = $("#callout"); if (c) c.classList.add("on");
+      Array.prototype.forEach.call(document.querySelectorAll(".grid td.t"), function(td){ td.classList.add("flag"); });
+      status("Two files per run, one solar and one wind. Every column after the first is one generator.");
+    });
+  }
+},
+{ chip:"Report", title:"7. Report back.", dur:7000,
+  html:function(){ return msg("agent", "This case can run it: 9 renewable units, all 9 with a weather model. Ran one point, then the full run. Here are the solar and wind CSVs.") +
+    '<div class="reveal" style="animation-delay:.6s"><p class="fh">Pages used:</p><ol class="used">' +
+    ROUTE.map(function(n){ return '<li><a href="' + GH + n.id + '.md" target="_blank" rel="noopener">' + n.id + '</a></li>'; }).join("") + '</ol></div>'; },
+  run:function(){ routeBase(null); status("The five pages it followed, in order."); }
+}
+];
+
+/* sample MW for the results picture: [UTC hour, gen 1, gen 2, gen 3]; 0 before 13:00Z, a midday peak, then falling */
+var SOLAR = [[10, 0, 0, 0], [11, 0, 0, 0], [12, 0, 0, 0], [13, 8.4, 5.1, 4.6], [14, 33.1, 22.7, 17.2], [15, 65.8, 46.0, 33.9], [16, 95.2, 67.3, 48.1],
+  [17, 113.6, 80.2, 57.0], [18, 119.0, 84.1, 59.4], [19, 107.9, 76.5, 53.2], [20, 79.3, 55.8, 38.7], [21, 40.6, 27.9, 20.1]];
+var FLEET = SOLAR.map(function(r){ return Math.round((r[1] + r[2] + r[3]) * 10) / 10; });
+var PEAK = FLEET.indexOf(Math.max.apply(null, FLEET));
+/* a decimal cell counts up to its value */
+function countDec(el, v){
+  if (!v || rm){ el.textContent = v ? v.toFixed(1) : "0"; return; }
+  var t0 = performance.now(), dur = 420;
+  (function f(){ var p = Math.min(1, (performance.now() - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = (v * e).toFixed(1); if (p < 1 && el.isConnected) requestAnimationFrame(f); })();
+}
+/* the fleet-total sparkline: the line grows one hour at a time as each row lands */
+function spark(){
+  if (!hasD3) return null;
+  var el = document.getElementById("spark"); if (!el) return null;
+  var w = el.clientWidth || 500, h = el.clientHeight || 130, sv = d3.select(el).attr("viewBox", "0 0 " + w + " " + h);
+  var x = d3.scaleLinear().domain([0, FLEET.length - 1]).range([14, w - 14]), y = d3.scaleLinear().domain([0, d3.max(FLEET) * 1.25]).range([h - 26, 10]);
+  sv.append("line").attr("class", "ax").attr("x1", 14).attr("x2", w - 14).attr("y1", y(0)).attr("y2", y(0));
+  sv.append("text").attr("x", 14).attr("y", h - 4).text(SOLAR[0][0] + ":00Z");
+  sv.append("text").attr("x", w - 14).attr("y", h - 4).attr("text-anchor", "end").text(SOLAR[SOLAR.length - 1][0] + ":00Z");
+  var area = sv.append("path").attr("class", "spa"), line = sv.append("path").attr("class", "spl"), head = sv.append("circle").attr("class", "head").attr("r", 0);
+  var A = d3.area().x(function(p){ return p[0]; }).y0(y(0)).y1(function(p){ return p[1]; }).curve(d3.curveMonotoneX);
+  var L = d3.line().x(function(p){ return p[0]; }).y(function(p){ return p[1]; }).curve(d3.curveMonotoneX);
+  var shown = -1;
+  function draw(pts){ area.attr("d", A(pts)); line.attr("d", L(pts)); var e = pts[pts.length - 1]; head.attr("cx", e[0]).attr("cy", e[1]).attr("r", 5); }
+  function pts(i, f){ var p = []; for (var k = 0; k <= i; k++) p.push([x(k), y(FLEET[k])]);
+    if (i > 0 && f < 1){ var a = p[i - 1], b = p[i]; p[i] = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]; } return p; }
+  return {
+    to:function(i){
+      if (i <= shown) return;
+      var from = shown; shown = i;
+      if (rm || from < 0){ draw(pts(i, 1)); return; }
+      sv.interrupt("grow").transition("grow").duration(330).ease(d3.easeCubicOut).tween("grow", function(){ return function(f){ draw(pts(i, f)); }; });
+    },
+    peak:function(){
+      var px = x(PEAK), py = y(FLEET[PEAK]);
+      sv.append("circle").attr("class", "head").attr("cx", px).attr("cy", py).attr("r", 6);
+      var t = sv.append("text").attr("class", "pk").attr("x", px).attr("y", py - 12).attr("text-anchor", "middle").text("peak " + FLEET[PEAK].toFixed(1)).style("opacity", 0);
+      t.transition().duration(500).style("opacity", 1);
+    }
+  };
+}
+
+/* common reset at the start of each stage; every change in it animates (fades, ring exits, count-down) */
+function graphBase(keepRoute){
+  setLit(null); keys([]); hitList(false);
+  if (hasD3){ if (!keepRoute) gNL.selectAll("line.nk").attr("class", "out").interrupt("draw").transition().duration(300).ease(d3.easeCubicIn).style("opacity", 0).remove(); setGraph(); }
+  setStats(nodes.length, oldLinks.length);
+}
+
+/* ---------- player ---------- */
+var pane = $("#stagePane"), chips = $("#chips"), playBtn = $("#playBtn"), prevBtn = $("#prevBtn"), nextBtn = $("#nextBtn"), progBar = $("#progBar");
+var cur = 0, playing = false, tStart = 0, raf = 0, swapTok = 0, idleAt = null, ended = false, speed = 1;
+var HOLD = [2400, 2400, 2600, 2600, 2400, 5200, 4200];   /* reading time once a stage's animation ends, ms at 1x */
+STAGES.forEach(function(s, i){
+  var li = document.createElement("li");
+  li.innerHTML = '<button type="button" aria-label="Step ' + (i + 1) + ': ' + s.chip + '"><b>' + (i + 1) + '</b><span>' + s.chip + '</span></button>';
+  li.firstChild.addEventListener("click", function(){ jump(i); });
+  chips.appendChild(li);
+});
+function go(i){
+  cur = Math.max(0, Math.min(STAGES.length - 1, i));
+  clearTimers();
+  var s = STAGES[cur], tok = ++swapTok, old = pane.firstElementChild;
+  var bs = chips.querySelectorAll("button");
+  for (var j = 0; j < bs.length; j++){ bs[j].classList.toggle("on", j === cur); bs[j].classList.toggle("done", j < cur); bs[j].setAttribute("aria-current", j === cur ? "step" : "false"); }
+  prevBtn.disabled = cur === 0; nextBtn.disabled = cur === STAGES.length - 1;
+  tStart = VC.now(); idleAt = null; ended = false; progBar.style.width = "0";
+  try { history.replaceState(null, "", "#s=" + (cur + 1)); } catch (e) {}
+  $("#live").textContent = s.title;
+  /* a second click inside the 180 ms fade: drop the half-faded content at once */
+  if (old && old._leaving){ pane.innerHTML = ""; old = null; }
+  function render(){
+    if (tok !== swapTok) return;
+    var h0 = pane.offsetHeight;
+    pane.innerHTML = '<div class="stage-in"><h2 class="stage-h">' + s.title + '</h2>' + s.html() + '</div>';
+    s.run();
+    /* the pane eases to its new height instead of snapping */
+    if (!rm && old && pane.animate){
+      var h1 = pane.offsetHeight;
+      if (Math.abs(h1 - h0) > 4){
+        pane.style.overflow = "hidden";
+        var a = pane.animate([{height:h0 + "px"}, {height:h1 + "px"}], {duration:480, easing:EASE});
+        a.onfinish = a.oncancel = function(){ pane.style.overflow = ""; };
+      }
+    }
+  }
+  /* old content fades out first, then the new stage fades (and, in full motion, rises) in */
+  /* paused: the clock is frozen, so a timed swap would never fire; render at once */
+  if (old && old.animate && playing){
+    old._leaving = true;
+    old.animate([{opacity:1, transform:"none"}, {opacity:0, transform:rm ? "none" : "translateY(-8px)"}], {duration:180, easing:"cubic-bezier(.4,0,1,1)", fill:"forwards"});
+    later(180, render);
+  } else render();
+}
+function tickPlay(){
+  if (!playing) return;
+  var t = VC.now(), s = STAGES[cur], el = t - tStart;
+  if (el < 400 || active()){
+    idleAt = null;
+    progBar.style.width = Math.min(90, el / s.dur * 90) + "%";
+  } else {
+    if (idleAt == null) idleAt = t;
+    var wait = 900 + HOLD[cur], f = Math.min(1, (t - idleAt) / wait), p0 = Math.min(90, (idleAt - tStart) / s.dur * 90);
+    progBar.style.width = (p0 + (100 - p0) * f) + "%";
+    if (f >= 1){
+      if (cur < STAGES.length - 1) go(cur + 1);
+      else { ended = true; setPlay(false); return; }
+    }
+  }
+  raf = requestAnimationFrame(tickPlay);
+}
+function setPlay(on){
+  playing = on;
+  playBtn.textContent = on ? "❚❚ Pause" : (ended ? "↺ Replay" : "▶ Play");
+  playBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  VC.set(on ? speed : 0);
+  cancelAnimationFrame(raf);
+  if (on){
+    if (ended) go(0);
+    raf = requestAnimationFrame(tickPlay);
+  }
+}
+function jump(i){ go(i); setPlay(true); }
+playBtn.addEventListener("click", function(){ setPlay(!playing); });
+prevBtn.addEventListener("click", function(){ jump(cur - 1); });
+nextBtn.addEventListener("click", function(){ jump(cur + 1); });
+Array.prototype.forEach.call(document.querySelectorAll("#speed button"), function(b){
+  b.addEventListener("click", function(){
+    speed = +b.getAttribute("data-s");
+    if (playing) VC.set(speed);
+    Array.prototype.forEach.call(document.querySelectorAll("#speed button"), function(x){ x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+  });
+});
+document.addEventListener("keydown", function(ev){
+  if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
+  var tg = ev.target && ev.target.tagName;
+  if (ev.key === " " && (tg === "BUTTON" || tg === "SUMMARY")) return;
+  if (ev.key === " "){ ev.preventDefault(); setPlay(!playing); }
+  else if (ev.key === "ArrowRight"){ if (cur < STAGES.length - 1) jump(cur + 1); }
+  else if (ev.key === "ArrowLeft"){ if (cur > 0) jump(cur - 1); }
+});
+/* 7: a hidden tab pauses, and resumes only if it was playing */
+var resumeOnShow = false;
+document.addEventListener("visibilitychange", function(){
+  if (document.hidden){ resumeOnShow = playing; if (playing) setPlay(false); }
+  else if (resumeOnShow){ resumeOnShow = false; setPlay(true); }
+});
+
+if (hasD3){
+  d3.timer(function(){});
+  setGraph();
+  if (rm) settleAll();
+}
+var m = /s=(\d)/.exec(location.hash);
+go(m ? +m[1] - 1 : 0);
+setPlay(true);
+})();
+</script>
+</body>
+</html>

@@ -27,7 +27,7 @@ jobs:
       - name: Assemble the site
         run: |
           mkdir -p _site/demos
-          cp site/index.html site/logo.svg _site/
+          cp site/index.html site/logo.svg site/install.html site/demo-design.html site/demo-has-page.html site/demo-new-page.html _site/
           cp -r assets _site/assets
           cp docs/agents/pages/*.html _site/demos/
           python3 site/build_data.py _site/data.json

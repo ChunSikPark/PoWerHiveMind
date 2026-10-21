@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>When No Page Exists</title>
+<meta name="description" content="An illustrated walkthrough, built on a real HiveMind page: the agent finds no page for a question, says so, and adds a linked page to the knowledge base.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script>
+  try { if (localStorage.getItem("hm-theme") === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
+  (function(){
+    var mo = null;
+    try { mo = localStorage.getItem("hm-motion"); } catch (e) {}
+    if (mo === "reduced") document.documentElement.classList.add("rm");
+  })();
+</script>
+<style>
+:root{
+  --bg:#F2F5F3; --surface:#FFFFFF; --sunk:#E6ECE9; --ink:#18201D; --muted:#56635E; --rule:#CBD3CF;
+  --live:#C4302B; --live-bg:#F8E3E0; --open:#2C7A4B;
+  --kit:#0B7A6C; --web:#9AA6A1; --eng:#8A5200;
+  --ink-2:#36423D; --edge:#C3CCC8; --mark:rgba(11,122,108,.18);
+  --s1:#8F8500; --s2:#D6339B; --s3:#1B8FB0; --s4:#D9622B; --s5:#4C9A2A; --s6:#7B5CD6;
+  --cond:"IBM Plex Sans Condensed","Arial Narrow",sans-serif;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#101513; --surface:#19201D; --sunk:#202825; --ink:#E2E8E5; --muted:#9AA6A1; --rule:#34403B;
+    --live:#F2665B; --live-bg:#3B1E1B; --open:#6CCB8E;
+    --kit:#4CC3AE; --web:#5E6B66; --eng:#E3A449;
+    --ink-2:#BCC6C1; --edge:#34423D; --mark:rgba(76,195,174,.25);
+    --s1:#faff69; --s2:#ff6ec7; --s3:#7bdff2; --s4:#ffa07a; --s5:#b5e48c; --s6:#c7a9ff;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101513; --surface:#19201D; --sunk:#202825; --ink:#E2E8E5; --muted:#9AA6A1; --rule:#34403B;
+  --live:#F2665B; --live-bg:#3B1E1B; --open:#6CCB8E;
+  --kit:#4CC3AE; --web:#5E6B66; --eng:#E3A449;
+  --ink-2:#BCC6C1; --edge:#34423D; --mark:rgba(76,195,174,.25);
+  --s1:#faff69; --s2:#ff6ec7; --s3:#7bdff2; --s4:#ffa07a; --s5:#b5e48c; --s6:#c7a9ff;
+}
+*{box-sizing:border-box;}
+body{overflow-x:clip;}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.6 var(--sans);-webkit-font-smoothing:antialiased;}
+a{color:inherit;text-underline-offset:3px;}
+a:hover{color:var(--kit);}
+:focus-visible{outline:2px solid var(--kit);outline-offset:3px;}
+code{font:400 max(.88em,17px)/1.4 var(--mono);background:var(--sunk);padding:1px 6px;border-radius:4px;overflow-wrap:anywhere;}
+.wrap{max-width:1440px;margin:0 auto;padding:0 24px;}
+@media (max-width:640px){.wrap{padding:0 16px;}}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 85%,transparent);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--rule);}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:16px;padding-bottom:16px;}
+.brand{display:flex;align-items:center;gap:12px;font:600 20px/1 var(--cond);text-decoration:none;}
+.brand .logo{width:38px;height:38px;flex:none;}
+.logo .h{fill:none;stroke:var(--ink);stroke-width:1.6}.logo .w{stroke:var(--kit);stroke-width:1.8;fill:none;stroke-linecap:round}.logo .n{fill:var(--ink)}.logo .c{fill:var(--live)}
+.top nav{display:flex;align-items:center;gap:22px;font-size:17px;}
+.top nav a{text-decoration:none;color:var(--ink-2);font-weight:500;}
+.themebtn{font:500 17px/1 var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:9px 14px;cursor:pointer;}
+.themebtn:hover{border-color:var(--kit);}
+@media (max-width:760px){.top{flex-wrap:wrap;gap:10px 16px;padding-top:12px;padding-bottom:12px;}.top nav{flex-wrap:wrap;gap:8px 16px;}}
+
+/* intro */
+.intro{padding:24px 0 14px;}
+.kicker{margin:0 0 10px;font:500 17px/1.3 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--kit);}
+h1{font:700 clamp(34px,3.8vw,52px)/1.05 var(--cond);letter-spacing:-.01em;margin:0 0 12px;}
+.honest{display:inline-flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:10px 16px;border:1.5px dashed var(--eng);border-radius:10px;font-size:17px;line-height:1.5;color:var(--ink-2);}
+.otherpath{margin:12px 0 0;font-size:17px;color:var(--ink-2);}
+.otherpath a{color:var(--kit);font-weight:600;}
+.honest b{font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--eng);}
+
+/* controls */
+.controls{position:sticky;top:71px;z-index:10;background:var(--bg);padding:12px 0 10px;border-bottom:1px solid var(--rule);margin-bottom:22px;}
+@media (max-width:760px){
+  .topbar{position:static;}
+  .controls{top:0;padding:8px 0;margin-bottom:16px;}
+  .ctl-row{gap:8px;}
+  .btn{min-height:44px;padding:10px 16px;}
+  .btn.play{min-width:108px;}
+  .ctl-pair{display:flex;gap:8px;width:100%;}
+  .speed{min-height:44px;}
+  .speed span{display:none;}
+  .speed button{min-width:42px;padding:8px 7px;}
+}
+.ctl-pair{display:contents;}
+@media (max-width:760px){.ctl-pair{display:flex;}}
+.ctl-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+.btn{font:600 18px/1 var(--sans);border-radius:10px;border:1.5px solid var(--rule);background:var(--surface);color:var(--ink);padding:13px 20px;cursor:pointer;min-height:48px;}
+.btn:hover{border-color:var(--kit);}
+.btn.play{background:var(--kit);border-color:var(--kit);color:var(--bg);min-width:120px;}
+.btn:disabled{opacity:.45;cursor:default;}
+.btn.mo{font:500 17px/1 var(--sans);color:var(--ink-2);padding:13px 16px;}
+.btn.mo b{font:600 17px/1 var(--mono);color:var(--kit);}
+.speed{display:inline-flex;align-items:center;gap:2px;border:1.5px solid var(--rule);border-radius:10px;padding:4px;min-height:48px;background:var(--surface);}
+.speed span{font:500 17px/1 var(--sans);color:var(--muted);padding:0 8px 0 6px;}
+.speed button{font:600 17px/1 var(--mono);border:0;background:transparent;color:var(--ink-2);padding:10px 9px;border-radius:7px;cursor:pointer;min-width:44px;}
+.speed button:hover{color:var(--kit);}
+.speed button[aria-pressed="true"]{background:var(--kit);color:var(--bg);}
+.chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0 0 0 8px;}
+.chips button{font:500 17px/1.2 var(--sans);color:var(--ink-2);background:transparent;border:1.5px solid var(--rule);border-radius:99px;padding:8px 14px;cursor:pointer;min-height:42px;}
+.chips button b{font-family:var(--mono);margin-right:6px;}
+.chips button.done{color:var(--ink);border-color:var(--muted);}
+.chips button.on{color:var(--bg);background:var(--kit);border-color:var(--kit);}
+.prog{height:5px;background:var(--sunk);border-radius:3px;margin-top:10px;overflow:hidden;}
+.prog i{display:block;height:100%;width:0;background:var(--kit);}
+@media (max-width:900px){.chips{margin:4px 0 0;width:100%;}.chips button span{display:none;}.chips button b{margin:0;}}
+
+/* panes */
+.stage-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:28px;align-items:start;padding-bottom:40px;}
+@media (max-width:1040px){.stage-grid{grid-template-columns:minmax(0,1fr);}}
+.pane{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:24px;}
+@media (max-width:640px){.pane{padding:16px;}}
+.stage-h{font:700 clamp(28px,3vw,40px)/1.1 var(--cond);margin:0 0 18px;}
+.reveal{animation:rise .6s cubic-bezier(.2,.7,.2,1) both;}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes fade{from{opacity:0;}to{opacity:1;}}
+.stage-in{animation:rise .5s cubic-bezier(.2,.7,.2,1) both;}
+
+/* prompt + keywords */
+.prompt{background:var(--bg);border:1.5px solid var(--rule);border-radius:12px;padding:18px 20px;font-size:21px;line-height:1.55;min-height:120px;}
+.prompt .who{display:block;font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px;}
+/* highlight = a wipe: two gradient layers grow left to right (fill + underline) */
+.prompt mark{background-color:transparent;color:inherit;border-radius:4px;padding:0 2px;
+  background-image:linear-gradient(var(--kit),var(--kit)),linear-gradient(var(--mark),var(--mark));
+  background-repeat:no-repeat;background-position:left bottom,left center;background-size:0% 3px,0% 100%;
+  transition:background-size .8s cubic-bezier(.65,0,.35,1);}
+.prompt mark.on{background-size:100% 3px,100% 100%;}
+.prompt .ch{opacity:0;transition:opacity .22s ease-out;}
+.prompt .ch.v{opacity:1;}
+.caret{display:inline-block;width:3px;height:1.05em;margin-right:-3px;background:var(--kit);vertical-align:-3px;animation:blink 1s steps(1) infinite;}
+@keyframes blink{50%{opacity:0;}}
+.kw{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.kw li{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;}
+.kw li > .from,.kw li > .arrow{opacity:0;transform:translateX(-6px);transition:opacity .5s cubic-bezier(.2,.7,.2,1),transform .5s cubic-bezier(.2,.7,.2,1);}
+.kw li.in > .from,.kw li.in > .arrow{opacity:1;transform:none;}
+.kw.fly .ck{opacity:0;}
+.kw.fly .ck.land{opacity:1;}
+.kw .from{font-size:18px;color:var(--ink-2);min-width:6.5em;}
+.kw .arrow{color:var(--muted);}
+.ck{display:inline-flex;align-items:center;gap:8px;font:500 17px/1 var(--mono);padding:8px 13px;border-radius:99px;border:1.5px solid var(--muted);color:var(--ink);background:var(--bg);transition:opacity .45s cubic-bezier(.4,0,.2,1),border-color .3s,box-shadow .3s,background .4s;}
+.ck.id{border-color:var(--kit);color:var(--kit);}
+.ck.now{background:var(--mark);animation:chipPulse 1.3s cubic-bezier(.2,.6,.3,1) infinite;}
+@keyframes chipPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--kit) 60%,transparent);}100%{box-shadow:0 0 0 12px color-mix(in srgb,var(--kit) 0%,transparent);}}
+@keyframes chipGlow{0%,100%{background:var(--mark);}50%{background:color-mix(in srgb,var(--kit) 36%,transparent);}}
+.ck.ping{animation:ping .7s cubic-bezier(.2,.7,.2,1);}
+@keyframes ping{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--kit) 55%,transparent);}100%{box-shadow:0 0 0 10px color-mix(in srgb,var(--kit) 0%,transparent);}}
+.ck .n{display:inline-block;font-weight:600;color:var(--muted);transition:color .4s;}
+.ck .n.hit{color:var(--eng);}
+.kwkey{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:17px;color:var(--ink-2);}
+.kwkey span{display:inline-flex;align-items:center;gap:8px;}
+.kwkey i{display:inline-block;width:30px;height:20px;border-radius:99px;border:1.5px solid var(--muted);}
+.kwkey i.id{border-color:var(--kit);}
+
+/* chat + cards */
+.msg{padding:16px 20px;border-radius:12px;font-size:20px;line-height:1.5;margin:0 0 14px;animation:rise .6s cubic-bezier(.2,.7,.2,1) both;}
+.msg .who{display:block;font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.msg.user{background:var(--sunk);border:1px solid var(--rule);margin-left:15%;}
+.msg.user .who{color:var(--ink-2);}
+.msg.agent{background:var(--bg);border:1.5px solid var(--kit);margin-right:8%;}
+.msg.agent .who{color:var(--kit);}
+.msg:nth-of-type(2){animation-delay:.7s;}
+.big{display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:12px;margin-top:14px;}
+.big b{font:700 64px/1 var(--cond);font-variant-numeric:tabular-nums;}
+.big span{font-size:19px;line-height:1.4;}
+.big.zero{border:1.5px solid var(--live);background:var(--live-bg);} .big.zero b{color:var(--live);}
+.big.zero.slam{animation:thud 1.1s cubic-bezier(.2,.8,.2,1) both;}
+.big.zero.slam b{animation:slam .75s cubic-bezier(.2,.9,.25,1.05) both;}
+.big.zero.slam .pre,.big.zero.slam .row > span{animation:rise .6s .3s cubic-bezier(.2,.7,.2,1) both;}
+.big.col{flex-direction:column;align-items:flex-start;gap:8px;}
+.big .row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.big .pre{font:600 19px/1.4 var(--sans);color:var(--ink);}
+.big .lbl{font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--open);}
+.big.ok b{white-space:nowrap;}
+.hits{margin:12px 0 0;font-size:17px;}
+.hits p{margin:0 0 6px;font-weight:600;color:var(--eng);}
+.hits summary{cursor:pointer;color:var(--ink-2);}
+.hits ul{margin:8px 0 0;padding-left:22px;font:500 17px/1.45 var(--mono);overflow-wrap:anywhere;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+@keyframes slam{0%{opacity:0;transform:scale(2);filter:blur(8px);}55%{opacity:1;transform:scale(.93);filter:blur(0);}100%{opacity:1;transform:none;filter:none;}}
+@keyframes thud{0%{opacity:0;box-shadow:0 0 0 0 color-mix(in srgb,var(--live) 70%,transparent);}25%{opacity:1;}100%{opacity:1;box-shadow:0 0 0 22px color-mix(in srgb,var(--live) 0%,transparent);}}
+.big.ok{border:1.5px solid var(--open);} .big.ok b{color:var(--open);}
+.note{font-size:17px;color:var(--muted);margin:10px 0 0;}
+.file{border:1.5px solid var(--kit);border-radius:12px;background:var(--bg);overflow:hidden;}
+.file-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;padding:10px 16px;background:color-mix(in srgb,var(--kit) 14%,var(--surface));font:500 17px/1.3 var(--mono);overflow-wrap:anywhere;}
+.file-b{padding:16px;}
+.file-b > *{animation:rise .6s cubic-bezier(.2,.7,.2,1) both;}
+.fh{font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:16px 0 8px;}
+.file-b > .fh:first-child{margin-top:0;}
+.ptitle{font:700 24px/1.2 var(--cond);margin:0;}
+.pabs{margin:0;font-size:18px;line-height:1.5;color:var(--ink-2);}
+.links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px;}
+.links li{display:inline-flex;align-items:center;gap:8px;font:500 17px/1.2 var(--mono);padding:6px 12px 6px 6px;border:1.5px solid var(--kit);border-radius:99px;overflow-wrap:anywhere;}
+.links li i{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--kit);color:var(--bg);font-style:normal;font-weight:600;flex:none;}
+.badge{display:inline-block;font:600 17px/1 var(--mono);text-transform:uppercase;letter-spacing:.03em;padding:6px 10px;border-radius:99px;border:1.5px solid currentColor;white-space:nowrap;}
+.b-open{color:var(--open);} .b-live{color:var(--live);} .b-kit{color:var(--kit);}
+.oks{display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:18px;}
+.oks div{display:flex;align-items:center;gap:12px;}
+.idxrow{margin-top:14px;padding:14px 16px;border-radius:12px;border:1.5px solid var(--open);background:color-mix(in srgb,var(--open) 12%,transparent);font-size:18px;line-height:1.5;}
+.idxrow .badge{margin-right:8px;}
+.issue{border:1.5px solid var(--rule);border-radius:12px;overflow:hidden;}
+.issue-h{padding:14px 16px;background:var(--sunk);font:600 20px/1.3 var(--sans);}
+.issue-b{padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;}
+ol.rules{margin:16px 0 0;padding-left:26px;font-size:19px;}
+ol.rules li{margin:0 0 8px;}
+
+/* graph */
+.g-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:10px;}
+.g-title{font:700 26px/1.1 var(--cond);margin:0;}
+.g-stats{display:flex;gap:22px;}
+.g-stats div{text-align:right;}
+.g-stats b{display:block;font:700 42px/1 var(--cond);font-variant-numeric:tabular-nums;transition:color .6s;transform-origin:100% 60%;}
+.g-stats b.up{color:var(--kit);}
+.g-stats span{font:500 17px/1.2 var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.03em;}
+.g-status{min-height:30px;font:500 18px/1.4 var(--sans);color:var(--ink);margin:0 0 10px;}
+.legend{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-wrap:wrap;gap:8px 18px;}
+.legend li{display:flex;align-items:center;gap:9px;font-size:17px;}
+.sw{width:20px;height:20px;border-radius:50%;flex:none;}
+.ring{width:22px;height:22px;border-radius:50%;flex:none;}
+#graph{display:block;width:100%;height:560px;background:var(--bg);border-radius:10px;border:1px solid var(--rule);cursor:grab;}
+@media (max-width:1040px){.gpane{order:-1;display:flex;flex-direction:column;} #graph{height:300px;}
+  .gpane > *{order:5;} .gpane .g-top{order:0;} .gpane .g-status{order:1;} .gpane #graph{order:2;} .gpane #legend{order:3;margin:12px 0 0;}}
+#graph .lk{stroke:var(--edge);stroke-width:1.2;transition:opacity .7s cubic-bezier(.4,0,.2,1),stroke .3s;}
+#graph .lk.hi{stroke:var(--ink-2);stroke-width:1.8;}
+#graph .nd{touch-action:none;stroke:var(--bg);stroke-width:1.5;cursor:pointer;transition:opacity .7s cubic-bezier(.4,0,.2,1),stroke .6s ease-out,stroke-width .6s ease-out;}
+#graph.dim .nd:not(.lit){opacity:.25;}
+#graph.dim .lk{opacity:.12;}
+#graph .nd.waking{transition:none;}
+#graph .nk{stroke:var(--kit);stroke-width:3.5;}
+#graph .nk.preview{stroke-dasharray:6 6;opacity:.8;}
+#graph .scan{stroke:var(--kit);stroke-width:2.5;}
+#graph .scanhalo{stroke:var(--kit);stroke-width:14;}
+#graph .scanglow{fill:url(#scanG);}
+#graph .ripple{fill:none;stroke:var(--eng);stroke-width:2.5;}
+#graph .rg{fill:none;}
+#graph .rg.hit{stroke:var(--eng);stroke-width:3;stroke-dasharray:5 4;}
+#graph .rg.nb{stroke:var(--kit);stroke-width:3;}
+#graph .rg.new{stroke:var(--kit);stroke-width:4;}
+#graph .rg.pulse{stroke:var(--kit);stroke-width:3;transform-box:fill-box;transform-origin:center;animation:pulse 1.6s ease-out infinite;}
+@keyframes pulse{from{transform:scale(1);opacity:.9;}to{transform:scale(2.4);opacity:0;}}
+#graph .rg.ghost{stroke:var(--kit);stroke-width:3;stroke-dasharray:6 5;}
+#graph text{font:600 17px/1 var(--mono);paint-order:stroke;stroke:var(--bg);stroke-width:5px;stroke-linejoin:round;pointer-events:none;}
+#graph text.hit{fill:var(--eng);} #graph text.nb{fill:var(--kit);} #graph text.new,#graph text.ghost{fill:var(--kit);font:700 20px/1 var(--cond);}
+#graph text.hover{fill:var(--ink);font:500 17px/1 var(--sans);}
+.keylist{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.keylist li{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:center;font:500 17px/1.35 var(--mono);overflow-wrap:anywhere;animation:rise .55s cubic-bezier(.2,.7,.2,1) both;}
+.tag{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;font:600 17px/1 var(--mono);border:2.5px dashed var(--eng);color:var(--eng);}
+.tag.nb{border:2.5px solid var(--kit);color:var(--kit);}
+.gtip{min-height:28px;margin:10px 0 0;font-size:17px;color:var(--ink-2);}
+.nod3{padding:40px 16px;text-align:center;color:var(--muted);}
+
+footer{border-top:1.5px solid var(--rule);padding:24px 0 48px;color:var(--muted);font-size:17px;line-height:1.6;}
+footer p{margin:0 0 6px;max-width:90ch;}
+
+/* Reduced motion (html.rm): same sequence and timing, but only opacity and colour change.
+   Nothing slides, scales, flies or sweeps. */
+@keyframes pulseFade{0%{opacity:.9;}100%{opacity:0;}}
+.rm .reveal,.rm .msg,.rm .file-b > *,.rm .stage-in,.rm .keylist li{animation-name:fade;}
+.rm .caret{animation:none;}
+.rm .prompt mark{background-image:none;transition:background-color .6s cubic-bezier(.4,0,.2,1),box-shadow .6s cubic-bezier(.4,0,.2,1);}
+.rm .prompt mark.on{background-color:var(--mark);box-shadow:inset 0 -3px 0 var(--kit);}
+.rm .kw li > .from,.rm .kw li > .arrow{transform:none;}
+.rm .ck.now{animation-name:chipGlow;}
+.rm .ck.ping{animation:none;}
+.rm .big.zero.slam,.rm .big.zero.slam b,.rm .big.zero.slam .pre,.rm .big.zero.slam .row > span{animation:fade .7s cubic-bezier(.4,0,.2,1) both;}
+.rm #graph .rg.pulse{animation-name:pulseFade;}
+.rm #graph .nd.wake{stroke:var(--kit);stroke-width:2.5;}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap top">
+    <a class="brand" href="./"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+<path class="h" d="M32.00 23.80 39.10 27.90 39.10 36.10 32.00 40.20 24.90 36.10 24.90 27.90Z M46.20 23.80 53.30 27.90 53.30 36.10 46.20 40.20 39.10 36.10 39.10 27.90Z M39.10 36.10 46.20 40.20 46.20 48.40 39.10 52.50 32.00 48.40 32.00 40.20Z M24.90 36.10 32.00 40.20 32.00 48.40 24.90 52.50 17.80 48.40 17.80 40.20Z M17.80 23.80 24.90 27.90 24.90 36.10 17.80 40.20 10.70 36.10 10.70 27.90Z M24.90 11.50 32.00 15.60 32.00 23.80 24.90 27.90 17.80 23.80 17.80 15.60Z M39.10 11.50 46.20 15.60 46.20 23.80 39.10 27.90 32.00 23.80 32.00 15.60Z"/>
+<path class="w" d="M32 32L46.20 32.00 M32 32L39.10 44.30 M32 32L24.90 44.30 M32 32L17.80 32.00 M32 32L24.90 19.70 M32 32L39.10 19.70 M46.20 32.00L39.10 44.30 M24.90 44.30L17.80 32.00 M24.90 19.70L39.10 19.70"/>
+<circle class="n" cx="46.20" cy="32.00" r="2.6"/><circle class="n" cx="39.10" cy="44.30" r="2.6"/><circle class="n" cx="24.90" cy="44.30" r="2.6"/><circle class="n" cx="17.80" cy="32.00" r="2.6"/><circle class="n" cx="24.90" cy="19.70" r="2.6"/><circle class="n" cx="39.10" cy="19.70" r="2.6"/>
+<circle class="c" cx="32" cy="32" r="4.2"/>
+</svg> <span>PowerWorldHiveMind</span></a>
+    <nav>
+      <a href="./">Home</a>
+      <a href="validation.html">Benchmark</a>
+      <a href="install.html">Install</a>
+      <a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a>
+      <button class="themebtn" id="themeBtn" type="button">Light</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <p class="kicker">PowerWorldHiveMind · demo</p>
+    <h1>No page for it? The agent says so, then adds one.</h1>
+    <p class="honest"><b>Illustration</b><span>Not a recorded run. Built on a real page, <code>methods/removing-empty-buses.md</code>. The graph and the search hits are real.</span></p>
+    <p class="otherpath">The other path: <a href="demo-has-page.html">when HiveMind has the page →</a></p>
+  </section>
+
+  <section class="controls" aria-label="Walkthrough controls">
+    <div class="ctl-row">
+      <button class="btn play" id="playBtn" type="button">▶ Play</button>
+      <button class="btn" id="prevBtn" type="button" aria-label="Previous step">←</button>
+      <button class="btn" id="nextBtn" type="button" aria-label="Next step">Step →</button>
+      <div class="ctl-pair"><button class="btn mo" id="motionBtn" type="button">Motion: <b>full</b></button>
+      <div class="speed" id="speed" role="group" aria-label="Speed"><span>Speed</span><button type="button" data-s="0.5">0.5×</button><button type="button" data-s="1" aria-pressed="true">1×</button><button type="button" data-s="1.5">1.5×</button><button type="button" data-s="2">2×</button></div></div>
+      <ul class="chips" id="chips"></ul>
+    </div>
+    <div class="prog" aria-hidden="true"><i id="progBar"></i></div>
+  </section>
+
+  <div class="stage-grid">
+    <p class="sr" id="live" aria-live="polite"></p>
+    <section class="pane" id="stagePane"></section>
+
+    <section class="pane gpane" aria-label="Graph of HiveMind pages">
+      <div class="g-top">
+        <h2 class="g-title">HiveMind's pages</h2>
+        <div class="g-stats">
+          <div><b id="statPages">0</b><span>pages</span></div>
+          <div><b id="statLinks">0</b><span>links</span></div>
+        </div>
+      </div>
+      <p class="g-status" id="gStatus"></p>
+      <ul class="legend" id="legend" aria-label="Topic colours"></ul>
+      <svg id="graph" role="group" aria-label="Each dot is a HiveMind page, coloured by topic. Lines are links between pages."></svg>
+      <ul class="legend" style="margin:12px 0 0" aria-label="Markers">
+        <li><span class="ring" style="border:3px dashed var(--eng)"></span>Mentions a term, but is about something else</li>
+        <li><span class="ring" style="border:3.5px solid var(--kit)"></span>New page and its links</li>
+      </ul>
+      <ul class="keylist" id="keyList"></ul>
+      <div id="hitList"></div>
+      <p class="gtip" id="gTip">Hover or tab to a dot to see the page. Click or press Enter to open it. Drag to move it.</p>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Sources: <code>AGENTS.md</code>, <code>skills/knowledge-base-page/SKILL.md</code>, <code>index.md</code>, <code>methods/removing-empty-buses.md</code>. The graph comes from every page's <code>topic:</code> and <code>## Connections</code> links, read 2026-10-21. The search terms are written by hand; the hits are real searches over the shipped pages, with the worked page left out.</p>
+    <p>It plays on its own: each step moves on when its animation is done. Keys: Space plays or pauses, the arrow keys jump a step.</p>
+  </div>
+</footer>
+
+<script>
+/* one virtual clock drives every animation: Pause freezes it, Speed scales it */
+(function(){
+  var P = window.performance, real = P.now.bind(P), speed = 1, base = real(), vbase = 0;
+  function now(){ return vbase + (real() - base) * speed; }
+  try { P.now = now; } catch (e) {}
+  window.VC = {now:now, set:function(s){ vbase = now(); base = real(); speed = s; }, speed:function(){ return speed; }};
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(function(){
+"use strict";
+var G = {"nodes":[["agc-participation-factors","c",1],["aggregate-clauses-cannot-bound-one-row","c",1],["aux-only-powerworld","c",5],["case-impedance-completeness","c",4],["case-to-case-device-transplant","c",3],["copper-plate","c",0],["esapp-environment","c",5],["esapp-script-command-wrappers","c",5],["esapp","c",5],["gic","c",0],["glossary","c",5],["grid-workshop-auto-pfw","c",2],["lodf","c",1],["one-device-per-voltage-pocket","c",1],["opf-preconditions","c",0],["parallel-contingency-solve","c",1],["per-unit-basis-discipline","c",4],["powerworld-inertia-and-cost-data","c",4],["powerworld-script-transfer","c",5],["powerworld-simauto","c",5],["pww-data","c",2],["sizing-a-device-whose-impedance-determines-its-own-flow","c",3],["timestep-simulation","c",2],["timestep-workflow","c",2],["unloaded-ehv-stub-overvoltage","c",3],["version-requirements","c",5],["adding-devices-esapp","m",3],["applying-a-dispatch-to-a-case","m",0],["aux-file-mode","m",5],["case-data-lint","m",4],["converting-lines-to-transformers","m",4],["diagnosing-a-non-converging-contingency","m",1],["esapp-overview","m",5],["finding-and-fixing-radial-by-n1-pockets","m",1],["handling-errors","m",5],["how-to-analyze-results","m",2],["ltc-regulation-checks","m",4],["new-device-contingency-aux","m",1],["powerworld-limitset-setdata","m",1],["preflight-powerworld","m",5],["ranking-new-devices-by-severity","m",1],["reading-violationctg","m",1],["reducing-a-contingency-set","m",1],["remediating-base-case-violations","m",3],["remediating-n1-contingency-violations","m",1],["removing-empty-buses","m",4],["reviewing-a-design","m",3],["save-powerworld-case","m",5],["teamoverbyeweather-client","m",2],["timestep-simulation-setup","m",2],["violation-network-map","m",1],["visualize-renewable-output","m",2],["zone-load-multiplier-trap","m",4],["adding-a-device","d",3],["aux-file-cookbook","d",5],["comparing-planning-cases","d",3],["contingency-and-aux","d",1],["power-flow-and-sensitivities","d",0],["start-here","d",5],["timestep-and-pfw","d",2],["violation-remediation","d",1],["aux-script-commands","r",5],["esapp-package-backend","r",5],["esapp-schema-reference","r",5],["powerworld-option-objects-v25","r",5],["powerworld-study-commands","r",5],["powerworld-study-options","r",5],["time-step-simulation-backend","r",2]],"edges":[[0,14],[0,41],[0,44],[0,64],[0,65],[1,60],[1,40],[1,41],[1,44],[2,4],[2,7],[2,14],[2,18],[2,19],[2,37],[2,61],[2,63],[3,27],[4,55],[5,22],[8,7],[8,9],[8,19],[8,22],[8,32],[8,61],[8,63],[6,8],[6,19],[6,32],[6,39],[6,62],[6,63],[7,8],[7,19],[7,30],[7,32],[7,47],[7,61],[7,62],[9,8],[9,10],[9,19],[9,61],[10,8],[10,19],[10,20],[11,23],[11,59],[11,49],[12,8],[12,15],[12,19],[13,21],[13,26],[13,40],[13,41],[13,43],[13,44],[14,2],[14,17],[14,19],[14,27],[14,63],[15,8],[15,19],[16,8],[16,9],[16,17],[17,8],[17,16],[17,19],[18,2],[18,7],[18,19],[18,61],[18,63],[19,8],[19,7],[19,32],[19,61],[20,5],[20,22],[20,35],[20,48],[20,49],[21,13],[21,16],[21,33],[21,43],[21,46],[22,20],[22,35],[22,49],[22,67],[23,5],[23,20],[23,22],[23,35],[23,48],[23,49],[23,67],[24,3],[24,26],[24,36],[24,50],[25,6],[25,10],[25,19],[25,39],[53,6],[53,26],[53,34],[54,2],[54,18],[54,58],[54,28],[55,56],[55,26],[55,37],[55,40],[55,41],[56,34],[56,37],[56,41],[56,61],[57,6],[57,12],[57,32],[57,34],[58,32],[58,34],[58,39],[59,20],[59,23],[59,35],[59,48],[59,49],[60,56],[60,26],[60,34],[60,40],[60,41],[26,8],[26,19],[26,32],[26,62],[26,63],[27,3],[27,8],[27,26],[27,30],[27,47],[28,2],[28,8],[28,18],[28,25],[28,61],[29,3],[29,27],[29,36],[29,38],[30,8],[30,26],[30,32],[30,38],[30,47],[30,62],[31,12],[31,15],[31,33],[31,41],[31,44],[31,66],[32,8],[32,19],[32,20],[32,35],[32,49],[33,12],[33,24],[33,60],[33,26],[33,41],[33,50],[34,6],[34,53],[34,26],[34,39],[35,20],[35,22],[35,32],[35,49],[35,51],[36,24],[36,60],[36,26],[36,30],[36,40],[36,47],[37,8],[37,15],[37,55],[37,26],[37,38],[37,41],[37,47],[37,61],[38,8],[38,19],[38,26],[38,47],[38,62],[39,8],[39,19],[39,32],[40,8],[40,12],[40,15],[40,55],[40,37],[40,38],[40,41],[41,8],[41,12],[41,15],[41,19],[41,37],[41,38],[41,62],[42,15],[42,60],[42,37],[42,41],[43,13],[43,21],[43,24],[43,60],[43,26],[43,36],[43,40],[43,44],[43,47],[44,0],[44,1],[44,13],[44,15],[44,21],[44,60],[44,26],[44,31],[44,33],[44,36],[44,41],[44,42],[44,43],[44,47],[45,26],[45,29],[45,33],[45,36],[45,41],[45,47],[46,3],[46,55],[46,26],[46,29],[46,30],[46,33],[46,34],[46,37],[46,52],[47,8],[47,19],[47,26],[47,30],[47,32],[47,38],[47,62],[48,20],[48,23],[48,49],[49,8],[49,11],[49,20],[49,22],[49,32],[49,35],[49,67],[50,60],[50,26],[50,32],[50,34],[50,40],[50,41],[51,20],[51,22],[51,32],[51,35],[52,26],[52,27],[52,29],[52,46],[52,63],[61,8],[61,19],[61,62],[61,63],[62,8],[62,19],[62,61],[63,8],[63,19],[63,32],[63,61],[63,62],[64,63],[64,65],[64,66],[65,15],[65,61],[65,64],[65,66],[66,14],[66,15],[66,38],[66,40],[66,41],[66,42],[66,63],[66,64],[66,65],[67,5],[67,20],[67,22],[67,49]]};
+var GH = "https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/";
+var DIRS = {c:"concepts", m:"methods", d:"demos", r:"references"};
+var TOPICS = ["Power flow & OPF","Contingency (N-1)","TimeStep & weather","Design & planning","Case data & audit","Saving & scripting"];
+var NEW = "removing-empty-buses";
+var root = document.documentElement;
+var rm = root.classList.contains("rm");   /* reduced motion: same steps and timing, fades only */
+var $ = function(s){ return document.querySelector(s); };
+var EASE = "cubic-bezier(.2,.7,.2,1)";
+
+/* theme */
+var themeBtn = $("#themeBtn");
+function paintTheme(){
+  var light = root.getAttribute("data-theme") === "light";
+  themeBtn.textContent = light ? "Dark" : "Light";
+}
+themeBtn.addEventListener("click", function(){
+  var next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+  root.setAttribute("data-theme", next);
+  try { localStorage.setItem("hm-theme", next); } catch (e) {}
+  paintTheme();
+});
+paintTheme();
+
+/* motion toggle: full motion by default, reduced if the viewer chose it (remembered per browser) */
+var motionBtn = $("#motionBtn");
+function paintMotion(){
+  motionBtn.innerHTML = 'Motion: <b>' + (rm ? "reduced" : "full") + '</b>';
+  motionBtn.setAttribute("aria-label", "Motion: " + (rm ? "reduced" : "full") + ". Switch to " + (rm ? "full" : "reduced") + " motion.");
+}
+motionBtn.addEventListener("click", function(){
+  rm = !rm;
+  root.classList.toggle("rm", rm);
+  try { localStorage.setItem("hm-motion", rm ? "reduced" : "full"); } catch (e) {}
+  paintMotion();
+  if (rm) settleAll();
+  var was = playing; go(cur); setPlay(was);
+});
+paintMotion();
+
+$("#legend").innerHTML = TOPICS.map(function(t, i){ return '<li><span class="sw" style="background:var(--s' + (i + 1) + ')"></span>' + t + '</li>'; }).join("");
+
+/* ---------- data ---------- */
+var nodes = G.nodes.map(function(a, i){ return {i:i, name:a[0], dir:DIRS[a[1]], t:a[2], id:DIRS[a[1]] + "/" + a[0]}; });
+var byId = {}; nodes.forEach(function(n){ byId[n.id] = n; });
+var newNode = nodes.filter(function(n){ return n.name === NEW; })[0];
+var oldNodes = nodes.filter(function(n){ return n !== newNode; });
+var oldLinks = G.edges.filter(function(e){ return e[0] !== newNode.i && e[1] !== newNode.i; }).map(function(e){ return {source:nodes[e[0]], target:nodes[e[1]]}; });
+var newLinks = G.edges.filter(function(e){ return e[0] === newNode.i; }).map(function(e){ return {source:newNode, target:nodes[e[1]]}; });
+var NB = newLinks.map(function(l){ return l.target; });
+var deg = {}; nodes.forEach(function(n){ deg[n.id] = 0; });
+oldLinks.forEach(function(l){ deg[l.source.id]++; deg[l.target.id]++; });
+deg[newNode.id] = newLinks.length;
+function rad(n){ return 5 + Math.sqrt(deg[n.id]) * 1.7; }
+
+/* the search: terms come from the prompt; hits are real */
+/* hits: a grep of concepts/, methods/, demos/ and references/ for each term, the worked page left out (2026-10-21) */
+var GROUPS = [
+  {from:"islanding", terms:[{t:"islanding", hits:["concepts/lodf", "concepts/unloaded-ehv-stub-overvoltage", "methods/diagnosing-a-non-converging-contingency",
+    "methods/finding-and-fixing-radial-by-n1-pockets", "methods/ranking-new-devices-by-severity", "methods/reading-violationctg",
+    "methods/remediating-n1-contingency-violations", "methods/violation-network-map", "references/powerworld-study-commands", "references/powerworld-study-options"]}]},
+  {from:"zero MW", terms:[{t:"zero MW", hits:[]}, {t:"0 MW", hits:["methods/applying-a-dispatch-to-a-case", "methods/timestep-simulation-setup", "methods/zone-load-multiplier-trap"]}]},
+  {from:"dead buses", terms:[{t:"dead bus", hits:[]}, {t:"dead-end", hits:["concepts/unloaded-ehv-stub-overvoltage", "methods/remediating-n1-contingency-violations"]},
+    {t:"empty bus", hits:["references/powerworld-option-objects-v25"]}]},
+  {from:"delete", terms:[{t:"BusIdentifier", id:true, hits:["references/esapp-schema-reference", "references/powerworld-option-objects-v25"]}]}
+];
+var TERMS = []; GROUPS.forEach(function(g, gi){ g.terms.forEach(function(t){ t.g = gi; TERMS.push(t); }); });
+var UNION = []; TERMS.forEach(function(t){ t.hits.forEach(function(k){ if (UNION.indexOf(k) < 0) UNION.push(k); }); });
+var PROMPT = [["My N-1 "], ["islanding", 0], [" screen lists outages that cut off "], ["zero MW", 1], [". They look like "], ["dead buses", 2], [". Can I "], ["delete", 3], [" them?"]];
+
+/* ---------- timers (all cleared on every stage change) ---------- */
+var timers = [], jobs = [], busy = 0, lastV = VC.now(), lastReal = Date.now(), simAcc = 0, sim;
+function later(ms, fn){ var j = {at:VC.now() + ms, fn:fn, dead:false}; jobs.push(j); timers.push({stop:function(){ j.dead = true; }}); }
+function frames(fn){
+  var alive = true, t0 = VC.now(), id; busy++;
+  function end(){ if (alive){ alive = false; busy--; } }
+  function f(){ if (!alive) return; if (fn(VC.now() - t0) !== true) id = requestAnimationFrame(f); else end(); }
+  id = requestAnimationFrame(f);
+  timers.push({stop:function(){ end(); cancelAnimationFrame(id); }});
+}
+/* runs due jobs, and keeps CSS and Web Animations at the clock's speed (0 = paused) */
+(function pump(){
+  var t = VC.now(), due = [];
+  jobs = jobs.filter(function(j){ if (j.dead) return false; if (j.at <= t){ due.push(j); return false; } return true; });
+  due.sort(function(a, b){ return a.at - b.at; }).forEach(function(j){ if (!j.dead) j.fn(); });
+  var sp = VC.speed();
+  if (document.getAnimations) document.getAnimations().forEach(function(a){
+    if (typeof CSSTransition !== "undefined" && a instanceof CSSTransition) return;   /* theme and hover fades are not part of the walkthrough */
+    if (a.playbackRate !== sp) a.playbackRate = sp;
+  });
+  /* force layout: ~one physics step per 16.7 ms of virtual time (none while paused); a drag runs at 1x even when paused */
+  var rt = Date.now(), dt = dragging ? rt - lastReal : t - lastV;
+  lastV = t; lastReal = rt;
+  if (sim && (sim.alpha() > sim.alphaMin() || dragging)){
+    simAcc += Math.max(0, dt) / 16.7;
+    var steps = Math.min(4, Math.floor(simAcc));
+    simAcc = steps === 4 ? 0 : simAcc - steps;
+    for (var s = 0; s < steps; s++) sim.tick();
+    if (steps) tick();
+  } else simAcc = 0;
+  requestAnimationFrame(pump);
+})();
+/* is the current stage still animating? */
+function active(){
+  if (busy > 0) return true;
+  for (var i = 0; i < jobs.length; i++) if (!jobs[i].dead) return true;
+  if (document.getAnimations){
+    var as = document.getAnimations();
+    for (var k = 0; k < as.length; k++){
+      var a = as[k], tm = a.effect && a.effect.getComputedTiming ? a.effect.getComputedTiming() : null;
+      if (a.playState === "running" && tm && tm.iterations !== Infinity) return true;
+    }
+  }
+  return false;
+}
+
+/* ---------- graph ---------- */
+var svgEl = $("#graph"), hasD3 = !!window.d3;
+var svg, gL, gNL, gN, gM, gS, linkSel, nodeSel, W = 600, H = 560, firstJoin = true;
+var marks = [], lit = null, waking = {}, dragging = 0, lastPtr = "mouse", tapped = null;
+function openPage(d){ window.open(GH + d.id + ".md", "_blank", "noopener"); }
+/* after a tap, the emulated mouse events must not clear the name the tap just showed */
+function unhover(){ hover(lastPtr === "touch" && tapped ? tapped : null); }
+document.addEventListener("pointerdown", function(e){ lastPtr = e.pointerType || "mouse"; if (lastPtr !== "touch") tapped = null; }, true);
+
+if (!hasD3) { svgEl.outerHTML = '<p class="nod3">The graph needs d3, which did not load. The steps on the left still work.</p>'; }
+else {
+  svg = d3.select(svgEl);
+  var lg = svg.append("defs").append("linearGradient").attr("id", "scanG").attr("x1", 0).attr("x2", 1).attr("y1", 0).attr("y2", 0);
+  lg.append("stop").attr("offset", 0).style("stop-color", "var(--kit)").style("stop-opacity", 0);
+  lg.append("stop").attr("offset", 1).style("stop-color", "var(--kit)").style("stop-opacity", .3);
+  gL = svg.append("g"); gNL = svg.append("g"); gS = svg.append("g"); gN = svg.append("g"); gM = svg.append("g");
+  sim = d3.forceSimulation().alphaDecay(.025)
+    .force("charge", d3.forceManyBody().strength(function(){ return W < 500 ? -90 : -170; }).distanceMax(420))
+    .force("link", d3.forceLink().distance(function(){ return W < 500 ? 38 : 60; }).strength(.25))
+    .force("x", d3.forceX(function(){ return W / 2; }).strength(.06))
+    .force("y", d3.forceY(function(){ return H / 2; }).strength(.09))
+    .force("collide", d3.forceCollide(function(d){ return rad(d) + 3; }))
+    .on("tick", tick);
+  sim.stop();   /* physics is stepped by pump() from the virtual clock, so Pause and Speed apply to it */
+  sizeGraph();
+  window.addEventListener("resize", function(){ sizeGraph(); sim.alpha(.3); if (rm) settleAll(); });
+}
+function sizeGraph(){
+  W = svgEl.clientWidth || 600; H = svgEl.clientHeight || 560;
+  svg.attr("viewBox", "0 0 " + W + " " + H);
+}
+/* reduced motion: run the layout to rest off-screen, then draw once */
+function settleAll(){
+  if (!hasD3) return;
+  sim.stop();
+  var t = 0; while (sim.alpha() > sim.alphaMin() && t++ < 500) sim.tick();
+  tick();
+}
+/* place the new page; under reduced motion only it moves, and only once */
+function settleNew(first){
+  if (!hasD3) return;
+  if (!rm){ sim.alpha(.35); return; }
+  if (first){
+    sim.stop();
+    oldNodes.forEach(function(n){ n.fx = n.x; n.fy = n.y; });
+    var keep = sim.force("link").links();
+    sim.force("link").links(oldLinks.concat(newLinks));
+    sim.alpha(.5); for (var t = 0; t < 150; t++) sim.tick();
+    sim.force("link").links(keep);
+    oldNodes.forEach(function(n){ n.fx = n.fy = null; });
+  }
+  tick();
+}
+function tick(){
+  sim.nodes().forEach(function(n){ var m = rad(n) + 4; n.x = Math.max(m, Math.min(W - m, n.x)); n.y = Math.max(m, Math.min(H - m, n.y)); });
+  if (linkSel) linkSel.attr("x1", function(d){ return d.source.x; }).attr("y1", function(d){ return d.source.y; }).attr("x2", function(d){ return d.target.x; }).attr("y2", function(d){ return d.target.y; });
+  if (nodeSel) nodeSel.attr("cx", function(d){ return d.x; }).attr("cy", function(d){ return d.y; });
+  gNL.selectAll("line").attr("x1", function(d){ return pos(d.source).x; }).attr("y1", function(d){ return pos(d.source).y; }).attr("x2", function(d){ return d.target.x; }).attr("y2", function(d){ return d.target.y; });
+  placeMarks();
+}
+function pos(n){ return n.x != null ? n : ghostPos(); }
+function ghostPos(){
+  if (newNode.x != null && sim.nodes().indexOf(newNode) >= 0) return newNode;
+  var x = 0, y = 0; NB.forEach(function(n){ x += n.x; y += n.y; });
+  return {x:x / NB.length, y:y / NB.length};
+}
+
+/* draw a stroke in along its length; pat is the dash pattern it ends with ([1e6,0] = solid) */
+function dashStr(pat, L, p){
+  if (!(L > 0)) return "0 1";
+  var out = [], s = 0, lim = p * L, i = 0;
+  while (s < lim){ var seg = pat[i % 2]; if (s + seg > lim) seg = lim - s; out.push(seg.toFixed(2)); s += seg; i++; }
+  if (out.length % 2) out.push(L + 1); else out.push(0, L + 1);
+  return out.join(" ");
+}
+function drawIn(sel, pat, dur, delay){
+  sel.each(function(){
+    var el = this, s = d3.select(el);
+    if (rm){
+      s.style("stroke-opacity", 0).transition("draw").delay(delay || 0).duration(dur).ease(d3.easeCubicInOut)
+        .style("stroke-opacity", 1).on("end", function(){ s.style("stroke-opacity", null); });
+      return;
+    }
+    s.style("stroke-dasharray", "0 100000").transition("draw").delay(delay || 0).duration(dur).ease(d3.easeCubicOut)
+      .styleTween("stroke-dasharray", function(){ return function(p){
+        var L = 0;
+        if (el.isConnected){ try { L = el.getTotalLength ? el.getTotalLength() : 100; } catch (e) { L = 0; } }
+        return dashStr(pat, L, p);
+      }; })
+      .on("end", function(){ s.style("stroke-dasharray", null); });
+  });
+}
+
+function setGraph(withNew, linkCount){
+  var ns = withNew ? nodes : oldNodes;
+  var ls = oldLinks.concat(withNew ? newLinks.slice(0, linkCount) : []);
+  if (withNew && newNode.x == null){ var g = ghostPos(); newNode.x = g.x; newNode.y = g.y; }
+  if (!withNew){ newNode.x = newNode.y = newNode.vx = newNode.vy = null; }
+  var first = firstJoin; firstJoin = false;
+  linkSel = gL.selectAll("line").data(oldLinks, function(d){ return d.source.id + "|" + d.target.id; }).join(function(en){
+    var l = en.append("line").attr("class", "lk");
+    if (first) l.style("stroke-opacity", 0).transition().delay(350).duration(1000).ease(d3.easeCubicInOut).style("stroke-opacity", 1)
+      .on("end", function(){ d3.select(this).style("stroke-opacity", null); });
+    return l;
+  });
+  nodeSel = gN.selectAll("circle.nd:not(.out)").data(ns, function(d){ return d.id; }).join(
+    function(enter){
+      var c = enter.append("circle").attr("class", "nd").attr("fill", function(d){ return "var(--s" + (d.t + 1) + ")"; })
+        .on("mouseenter", function(e, d){ hover(d); }).on("mouseleave", unhover)
+        .on("click", function(e, d){
+          /* touch: the first tap shows the name, the second opens the page */
+          if (lastPtr === "touch" && tapped !== d){ tapped = d; hover(d); return; }
+          openPage(d);
+        })
+        .call(d3.drag()
+          .on("start", function(e, d){ d._moved = false; d.fx = d.x; d.fy = d.y; })
+          /* heat the layout only once the pointer really moves, so a tap does not shift the dots */
+          .on("drag", function(e, d){ if (!d._moved){ d._moved = true; dragging++; if (!e.active) sim.alphaTarget(.2); } d.fx = e.x; d.fy = e.y; })
+          .on("end", function(e, d){ if (d._moved){ dragging = Math.max(0, dragging - 1); if (!e.active) sim.alphaTarget(0); } d.fx = d.fy = null; }))
+        .attr("tabindex", 0).attr("aria-label", function(d){ return d.id; })
+        .on("focus", function(e, d){ hover(d); }).on("blur", unhover)
+        .on("keydown", function(e, d){ if (e.key === "Enter"){ e.preventDefault(); openPage(d); } });
+      if (rm){
+        c.attr("r", rad).style("fill-opacity", 0).transition("grow").delay(function(d, i){ return first ? i * 6 : 0; }).duration(600)
+          .ease(d3.easeCubicInOut).style("fill-opacity", 1).on("end", function(){ d3.select(this).style("fill-opacity", null); });
+      } else {
+        c.attr("r", 0).transition("grow").delay(function(d, i){ return first ? 120 + i * 9 : 0; }).duration(first ? 700 : 750)
+          .ease(d3.easeBackOut.overshoot(first ? 1.4 : 2.2)).attr("r", rad);
+      }
+      return c;
+    },
+    function(u){ return u; },
+    function(ex){
+      ex.classed("out", true).interrupt("grow");
+      if (rm) ex.transition().duration(400).style("fill-opacity", 0).remove();
+      else ex.transition().duration(380).ease(d3.easeCubicIn).attr("r", 0).remove();
+    });
+  sim.nodes(ns); sim.force("link").links(ls);
+  applyLit();
+}
+
+/* numbers count to their new value instead of jumping */
+function countTo(el, to){
+  var from = parseInt(el.textContent, 10) || 0;
+  if (el._raf) cancelAnimationFrame(el._raf);
+  if (from === to){ el.textContent = to; return; }
+  var t0 = performance.now(), dur = Math.min(1100, 450 + Math.abs(to - from) * 6);
+  (function f(){
+    var p = Math.min(1, (performance.now() - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * e);
+    el._raf = p < 1 ? requestAnimationFrame(f) : 0;
+  })();
+  if (!rm && el.animate && Math.abs(to - from) < 5) el.animate([{transform:"scale(1.16)"}, {transform:"none"}], {duration:500, easing:EASE});
+}
+function setStats(p, l){
+  var sp = $("#statPages"), sl = $("#statLinks");
+  countTo(sp, p); countTo(sl, l);
+  sp.classList.toggle("up", p > oldNodes.length); sl.classList.toggle("up", l > oldLinks.length);
+}
+function status(t){
+  var el = $("#gStatus");
+  if (el.textContent === t) return;
+  el.textContent = t;
+  if (el.animate) el.animate(rm ? [{opacity:0}, {opacity:1}] : [{opacity:0, transform:"translateY(5px)"}, {opacity:1, transform:"none"}], {duration:400, easing:EASE});
+}
+function setLit(list){ lit = list; applyLit(); }
+function applyLit(){
+  if (!hasD3) return;
+  svg.classed("dim", !!lit);
+  if (nodeSel) nodeSel.classed("lit", function(d){ return !!lit && lit.indexOf(d) >= 0; });
+}
+
+/* marks: rings and labels, each in a <g> that follows its node */
+function markR(d){ return (d.kind === "ghost" || d.kind === "new" || d.kind === "pulse" ? 12 : rad(d.node)) + 6; }
+function markKey(d){ return d.key || d.node.id + d.kind; }
+function setMarks(m){
+  marks = m || [];
+  if (!hasD3) return;
+  gM.selectAll("g.mk").data(marks, markKey).join(
+    function(en){
+      var g = en.append("g").attr("class", "mk");
+      g.append("circle").attr("class", function(d){ return "rg " + d.kind; }).attr("r", markR);
+      g.filter(function(d){ return d.label; }).append("text").attr("class", function(d){ return "mk " + d.kind; }).text(function(d){ return d.label; });
+      g.each(function(d){ enterMark(d3.select(this), d); });
+      return g;
+    },
+    function(up){ up.select("text").text(function(d){ return d.label; }); return up; },
+    function(ex){
+      ex.selectAll("circle,text").interrupt("draw").interrupt("shrink").interrupt("grow").interrupt("ping").interrupt();
+      ex.attr("class", "mk-out").interrupt().transition().duration(340).ease(d3.easeCubicIn).style("opacity", 0).remove();
+    });
+  placeMarks();
+}
+function enterMark(g, d){
+  var c = g.select("circle"), t = g.select("text"), dl = d.delay || 0, rr = markR(d);
+  if (rm){ g.style("opacity", 0).transition().delay(dl).duration(600).ease(d3.easeCubicInOut).style("opacity", 1); return; }
+  if (d.kind === "pulse"){ g.style("opacity", 0).transition().delay(dl).duration(500).style("opacity", 1); return; }
+  if (d.kind === "new"){
+    c.attr("r", 0).transition("grow").delay(dl).duration(700).ease(d3.easeBackOut.overshoot(2.2)).attr("r", rr);
+  } else {
+    c.attr("transform", "rotate(-90)");   /* draw from 12 o'clock */
+    if (d.kind !== "nb") c.attr("r", rr + 14).transition("shrink").delay(dl).duration(850).ease(d3.easeCubicOut).attr("r", rr);
+    drawIn(c, d.kind === "hit" ? [5, 4] : d.kind === "ghost" ? [6, 5] : [1e6, 0], d.kind === "nb" ? 650 : 850, dl);
+  }
+  if (!t.empty()) t.style("opacity", 0).transition().delay(dl + (d.kind === "new" ? 250 : 380)).duration(450).ease(d3.easeCubicOut).style("opacity", 1);
+}
+function pingMark(label){
+  if (!hasD3) return;
+  var c = gM.selectAll("g.mk").filter(function(d){ return d.kind === "hit" && d.node.id === label; }).select("circle");
+  if (rm){ c.style("opacity", .2).transition("ping").duration(650).style("opacity", 1); return; }
+  c.style("stroke-width", 3).transition("ping").duration(170).ease(d3.easeCubicOut).style("stroke-width", 7)
+    .transition().duration(650).ease(d3.easeCubicInOut).style("stroke-width", 3).on("end", function(){ d3.select(this).style("stroke-width", null); });
+}
+function placeMarks(){
+  if (!hasD3) return;
+  gM.selectAll("g.mk, g.mk-out").each(function(d){
+    var p = d.kind === "ghost" ? ghostPos() : d.node;
+    if (p.x == null) return;
+    var g = d3.select(this).attr("transform", "translate(" + p.x + "," + p.y + ")");
+    if (!d.label) return;
+    var rr = markR(d), t = g.select("text");
+    if (d.kind === "ghost" || d.kind === "new"){
+      var c = {x:0, y:0}; NB.forEach(function(n){ c.x += n.x / NB.length; c.y += n.y / NB.length; });
+      var dx = p.x - c.x, dy = p.y - c.y, len = Math.hypot(dx, dy);
+      if (len < 8){ dx = 0; dy = -1; } else { dx /= len; dy /= len; }
+      var off = rr + 26;
+      t.attr("x", dx * off).attr("y", dy * off + 6).attr("text-anchor", "middle");
+      return;
+    }
+    var right = p.x < W - 60;
+    t.attr("x", right ? rr + 6 : -rr - 6).attr("y", 6).attr("text-anchor", right ? "start" : "end");
+  });
+  gM.selectAll("text.hover").each(function(d){ d3.select(this).attr("x", d.x).attr("y", d.y - rad(d) - 10); });
+}
+function hover(d){
+  gM.selectAll("text.hover").data(d ? [d] : []).join("text").attr("class", "hover").attr("text-anchor", "middle").text(function(n){ return n.name; });
+  placeMarks();
+  linkSel.classed("hi", function(l){ return !!d && (l.source === d || l.target === d); });
+  $("#gTip").textContent = d ? d.id + " · " + TOPICS[d.t] : "Hover or tab to a dot to see the page. Click or press Enter to open it. Drag to move it.";
+}
+var lastKeys = "";
+function keys(items){
+  var html = items.map(function(it, i){ return '<li style="animation-delay:' + (i * 70) + 'ms"><span class="tag ' + (it.nb ? "nb" : "") + '">' + it.k + '</span><span>' + it.text + '</span></li>'; }).join("");
+  if (html === lastKeys) return;
+  lastKeys = html; $("#keyList").innerHTML = html;
+}
+function hitList(show){
+  $("#hitList").innerHTML = show ? '<div class="hits"><p>' + UNION.length + ' pages mention a term</p><details><summary>Show the ' + UNION.length +
+    '</summary><ul>' + UNION.map(function(k){ return '<li>' + k + '</li>'; }).join("") + '</ul></details></div>' : "";
+}
+function hitMarks(upto){
+  var seen = {}, m = [];
+  TERMS.slice(0, upto).forEach(function(t){ t.hits.forEach(function(k){ if (!seen[k]){ seen[k] = 1; m.push({node:byId[k], kind:"hit"}); } }); });
+  return m;
+}
+
+/* scan: a line sweeps the graph once per term; nodes wake as it passes; hits ripple and get their ring.
+   Reduced motion: no line; the same hits land at the same moments, as fades. */
+function cssVar(name){ return getComputedStyle(root).getPropertyValue(name).trim(); }
+function unwake(c){ c.classed("waking", false).style("stroke", null).style("stroke-width", null).style("opacity", null).attr("r", rad(c.datum())); }
+function wake(el, n, kit, bg){
+  var c = d3.select(el), o0 = svg.classed("dim") && !(lit && lit.indexOf(n) >= 0) ? .25 : 1;
+  waking[n.id] = el;
+  c.interrupt("wake").classed("waking", true)
+    .transition("wake").duration(150).ease(d3.easeCubicOut).attr("r", rad(n) * 1.3).style("stroke", kit).style("stroke-width", 3.5).style("opacity", 1)
+    .transition().duration(550).ease(d3.easeCubicInOut).attr("r", rad(n)).style("stroke", bg).style("stroke-width", 1.5).style("opacity", o0)
+    .on("end", function(){ unwake(c); delete waking[n.id]; });
+}
+function scan(term, onHit, done){
+  var hits = term.hits.map(function(k){ return {k:k, n:byId[k]}; });
+  if (!hasD3){ hits.forEach(onHit); done(); return; }
+  var dur = hits.length ? 1300 : 700;   /* a term with no hits gets a short sweep */
+  if (rm){
+    nodeSel.classed("wake", true); later(dur * .7, function(){ nodeSel.classed("wake", false); });
+    hits.slice().sort(function(a, b){ return a.n.x - b.n.x; }).forEach(function(h){ later(Math.max(100, dur * h.n.x / W), function(){ onHit(h); }); });
+    later(dur, done);
+    return;
+  }
+  var glow = gS.append("rect").attr("class", "scanglow").attr("y", 0).attr("height", H).attr("width", 150);
+  var halo = gS.append("line").attr("class", "scanhalo").attr("y1", 0).attr("y2", H);
+  var line = gS.append("line").attr("class", "scan").attr("y1", 0).attr("y2", H);
+  var passed = {}, hitBy = {}, kit = cssVar("--kit"), bg = cssVar("--bg");
+  hits.forEach(function(h){ hitBy[h.n.id] = h; });
+  var sb = true; busy++;
+  function unbusy(){ if (sb){ sb = false; busy--; } }
+  var tm = d3.timer(function(el){
+    var f = Math.min(1, el / dur), x = -30 + d3.easeCubicInOut(f) * (W + 60), op = Math.min(1, f * 7, (1 - f) * 7);
+    line.attr("x1", x).attr("x2", x).style("opacity", op);
+    halo.attr("x1", x).attr("x2", x).style("opacity", op * .18);
+    glow.attr("x", x - 150).style("opacity", op);
+    nodeSel.each(function(n){
+      if (!passed[n.id] && n.x <= x){
+        passed[n.id] = 1; wake(this, n, kit, bg);
+        var h = hitBy[n.id];
+        if (h){
+          gS.append("circle").attr("class", "ripple").attr("cx", n.x).attr("cy", n.y).attr("r", rad(n)).style("opacity", .9)
+            .transition().duration(950).ease(d3.easeCubicOut).attr("r", rad(n) + 38).style("opacity", 0).remove();
+          onHit(h);
+        }
+      }
+    });
+    if (f >= 1){ tm.stop(); unbusy(); line.remove(); halo.remove(); glow.remove(); done(); }
+  });
+  timers.push({stop:function(){ tm.stop(); unbusy(); }});
+}
+
+function clearTimers(){
+  timers.forEach(function(t){ t.stop(); }); timers = []; busy = 0;
+  if (!hasD3) return;
+  gS.selectAll("*").interrupt().remove();
+  if (nodeSel) nodeSel.classed("wake", false);
+  Object.keys(waking).forEach(function(id){ var c = d3.select(waking[id]); c.interrupt("wake"); unwake(c); });
+  waking = {};
+}
+
+/* ---------- stages ---------- */
+function esc(c){ return c === "&" ? "&amp;" : c === "<" ? "&lt;" : c; }
+function chars(s){ return s.split("").map(function(c){ return '<span class="ch">' + esc(c) + '</span>'; }).join(""); }
+function promptHTML(){
+  return '<div class="prompt"><span class="who">You</span><span id="ptext"><span class="caret"></span>' +
+    PROMPT.map(function(p){ return p[1] != null ? '<mark data-g="' + p[1] + '">' + chars(p[0]) + '</mark>' : chars(p[0]); }).join("") +
+    '</span></div>';
+}
+function termsHTML(fly){
+  return '<ul class="kw' + (fly ? " fly" : "") + '" id="kw">' + GROUPS.map(function(g, gi){
+    return '<li data-g="' + gi + '"><span class="from">“' + g.from + '”</span><span class="arrow">→</span>' +
+      g.terms.map(function(t){ return '<span class="ck' + (t.id ? " id" : "") + '" data-t="' + TERMS.indexOf(t) + '">' + t.t + '<span class="n"></span></span>'; }).join("") + '</li>';
+  }).join("") + '</ul><div class="kwkey"><span><i></i>plain-English term</span><span><i class="id"></i>PowerWorld identifier</span></div>';
+}
+function ckEl(ti){ return document.querySelector('.ck[data-t="' + ti + '"]'); }
+function setCount(ti, v, pop){
+  var el = document.querySelector('.ck[data-t="' + ti + '"] .n');
+  if (!el) return;
+  el.textContent = v; el.classList.toggle("hit", v > 0);
+  if (pop && !rm && el.animate) el.animate([{transform:"scale(1.9)"}, {transform:"none"}], {duration:520, easing:EASE});
+}
+/* the phrase's chips leave the highlighted phrase and arc down into the term list (FLIP) */
+function flyGroup(gi){
+  var mk = document.querySelector('#ptext mark[data-g="' + gi + '"]'), li = document.querySelector('#kw li[data-g="' + gi + '"]');
+  if (!li) return;
+  li.classList.add("in");
+  var mr = mk ? mk.getBoundingClientRect() : null;
+  Array.prototype.forEach.call(li.querySelectorAll(".ck"), function(ck, j){
+    later(j * 160, function(){
+      ck.classList.add("land");
+      if (rm || !mr || !ck.animate) return;
+      var cr = ck.getBoundingClientRect();
+      var dx = mr.left + mr.width / 2 - (cr.left + cr.width / 2), dy = mr.top + mr.height / 2 - (cr.top + cr.height / 2);
+      var kx = dx * .5, ky = Math.min(dy, 0) - 56, kf = [], N = 16;
+      for (var s = 0; s <= N; s++){
+        var p = s / N, q = 1 - p;
+        var x = q * q * dx + 2 * q * p * kx, y = q * q * dy + 2 * q * p * ky;
+        var sc = p < .82 ? .55 + .57 * (p / .82) : 1.12 - .12 * ((p - .82) / .18);
+        kf.push({transform:"translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) scale(" + sc.toFixed(3) + ")", opacity:Math.min(1, p * 5), offset:p});
+      }
+      ck.animate(kf, {duration:920, easing:"cubic-bezier(.45,.05,.2,1)"});
+      later(900, function(){ ck.classList.add("ping"); });
+    });
+  });
+}
+function msg(who, text){ return '<div class="msg ' + who + '"><span class="who">' + (who === "user" ? "You" : "Agent") + '</span>' + text + '</div>'; }
+
+var STAGES = [
+{ chip:"Ask", title:"1. You ask. The agent pulls out search terms.", dur:11000,
+  html:function(){ return promptHTML() + termsHTML(true); },
+  run:function(){
+    graphBase(); setMarks([]);
+    status(oldNodes.length + " pages, each linked to the pages it relies on.");
+    var chs = document.querySelectorAll("#ptext .ch"), caret = $("#ptext .caret"), times = [], t = 0, shown = 0;
+    for (var c = 0; c < chs.length; c++){ times.push(t); var ch = chs[c].textContent; t += 15 + (ch === "." || ch === "?" ? 150 : 0); }
+    function revealTo(n){
+      while (shown < n){ chs[shown].classList.add("v"); shown++; }
+      if (caret && caret.parentNode && shown) chs[shown - 1].parentNode.insertBefore(caret, chs[shown - 1].nextSibling);
+    }
+    frames(function(el){ var e = el - 250, n = shown; while (n < chs.length && times[n] <= e) n++; if (n > shown) revealTo(n); return shown >= chs.length; });
+    GROUPS.forEach(function(g, gi){
+      var at = 2600 + gi * 1500;
+      later(at, function(){
+        revealTo(chs.length);
+        if (caret && caret.parentNode) caret.parentNode.removeChild(caret);
+        var m = document.querySelector('#ptext mark[data-g="' + gi + '"]'); if (m) m.classList.add("on");
+      });
+      later(at + 650, function(){ flyGroup(gi); });
+    });
+  }
+},
+{ chip:"Scan", title:"2. Scan every page for each term.", dur:14500,
+  html:function(){ return termsHTML(false) + '<div id="verdict"><div class="big zero col" id="vbox" style="visibility:hidden"><span class="pre">' + UNION.length +
+    ' pages mention a term.</span><span class="row"><b>0</b><span>cover deleting empty buses.</span></span></div></div>'; },
+  run:function(){
+    graphBase(); setMarks([]);
+    Array.prototype.forEach.call(document.querySelectorAll("#kw li"), function(li){ li.classList.add("in"); });
+    status("Scanning concepts, methods, demos and references…");
+    var i = 0, seen = {}, cum = [];
+    function next(){
+      if (i > 0){ var prev = ckEl(i - 1); if (prev) prev.classList.remove("now"); if (cum.length) setLit(cum.map(function(m){ return m.node; })); }
+      if (i >= TERMS.length){ finish(); return; }
+      var c = ckEl(i); if (c) c.classList.add("now");
+      status("Scanning for “" + TERMS[i].t + "”");
+      var me = i, count = 0; i++;
+      setCount(me, 0);
+      scan(TERMS[me], function(h){
+        count++; setCount(me, count, true);
+        if (!seen[h.k]){ seen[h.k] = 1; cum.push({node:h.n, kind:"hit"}); setMarks(cum.slice()); }
+        else pingMark(h.k);
+      }, function(){ setCount(me, TERMS[me].hits.length); later(250, next); });
+    }
+    function finish(){
+      for (var j = 0; j < TERMS.length; j++) setCount(j, TERMS[j].hits.length);
+      var hm = hitMarks(TERMS.length); setMarks(hm); setLit(hm.map(function(m){ return m.node; }));
+      hitList(true);
+      status(UNION.length + " pages mention a term. Each is about something else.");
+      var v = $("#vbox"); if (v){ v.style.visibility = ""; v.classList.add("slam"); }
+    }
+    later(450, next);
+  }
+},
+{ chip:"Say so", title:"3. Say so. Then test it on the case.", dur:9000,
+  html:function(){ return msg("agent", "<b>No HiveMind page covers this.</b> I'll test it, and mark the answer as outside HiveMind.") +
+    '<div class="big ok col reveal" style="animation-delay:1.2s"><span class="lbl">What the test found</span><span class="row"><b>0 change</b><span>in any voltage or flow after deleting them, in all five dispatches.</span></span></div>' +
+    '<p class="note reveal" style="animation-delay:1.4s">Result from the page: measured 2026-10-04 on a ~9k-bus synthetic case.</p>'; },
+  run:function(){ graphBase(); var hm = hitMarks(TERMS.length); setMarks(hm); setLit(hm.map(function(m){ return m.node; })); hitList(true);
+    status("Nothing in HiveMind. The answer comes from the case itself."); }
+},
+{ chip:"Offer", title:"4. Offer to keep it.", dur:7000,
+  html:function(){ return msg("agent", "That worked and it's checked. Add it to HiveMind as a page, so the next session finds it?") + msg("user", "Yes."); },
+  run:function(){ graphBase(); setMarks([]); status("Still " + oldNodes.length + " pages. Nothing is written until you say yes."); }
+},
+{ chip:"Draft", title:"5. Draft it in the house format.", dur:9500,
+  html:function(){ return '<div class="file reveal"><div class="file-h"><span>methods/removing-empty-buses.md</span><span class="badge" style="color:var(--s5)">topic: case-audit</span></div><div class="file-b">' +
+    '<p class="fh">Title</p><p class="ptitle">Method: Removing empty buses from a case</p>' +
+    '<div style="animation-delay:.6s"><p class="fh">Abstract</p><p class="pabs">How to find and delete voltage levels that carry nothing (no load, no running plant, no shunt, no line out of the substation) and hang off one transformer, without changing the power flow. …</p></div>' +
+    '<div style="animation-delay:1.2s"><p class="fh">Connections</p><ul class="links">' + NB.map(function(n, i){ return '<li><i>' + (i + 1) + '</i>' + n.name + '</li>'; }).join("") + '</ul></div>' +
+    '<div style="animation-delay:1.8s"><p class="fh">Content</p><p class="pabs">What counts as empty · Two shapes that look empty and must stay · Delete and verify · PowerWorld traps met on the way</p></div>' +
+    '</div></div>'; },
+  run:function(){
+    graphBase(); setLit(NB);
+    keys(NB.map(function(n, i){ return {k:i + 1, nb:true, text:n.id}; }));
+    setMarks([{node:newNode, kind:"ghost", label:"draft", key:"ghost"}].concat(NB.map(function(n, i){ return {node:n, kind:"nb", label:String(i + 1), delay:250 + i * 110}; })));
+    later(1200, function(){
+      if (!hasD3) return;
+      var ls = gNL.selectAll("line.nk").data(newLinks, function(d){ return d.target.id; }).join("line").attr("class", "nk preview");
+      tick();
+      ls.each(function(d, j){ drawIn(d3.select(this), [6, 6], 800, j * 110); });
+    });
+    status("The draft and the 6 pages it links to.");
+  }
+},
+{ chip:"Link in", title:"6. It joins the graph.", dur:10000,
+  html:function(){ return '<div class="idxrow reveal"><span class="badge b-open">+ index.md</span><code>removing-empty-buses</code>: find and delete dead-end voltage levels that carry nothing, without moving the power flow.</div>' +
+    '<div class="oks reveal" style="animation-delay:4.6s"><div><span class="badge b-open">✓</span>every page has an index row</div><div><span class="badge b-open">✓</span>every link points at a page that exists</div></div>'; },
+  run:function(){
+    graphBase(); setMarks([]); setLit(NB.concat([newNode]));
+    keys(NB.map(function(n, i){ return {k:i + 1, nb:true, text:n.id}; }));
+    status("New page added.");
+    var k = 0;
+    function core(){ return [{node:newNode, kind:"pulse", key:"pulse"}, {node:newNode, kind:"new", label:"NEW", key:"new"}]; }
+    function addLink(){
+      k++;
+      setGraph(true, k);
+      if (hasD3){
+        var en = gNL.selectAll("line.nk").data(newLinks.slice(0, k), function(d){ return d.target.id; }).enter().append("line").attr("class", "nk");
+        tick(); drawIn(en, [1e6, 0], 700, 0);
+        settleNew(false);
+      }
+      setMarks(core().concat(NB.slice(0, k).map(function(n, i){ return {node:n, kind:"nb", label:String(i + 1), delay:i === k - 1 ? 430 : 0}; })));
+      setStats(nodes.length, oldLinks.length + k);
+      status("Link " + k + " of " + NB.length + ": " + NB[k - 1].name);
+      if (k < NB.length) later(650, addLink);
+      else later(850, function(){ status("Linked in. The next search finds it."); });
+    }
+    later(400, function(){
+      setGraph(true, 0); setStats(nodes.length, oldLinks.length); settleNew(true);
+      setMarks(core()); later(600, addLink);
+    });
+  }
+},
+{ chip:"Or: issue", title:"7. Or: tell the maintainers.", dur:9000,
+  html:function(){ return '<div class="issue reveal"><div class="issue-h">No page: removing empty buses from a case</div><div class="issue-b"><span class="badge b-live">missing-page</span><span class="badge" style="color:var(--s5)">case-audit</span></div></div>' +
+    '<ol class="rules reveal" style="animation-delay:.6s"><li>The agent offers. It never files on its own.</li><li>You see the exact text first. The tracker is public.</li><li>You click submit.</li></ol>'; },
+  run:function(){ graphBase(); setMarks([{node:newNode, kind:"ghost", label:"missing", key:"ghost"}]);
+    status("No page here. A later HiveMind update can carry it to everyone."); }
+}
+];
+
+/* common reset at the start of each stage; every change in it animates (fades, ring exits, count-down) */
+function graphBase(){
+  setLit(null); keys([]); hitList(false);
+  if (hasD3){ gNL.selectAll("line.nk").attr("class", "out").interrupt("draw").transition().duration(300).ease(d3.easeCubicIn).style("opacity", 0).remove(); setGraph(false, 0); }
+  setStats(oldNodes.length, oldLinks.length);
+}
+
+/* ---------- player ---------- */
+var pane = $("#stagePane"), chips = $("#chips"), playBtn = $("#playBtn"), prevBtn = $("#prevBtn"), nextBtn = $("#nextBtn"), progBar = $("#progBar");
+var cur = 0, playing = false, tStart = 0, raf = 0, swapTok = 0, idleAt = null, ended = false, speed = 1;
+var HOLD = [2600, 1200, 3200, 2400, 4200, 3000, 3800];   /* reading time once a stage's animation ends, ms at 1x */
+STAGES.forEach(function(s, i){
+  var li = document.createElement("li");
+  li.innerHTML = '<button type="button" aria-label="Step ' + (i + 1) + ': ' + s.chip + '"><b>' + (i + 1) + '</b><span>' + s.chip + '</span></button>';
+  li.firstChild.addEventListener("click", function(){ jump(i); });
+  chips.appendChild(li);
+});
+function go(i){
+  cur = Math.max(0, Math.min(STAGES.length - 1, i));
+  clearTimers();
+  var s = STAGES[cur], tok = ++swapTok, old = pane.firstElementChild;
+  var bs = chips.querySelectorAll("button");
+  for (var j = 0; j < bs.length; j++){ bs[j].classList.toggle("on", j === cur); bs[j].classList.toggle("done", j < cur); bs[j].setAttribute("aria-current", j === cur ? "step" : "false"); }
+  prevBtn.disabled = cur === 0; nextBtn.disabled = cur === STAGES.length - 1;
+  tStart = VC.now(); idleAt = null; ended = false; progBar.style.width = "0";
+  try { history.replaceState(null, "", "#s=" + (cur + 1)); } catch (e) {}
+  $("#live").textContent = s.title;
+  /* a second click inside the 180 ms fade: drop the half-faded content at once */
+  if (old && old._leaving){ pane.innerHTML = ""; old = null; }
+  function render(){
+    if (tok !== swapTok) return;
+    var h0 = pane.offsetHeight;
+    pane.innerHTML = '<div class="stage-in"><h2 class="stage-h">' + s.title + '</h2>' + s.html() + '</div>';
+    s.run();
+    /* the pane eases to its new height instead of snapping */
+    if (!rm && old && pane.animate){
+      var h1 = pane.offsetHeight;
+      if (Math.abs(h1 - h0) > 4){
+        pane.style.overflow = "hidden";
+        var a = pane.animate([{height:h0 + "px"}, {height:h1 + "px"}], {duration:480, easing:EASE});
+        a.onfinish = a.oncancel = function(){ pane.style.overflow = ""; };
+      }
+    }
+  }
+  /* old content fades out first, then the new stage fades (and, in full motion, rises) in */
+  /* paused: the clock is frozen, so a timed swap would never fire; render at once */
+  if (old && old.animate && playing){
+    old._leaving = true;
+    old.animate([{opacity:1, transform:"none"}, {opacity:0, transform:rm ? "none" : "translateY(-8px)"}], {duration:180, easing:"cubic-bezier(.4,0,1,1)", fill:"forwards"});
+    later(180, render);
+  } else render();
+}
+function tickPlay(){
+  if (!playing) return;
+  var t = VC.now(), s = STAGES[cur], el = t - tStart;
+  if (el < 400 || active()){
+    idleAt = null;
+    progBar.style.width = Math.min(90, el / s.dur * 90) + "%";
+  } else {
+    if (idleAt == null) idleAt = t;
+    var wait = 900 + HOLD[cur], f = Math.min(1, (t - idleAt) / wait), p0 = Math.min(90, (idleAt - tStart) / s.dur * 90);
+    progBar.style.width = (p0 + (100 - p0) * f) + "%";
+    if (f >= 1){
+      if (cur < STAGES.length - 1) go(cur + 1);
+      else { ended = true; setPlay(false); return; }
+    }
+  }
+  raf = requestAnimationFrame(tickPlay);
+}
+function setPlay(on){
+  playing = on;
+  playBtn.textContent = on ? "❚❚ Pause" : (ended ? "↺ Replay" : "▶ Play");
+  playBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  VC.set(on ? speed : 0);
+  cancelAnimationFrame(raf);
+  if (on){
+    if (ended) go(0);
+    raf = requestAnimationFrame(tickPlay);
+  }
+}
+function jump(i){ go(i); setPlay(true); }
+playBtn.addEventListener("click", function(){ setPlay(!playing); });
+prevBtn.addEventListener("click", function(){ jump(cur - 1); });
+nextBtn.addEventListener("click", function(){ jump(cur + 1); });
+Array.prototype.forEach.call(document.querySelectorAll("#speed button"), function(b){
+  b.addEventListener("click", function(){
+    speed = +b.getAttribute("data-s");
+    if (playing) VC.set(speed);
+    Array.prototype.forEach.call(document.querySelectorAll("#speed button"), function(x){ x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+  });
+});
+document.addEventListener("keydown", function(ev){
+  if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
+  var tg = ev.target && ev.target.tagName;
+  if (ev.key === " " && (tg === "BUTTON" || tg === "SUMMARY")) return;
+  if (ev.key === " "){ ev.preventDefault(); setPlay(!playing); }
+  else if (ev.key === "ArrowRight"){ if (cur < STAGES.length - 1) jump(cur + 1); }
+  else if (ev.key === "ArrowLeft"){ if (cur > 0) jump(cur - 1); }
+});
+/* 7: a hidden tab pauses, and resumes only if it was playing */
+var resumeOnShow = false;
+document.addEventListener("visibilitychange", function(){
+  if (document.hidden){ resumeOnShow = playing; if (playing) setPlay(false); }
+  else if (resumeOnShow){ resumeOnShow = false; setPlay(true); }
+});
+
+if (hasD3){
+  d3.timer(function(){});
+  setGraph(false, 0);
+  if (rm) settleAll();
+}
+var m = /s=(\d)/.exec(location.hash);
+go(m ? +m[1] - 1 : 0);
+setPlay(true);
+})();
+</script>
+</body>
+</html>

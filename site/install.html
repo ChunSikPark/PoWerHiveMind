@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install HiveMind</title>
+<meta name="description" content="Install PowerWorldHiveMind by asking Claude to set it up for you, or in three lines yourself.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script>
+/* dark by default; a remembered Light choice is applied before first paint */
+try { if (localStorage.getItem("pwhm-theme") === "light") document.documentElement.dataset.theme = "light"; } catch (e) {}
+</script>
+<style>
+:root{
+  --bg:#F2F5F3; --surface:#FFFFFF; --sunk:#E6ECE9; --ink:#18201D; --ink-2:#36423D; --muted:#56635E; --rule:#CBD3CF;
+  --live:#C4302B; --live-bg:#F8E3E0; --open:#2C7A4B; --open-bg:#E1F0E6;
+  --kit:#0B7A6C; --web:#9AA6A1; --eng:#A8650A;
+  --btn-a:#0B7A6C; --btn-b:#2C7A4B; --on-kit:#FFFFFF;
+  --s1:#8F8500; --s6:#7B5CD6;
+  --cond:"IBM Plex Sans Condensed","Arial Narrow",sans-serif;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#101513; --surface:#19201D; --sunk:#202825; --ink:#E2E8E5; --ink-2:#BCC6C1; --muted:#9AA6A1; --rule:#34403B;
+    --live:#F2665B; --live-bg:#3B1E1B; --open:#6CCB8E; --open-bg:#16301F;
+    --kit:#4CC3AE; --web:#5E6B66; --eng:#E3A449;
+    --btn-a:#4CC3AE; --btn-b:#6CCB8E; --on-kit:#06110E;
+    --s1:#faff69; --s6:#c7a9ff;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101513; --surface:#19201D; --sunk:#202825; --ink:#E2E8E5; --ink-2:#BCC6C1; --muted:#9AA6A1; --rule:#34403B;
+  --live:#F2665B; --live-bg:#3B1E1B; --open:#6CCB8E; --open-bg:#16301F;
+  --kit:#4CC3AE; --web:#5E6B66; --eng:#E3A449;
+  --btn-a:#4CC3AE; --btn-b:#6CCB8E; --on-kit:#06110E;
+  --s1:#faff69; --s6:#c7a9ff;
+}
+/* the tool colour follows the manual-install tab: s1 = Claude Code, s6 = Codex */
+body{--tool:var(--s1);}
+body[data-tool="codex"]{--tool:var(--s6);}
+
+*{box-sizing:border-box;}
+@media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important;}}
+html{overflow-x:hidden;}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.55 var(--sans);-webkit-font-smoothing:antialiased;}
+a{color:inherit;text-underline-offset:3px;}
+a:hover{color:var(--kit);}
+:focus-visible{outline:2px solid var(--kit);outline-offset:3px;}
+code{font:500 .9em/1.4 var(--mono);background:var(--sunk);padding:1px 6px;border-radius:3px;overflow-wrap:anywhere;}
+[hidden]{display:none !important;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
+@media (max-width:640px){.wrap{padding:0 16px;}}
+
+/* top bar, as on the site */
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 85%,transparent);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--rule);}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px 18px;padding:14px 24px;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:12px;font:600 21px/1 var(--cond);text-decoration:none;}
+.brand svg{width:38px;height:38px;flex-shrink:0;}
+.brand .h{fill:none;stroke:var(--ink);stroke-width:1.6;}
+.brand .w{stroke:var(--kit);stroke-width:1.8;fill:none;stroke-linecap:round;}
+.brand .n{fill:var(--ink);}
+.brand .c{fill:var(--live);}
+.right{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.top nav{display:flex;gap:20px;font-size:17px;flex-wrap:wrap;}
+.top nav a{text-decoration:none;color:var(--ink-2);font-weight:500;}
+.top nav a[aria-current="page"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--kit);}
+.top nav a:hover{color:var(--kit);}
+.theme{font:600 16px/1 var(--sans);padding:9px 13px;border-radius:6px;border:1.5px solid var(--rule);background:none;color:var(--ink);cursor:pointer;}
+.theme:hover{border-color:var(--ink);}
+@media (max-width:640px){.top{padding:12px 16px;}.top nav{gap:14px;font-size:16px;}.right{gap:12px;width:100%;justify-content:space-between;}}
+
+/* head */
+.head{padding:28px 0 18px;}
+h1{font:700 clamp(38px,4.8vw,58px)/1.02 var(--cond);letter-spacing:-.01em;margin:0 0 12px;}
+.lede{margin:0 0 14px;font-size:clamp(19px,1.7vw,22px);color:var(--ink-2);max-width:34em;}
+.need{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0;padding:0;list-style:none;font-size:17px;color:var(--muted);}
+.need li.it{font:600 17px/1.2 var(--sans);color:var(--ink);padding:7px 12px;border-radius:6px;background:var(--sunk);}
+
+/* the two doors */
+.doors{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;align-items:start;}
+@media (max-width:900px){.doors{grid-template-columns:1fr;}}
+.door{background:var(--surface);border:1.5px solid var(--rule);border-radius:8px;padding:22px 24px;min-width:0;}
+.door.main{border:2px solid var(--kit);}
+.door-k{display:block;font:600 16px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--kit);margin:0 0 6px;}
+.door.side .door-k{color:var(--muted);}
+.door h2{font:700 32px/1.1 var(--cond);margin:0 0 16px;}
+.door.side h2{font-size:28px;margin-bottom:10px;}
+.door.side p{margin:0 0 16px;color:var(--ink-2);}
+@media (max-width:520px){.door{padding:18px 16px;}.door h2{font-size:28px;}}
+
+.easy{list-style:none;margin:0;padding:0;display:grid;gap:22px;}
+.easy > li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 16px;}
+.easy .num{grid-column:1;grid-row:1 / span 6;}
+.easy > li > :not(.num){grid-column:2;}
+.num{width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--bg);font:700 24px/44px var(--cond);text-align:center;}
+.easy h3{font:700 25px/1.2 var(--cond);margin:6px 0 4px;}
+.easy p{margin:0;color:var(--ink-2);}
+.easy .act{margin-top:10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 22px;border-radius:10px;border:1.5px solid var(--rule);font:600 18px/1 var(--sans);text-decoration:none;cursor:pointer;background:transparent;color:var(--ink);}
+.btn:hover{border-color:var(--kit);color:var(--ink);}
+.btn.big{padding:20px 30px;font-size:21px;border:0;background-image:linear-gradient(135deg,var(--btn-a),var(--btn-b));background-color:var(--btn-a);color:var(--on-kit);}
+.btn.big:hover{color:var(--on-kit);filter:brightness(1.06);}
+.btn.big.done{background-image:none;background-color:var(--open);}
+@media (max-width:520px){.btn.big{width:100%;}}
+.note{font-size:17px;color:var(--ink-2);margin:10px 0 0 !important;padding-left:12px;border-left:3px solid var(--rule);}
+details.peek{margin-top:10px;font-size:17px;}
+details.peek summary{cursor:pointer;color:var(--ink-2);font-weight:600;}
+details.peek .cmd{margin-top:8px;}
+
+.cmd{display:flex;align-items:stretch;background:var(--sunk);border-radius:6px;min-width:0;border:1.5px solid transparent;}
+.cmd pre{margin:0;padding:11px 14px;font:500 17px/1.45 var(--mono);white-space:pre-wrap;word-break:break-word;flex:1;min-width:0;}
+.cmd button{flex-shrink:0;border:0;border-left:1.5px solid var(--rule);background:none;color:var(--ink);font:600 16px/1 var(--sans);padding:0 16px;cursor:pointer;min-width:84px;}
+.cmd button:hover{color:var(--kit);}
+.cmd.done{border-color:var(--open);}
+.cmd.done button{color:var(--open);}
+@media (max-width:520px){.cmd pre{padding:11px 12px;}.cmd button{min-width:72px;padding:0 12px;}}
+
+/* right / wrong, labelled directly */
+.verdict{display:grid;gap:8px;margin-top:8px;}
+.vd{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;align-items:baseline;padding:9px 14px;border-radius:6px;font-size:17px;}
+.vd b{font:700 16px/1 var(--mono);text-transform:uppercase;letter-spacing:.03em;padding:5px 9px;border-radius:99px;}
+.vd.ok{background:var(--open-bg);}
+.vd.ok b{background:var(--open);color:var(--bg);}
+.vd.no{background:var(--live-bg);}
+.vd.no b{background:var(--live);color:var(--bg);}
+
+/* manual install */
+.manual{margin-top:16px;background:var(--surface);border:1.5px solid var(--rule);border-radius:8px;padding:20px 24px;}
+@media (max-width:520px){.manual{padding:16px;}}
+.manual-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;margin-bottom:14px;}
+.manual-head h2{font:700 28px/1.1 var(--cond);margin:0;}
+.tabs{display:flex;border:1.5px solid var(--rule);border-radius:8px;overflow:hidden;max-width:100%;}
+.tabs button{display:flex;align-items:center;justify-content:center;gap:10px;font:600 18px/1 var(--sans);padding:13px 18px;border:0;background:var(--surface);color:var(--ink-2);cursor:pointer;}
+.tabs button+button{border-left:1.5px solid var(--rule);}
+.tabs button i{width:16px;height:16px;border-radius:4px;flex-shrink:0;}
+.tabs button[data-tool="claude"] i{background:var(--s1);}
+.tabs button[data-tool="codex"] i{background:var(--s6);}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);}
+@media (max-width:520px){.tabs{width:100%;}.tabs button{flex:1;padding:13px 8px;}}
+.msteps{list-style:none;margin:0;padding:0 0 0 18px;border-left:6px solid var(--tool);display:grid;gap:16px;}
+.msteps > li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:6px 22px;align-items:start;}
+@media (max-width:900px){.msteps > li{grid-template-columns:1fr;}}
+.msteps h3{font:700 23px/1.2 var(--cond);margin:0 0 2px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;}
+.msteps p{margin:0;font-size:17px;color:var(--ink-2);}
+.msteps .do{display:grid;gap:6px;min-width:0;}
+.tag{display:inline-flex;align-items:center;gap:7px;font:600 16px/1 var(--mono);padding:5px 9px;border-radius:99px;border:1.5px solid var(--tool);color:var(--ink);}
+.tag i{width:12px;height:12px;border-radius:3px;background:var(--tool);}
+
+/* try it */
+.try{margin:16px 0 0;padding:16px 20px;border-left:4px solid var(--kit);background:var(--surface);border-radius:0 8px 8px 0;}
+.try h2{font:700 26px/1.15 var(--cond);margin:0 0 10px;}
+.try .cmds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+@media (max-width:900px){.try .cmds{grid-template-columns:1fr;}}
+.foot{margin:18px 0 40px;font-size:17px;color:var(--muted);}
+</style>
+</head>
+<body data-tool="claude">
+<header class="topbar">
+  <div class="wrap top">
+    <a class="brand" href="./" aria-label="PowerWorldHiveMind home">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path class="h" d="M32.00 23.80 39.10 27.90 39.10 36.10 32.00 40.20 24.90 36.10 24.90 27.90Z M46.20 23.80 53.30 27.90 53.30 36.10 46.20 40.20 39.10 36.10 39.10 27.90Z M39.10 36.10 46.20 40.20 46.20 48.40 39.10 52.50 32.00 48.40 32.00 40.20Z M24.90 36.10 32.00 40.20 32.00 48.40 24.90 52.50 17.80 48.40 17.80 40.20Z M17.80 23.80 24.90 27.90 24.90 36.10 17.80 40.20 10.70 36.10 10.70 27.90Z M24.90 11.50 32.00 15.60 32.00 23.80 24.90 27.90 17.80 23.80 17.80 15.60Z M39.10 11.50 46.20 15.60 46.20 23.80 39.10 27.90 32.00 23.80 32.00 15.60Z"/><path class="w" d="M32 32L46.20 32.00 M32 32L39.10 44.30 M32 32L24.90 44.30 M32 32L17.80 32.00 M32 32L24.90 19.70 M32 32L39.10 19.70 M46.20 32.00L39.10 44.30 M24.90 44.30L17.80 32.00 M24.90 19.70L39.10 19.70"/><circle class="n" cx="46.20" cy="32.00" r="2.6"/><circle class="n" cx="39.10" cy="44.30" r="2.6"/><circle class="n" cx="24.90" cy="44.30" r="2.6"/><circle class="n" cx="17.80" cy="32.00" r="2.6"/><circle class="n" cx="24.90" cy="19.70" r="2.6"/><circle class="n" cx="39.10" cy="19.70" r="2.6"/><circle class="c" cx="32" cy="32" r="4.2"/></svg>
+      PowerWorldHiveMind
+    </a>
+    <div class="right">
+      <nav><a href="./">Home</a><a href="validation.html">Benchmark</a><a href="install.html" aria-current="page">Install</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a></nav>
+      <button type="button" class="theme" id="theme">Light</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="head">
+    <h1>Let Claude install it for you.</h1>
+    <p class="lede">PowerWorldHiveMind is a set of pages your AI assistant reads. You copy one request, and Claude does the setup.</p>
+    <ul class="need" aria-label="What you need">
+      <li>You need:</li>
+      <li class="it">Windows</li>
+      <li class="it">PowerWorld Simulator</li>
+      <li class="it">The SimAuto add-on</li>
+      <li>SimAuto is licensed separately.</li>
+    </ul>
+  </div>
+
+  <div class="doors">
+    <!-- door 1: new to AI -->
+    <section class="door main" aria-labelledby="easyH">
+      <span class="door-k">New to AI?</span>
+      <h2 id="easyH">Let Claude set it up</h2>
+      <ol class="easy">
+        <li>
+          <span class="num" aria-hidden="true">1</span>
+          <h3>Get the Claude app</h3>
+          <p>Sign in, then click <b>Code</b> at the top left. You need a paid plan, Pro or above.</p>
+          <div class="act"><a class="btn" href="https://claude.com/download">Download Claude</a></div>
+        </li>
+        <li>
+          <span class="num" aria-hidden="true">2</span>
+          <h3>Copy this, paste it, press Enter</h3>
+          <p>Click <b>Allow</b> when it asks.</p>
+          <div class="act"><button type="button" class="btn big" id="setupCopy">Copy the setup request</button></div>
+          <p class="note">First it asks if you want HiveMind in the terminal, where it works better and shows its dashboard. Then it installs or updates what HiveMind needs, asking before each install, and tells you your PowerWorld version. It never opens or changes your PowerWorld cases.</p>
+          <details class="peek">
+            <summary>Read the request first</summary>
+            <div class="cmd"><pre id="setupText">Set up PowerWorldHiveMind on this computer for me. Ask me before you install anything, and explain each step in plain words. After you install any program, call it by its full path, because this session won't see it on the PATH yet.
+
+1. First ask me one question: do I want to use HiveMind in the terminal? It works better there, because the terminal shows the HiveMind dashboard: the version, my usage limits and how full the context is. If I'm not familiar with the terminal, keep me in the Claude desktop app. That works fine too. Remember my answer.
+2. Install HiveMind: clone https://github.com/ChunSikPark/PowerWorldHiveMind into ~/.claude/skills/powerworld-hivemind. If Git is missing, install it first.
+3. Run the HiveMind setup: follow commands/powerworld-setup.md in that folder. Where it says ${CLAUDE_PLUGIN_ROOT}, use that folder. If Python is missing, don't stop: install it with "Add Python to PATH" turned on, then use the full path to python.exe. The setup installs or updates the Python packages HiveMind needs and checks that PowerWorld and the SimAuto licence work. When it offers the dashboard, use my answer from step 1 instead of asking again.
+4. Tell me what the check found, including my PowerWorld version and whether HiveMind was tested on it. Do step 5 even if the check failed.
+5. If I chose the terminal: install Claude Code with irm https://claude.ai/install.ps1 | iex, open a new PowerShell window, and start claude there by its full path. Tell me a browser will open once so I can sign in. If I chose the app: tell me to start a new conversation here so HiveMind loads.</pre><button type="button" data-copy>Copy</button></div>
+          </details>
+        </li>
+        <li>
+          <span class="num" aria-hidden="true">3</span>
+          <h3>Check it worked</h3>
+          <p>In a <b>new</b> conversation, ask this trick question:</p>
+          <div class="act" style="display:block">
+            <div class="cmd"><pre>esapp warns that the Branch field LineStatus is read-only. Can I still open a line by writing it?</pre><button type="button" data-copy>Copy</button></div>
+            <div class="verdict">
+              <div class="vd ok"><b>Right</b><span>"Yes. It's only a warning, you can still write it." HiveMind loaded.</span></div>
+              <div class="vd no"><b>Wrong</b><span>"No, it's read-only." Start a new conversation and ask again.</span></div>
+            </div>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- door 2: already uses AI -->
+    <section class="door side" aria-labelledby="selfH">
+      <span class="door-k">Already use Claude Code or Codex?</span>
+      <h2 id="selfH">Install it yourself</h2>
+      <p>Install HiveMind, run setup, check it.</p>
+      <button type="button" class="btn" id="manualBtn" aria-expanded="false" aria-controls="manual">Show the steps</button>
+    </section>
+  </div>
+
+  <section class="manual" id="manual" hidden aria-labelledby="manualH">
+    <div class="manual-head">
+      <h2 id="manualH">Install it yourself</h2>
+      <div class="tabs" role="group" aria-label="Your AI assistant">
+        <button type="button" data-tool="claude" aria-pressed="true"><i aria-hidden="true"></i>Claude Code</button>
+        <button type="button" data-tool="codex" aria-pressed="false"><i aria-hidden="true"></i>Codex</button>
+      </div>
+    </div>
+    <ol class="msteps">
+      <li>
+        <div><h3>1. Install HiveMind <span class="tag"><i aria-hidden="true"></i><span data-tool-name>Claude Code</span></span></h3>
+          <p data-tool="claude">Paste into Claude Code, then load it.</p>
+          <p data-tool="codex" hidden>Run in the terminal. Then open <code>/plugins</code>, install <b>powerworld-hivemind</b>, and start a new session. Not yet tested on a released Codex build.</p></div>
+        <div class="do">
+          <div class="cmd" data-tool="claude"><pre>Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PowerWorldHiveMind ~/.claude/skills/powerworld-hivemind</pre><button type="button" data-copy>Copy</button></div>
+          <div class="cmd" data-tool="claude"><pre>/reload-plugins</pre><button type="button" data-copy>Copy</button></div>
+          <div class="cmd" data-tool="codex" hidden><pre>codex plugin marketplace add ChunSikPark/PowerWorldHiveMind</pre><button type="button" data-copy>Copy</button></div>
+        </div>
+      </li>
+      <li>
+        <div><h3>2. Run setup <span class="tag"><i aria-hidden="true"></i><span data-tool-name>Claude Code</span></span></h3>
+          <p>Installs the Python packages and checks that PowerWorld and SimAuto can be driven from this machine.</p></div>
+        <div class="do">
+          <div class="cmd" data-tool="claude"><pre>/powerworld-hivemind:powerworld-setup</pre><button type="button" data-copy>Copy</button></div>
+          <div class="cmd" data-tool="codex" hidden><pre>Read the AGENTS.md of the powerworld-hivemind plugin. Check whether Python is installed, install the esapp and TeamOverbyeWeather packages if they are missing, then run the preflight check.</pre><button type="button" data-copy>Copy</button></div>
+        </div>
+      </li>
+      <li>
+        <div><h3>3. Check it worked</h3>
+          <p>Trick question. "Yes, it's only a warning, you can still write it" means HiveMind loaded.</p></div>
+        <div class="do">
+          <div class="cmd"><pre>esapp warns that the Branch field LineStatus is read-only. Can I still open a line by writing it?</pre><button type="button" data-copy>Copy</button></div>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="try" aria-labelledby="tryH">
+    <h2 id="tryH">Then try it on your own case</h2>
+    <div class="cmds">
+      <div class="cmd"><pre>Open my case at C:\path\to\case.pwb and summarize it.</pre><button type="button" data-copy>Copy</button></div>
+      <div class="cmd"><pre>Run an N-1 contingency analysis and show me the worst violations.</pre><button type="button" data-copy>Copy</button></div>
+      <div class="cmd"><pre>Add a 138 kV line between bus 12 and bus 40 and tell me what it does to N-1.</pre><button type="button" data-copy>Copy</button></div>
+    </div>
+  </section>
+
+  <p class="foot">Stuck? <a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/GETTING-STARTED.md">The getting-started guide</a> shows what each failure looks like and how to fix it.</p>
+</main>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("theme");
+  function paintTheme() { themeBtn.textContent = root.dataset.theme === "light" ? "Dark" : "Light"; }
+  paintTheme();
+  themeBtn.addEventListener("click", function () {
+    root.dataset.theme = root.dataset.theme === "light" ? "dark" : "light";
+    try { localStorage.setItem("pwhm-theme", root.dataset.theme); } catch (e) {}
+    paintTheme();
+  });
+
+  // manual install: open/close, remembered
+  var manual = document.getElementById("manual");
+  var manualBtn = document.getElementById("manualBtn");
+  function setManual(open) {
+    manual.hidden = !open;
+    manualBtn.setAttribute("aria-expanded", String(open));
+    manualBtn.textContent = open ? "Hide the steps" : "Show the steps";
+  }
+  manualBtn.addEventListener("click", function () {
+    var open = manual.hidden;
+    setManual(open);
+    try { localStorage.setItem("pwhm-manual", open ? "1" : "0"); } catch (e) {}
+    if (open) manual.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  });
+  try { if (localStorage.getItem("pwhm-manual") === "1") setManual(true); } catch (e) {}
+
+  // Claude Code / Codex tab inside the manual install
+  var NAMES = { claude: "Claude Code", codex: "Codex" };
+  var tabs = document.querySelectorAll('.tabs button');
+  function setTool(tool) {
+    if (!NAMES[tool]) tool = "claude";
+    document.body.dataset.tool = tool;
+    tabs.forEach(function (t) { t.setAttribute("aria-pressed", String(t.dataset.tool === tool)); });
+    document.querySelectorAll(".msteps [data-tool]").forEach(function (el) { el.hidden = el.dataset.tool !== tool; });
+    document.querySelectorAll("[data-tool-name]").forEach(function (el) { el.textContent = NAMES[tool]; });
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      setTool(t.dataset.tool);
+      try { localStorage.setItem("pwhm-tool", t.dataset.tool); } catch (e) {}
+    });
+  });
+  var saved = null;
+  try { saved = localStorage.getItem("pwhm-tool"); } catch (e) {}
+  setTool(saved || "claude");
+
+  // copy buttons
+  function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function copy(text, then) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { then(true); }, function () { then(fallbackCopy(text)); });
+    } else { then(fallbackCopy(text)); }
+  }
+  document.querySelectorAll("[data-copy]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var box = b.closest(".cmd");
+      copy(box.querySelector("pre").textContent, function (ok) {
+        b.textContent = ok ? "Copied" : "Select it";
+        box.classList.toggle("done", ok);
+        setTimeout(function () { b.textContent = "Copy"; box.classList.remove("done"); }, 1800);
+      });
+    });
+  });
+  var setupBtn = document.getElementById("setupCopy");
+  setupBtn.addEventListener("click", function () {
+    copy(document.getElementById("setupText").textContent, function (ok) {
+      setupBtn.textContent = ok ? "Copied. Now paste it into Claude" : "Open \u201cRead the request first\u201d and copy it there";
+      setupBtn.classList.toggle("done", ok);
+      setTimeout(function () { setupBtn.textContent = "Copy the setup request"; setupBtn.classList.remove("done"); }, 3000);
+    });
+  });
+})();
+</script>
+</body>
+</html>
