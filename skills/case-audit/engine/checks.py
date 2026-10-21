@@ -16,6 +16,7 @@ RULES = [
     ("base.ac_converges", "base", False, lambda cd, pww: B.ac_converges(cd)),
     ("base.dc_skeleton", "base", False, lambda cd, pww: B.dc_skeleton(cd)),
     ("base.gen_over_nameplate", "base", True, lambda cd, pww: B.gen_over_nameplate(cd)),
+    ("base.dead_bus_injection", "base", False, lambda cd, pww: B.dead_bus_injection(cd)),
     ("base.regulates_nothing", "base", False, lambda cd, pww: R.regulates_nothing(cd)),
     ("base.ltc_middle_target", "base", False, lambda cd, pww: R.ltc_middle_target(cd)),
     ("base.ltc_regulates_lv_side", "base", True, lambda cd, pww: R.ltc_regulates_lv_side(cd)),

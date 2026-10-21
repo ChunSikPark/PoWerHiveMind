@@ -1,6 +1,7 @@
 ---
 name: case-audit
 description: "Check a PowerWorld case read-only and say whether it is sane and READY for a study - base power flow, N-1 monitoring, TimeStep with weather, OPF/SCOPF - with a case summary (load, generation, headroom by fuel type, shunts, size) and every blocker named by its object keys, plus a data lint (shunt steps, unit limits, ratings, islands, names, kV). Use for 'review this case', 'scan the case', 'what's wrong with this case', 'check the case for issues', 'give me a summary of this case', 'what's in this case', 'can I run a time step / OPF / N-1 on this', 'is this case ready for X'. Never writes the case."
+topic: agents
 ---
 
 # Case audit
@@ -21,6 +22,7 @@ environment variable: in any other harness, or if you still see the literal text
 |---|---|
 | a summary, "what's in this case", "is it sane" | `base` |
 | N-1, contingencies, SCOPF monitoring | `base` (the `n1` verdict line comes with it) |
+| "is this case N-1 clean": what breaks when the outages are solved | out of scope: the audit checks N-1 monitoring and does not solve contingencies. Use the powerworld skill |
 | time step, weather, PFW, renewables over time | `base,timestep` |
 | OPF, economic dispatch | `base,opf` |
 | SCOPF | `base,opf` (the `scopf` verdict line comes with it) |

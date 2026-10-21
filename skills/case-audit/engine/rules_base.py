@@ -1,12 +1,14 @@
-"""base rules: does the AC solve, is the network real, is any unit past its rating, stale results."""
+"""base rules: does the AC solve, is the network real, is any unit past its rating, is load or generation
+stranded on a dead bus, stale results."""
 from __future__ import annotations
 
 import numpy as np
 
 from casedata import CaseData
 from findings import AC_STUDIES, BROKEN, FYI, ON_PURPOSE, STOPS, WORTH, Finding, branch_keys, bus
-from thresholds import (DC_SKELETON_MEDIAN_XR, DC_SKELETON_PARTIAL_SHARE, DC_SKELETON_SHARE, GEN_OVER_MIN_MW,
-                        GEN_OVER_STOP_MW, GEN_OVER_STOP_SHARE, TINY_R)
+from summary import _total, dead_buses, dead_injections
+from thresholds import (DC_SKELETON_MEDIAN_XR, DC_SKELETON_PARTIAL_SHARE, DC_SKELETON_SHARE, DEAD_BUS_STOP_MW,
+                        GEN_OVER_MIN_MW, GEN_OVER_STOP_MW, GEN_OVER_STOP_SHARE, TINY_R)
 
 
 def ac_converges(cd: CaseData) -> list[Finding]:
@@ -80,6 +82,50 @@ def gen_over_nameplate(cd: CaseData) -> list[Finding]:
             page="methods/applying-a-dispatch-to-a-case.md", stops=AC_STUDIES if stop else (),
             where=where, details={"over_mw": total}))
     return out
+
+
+def _multiplied(d, setpoint: str) -> str:
+    """How the load MW was reached: '1,533 MW setpoint × 1.305 zone multiplier'."""
+    if not d.multiplier_applied.any():
+        return f"{setpoint} setpoint; area and zone multipliers not read, not applied"
+    on = d[d.multiplier_applied & (d.loads > 0)]
+    pairs = set(zip(on.area_mult, on.zone_mult))
+    if len(pairs) == 1:
+        [(a, z)] = pairs
+        factors = " × ".join(f"{m:g} {name}" for m, name in ((a, "area"), (z, "zone")) if m != 1)
+        how = f"{setpoint} setpoint × {factors} multiplier" if factors else f"{setpoint} setpoint, multipliers 1"
+    else:
+        how = f"{setpoint} setpoint × each load's area and zone multipliers"
+    return how if d.multiplier_applied.all() else how + "; some multipliers not read, those loads at setpoint"
+
+
+def dead_bus_injection(cd: CaseData) -> list[Finding]:
+    """In-service load or generation on a bus outside every viable island. The solver converges on the
+    live network without it and reports nothing, so a closed status alone passes a case that dropped
+    a load. A dead bus with nothing attached is common and harmless: only counted."""
+    d = dead_injections(cd)
+    if d.empty:
+        return []
+    b = cd.get("Bus").set_index("BusNum")
+    load, setpoint, gen = _total(d.load_mw), _total(d.load_setpoint_mw), _total(d.gen_mw)
+    applied = bool(d.multiplier_applied.all())
+    stop = not (load + gen <= DEAD_BUS_STOP_MW)             # after multipliers; an unread setpoint counts as material
+    mw = lambda x: "an unread amount" if np.isnan(x) else f"{x:,.0f} MW"
+    dead = len(dead_buses(cd))
+    return [Finding(
+        "base.dead_bus_injection", STOPS if stop else WORTH, BROKEN,
+        what=f"{len(d)} disconnected bus(es) carry in-service load or generation the solution leaves out: "
+             f"{mw(load)} of load ({_multiplied(d, mw(setpoint))}) and {mw(gen)} of generation at its setpoint",
+        why=("the main island solves without them and reports no error, so every result describes a case "
+             "short of that load and generation" if stop else
+             "small enough not to move a finding, but the solution still leaves it out"),
+        page="methods/violation-network-map.md", stops=AC_STUDIES if stop else (),
+        where=[{"BusNum": bus(r.BusNum), "BusName": b.at[r.BusNum, "BusName"], "BusNomVolt": b.at[r.BusNum, "BusNomVolt"],
+                "AreaNum": b.at[r.BusNum, "AreaNum"], "load_mw": r.load_mw, "load_setpoint_mw": r.load_setpoint_mw,
+                "multiplier_applied": r.multiplier_applied, "gen_mw": r.gen_mw} for r in d.itertuples()],
+        details={"load_mw": None if np.isnan(load) else load, "gen_mw": None if np.isnan(gen) else gen,
+                 "load_setpoint_mw": None if np.isnan(setpoint) else setpoint, "multiplier_applied": applied,
+                 "dead_buses": dead, "dead_buses_with_nothing_attached": dead - len(d)})]
 
 
 def stale_ctg_results(cd: CaseData) -> list[Finding]:

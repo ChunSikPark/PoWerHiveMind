@@ -73,3 +73,33 @@ def test_the_overshoot_floor_is_the_rules_threshold(frames, monkeypatch):
     assert case_summary(case(frames))["generation_includes_overshoot_mw"] == 0
     monkeypatch.setattr(summary, "GEN_OVER_MIN_MW", 0.01)
     assert case_summary(case(frames))["generation_includes_overshoot_mw"] == pytest.approx(0.05)
+
+
+def test_load_on_disconnected_buses_is_reported_beside_the_solved_total(frames):
+    import report
+    from auditcase import add_dead_bus
+    add_dead_bus(frames, 7, load_mw=766.0, gen_mw=100.0)
+    frames["Load"].loc[frames["Load"].BusNum == 7, "LoadMW"] = 766.0     # even if LoadMW kept the setpoint
+    s = case_summary(case(frames))
+    assert s["load_mw"] == 420 and s["load_mw_dead_buses"] == 766
+    assert s["generation_mw"] == 430 and s["generation_mw_dead_buses"] == 100
+    md = report.render_md(report.build(case(frames), []))
+    assert ("| Load | 420 solved + 766 on disconnected buses, not served (setpoint; area and zone multipliers "
+            "not read) | 50 |") in md
+    assert "| Generation (online) | 430 solved + 100 on disconnected buses, not served | 20 |" in md
+
+
+def test_dead_bus_load_in_the_summary_is_after_its_multipliers(frames):
+    import report
+    from auditcase import add_dead_bus
+    add_dead_bus(frames, 7, load_mw=766.28, area_mult=1.0, zone_mult=1.305)
+    s = case_summary(case(frames))
+    assert s["load_mw_dead_buses"] == pytest.approx(1000, abs=0.1) and s["load_mw_dead_buses_multiplier_applied"]
+    assert "| Load | 420 solved + 1,000 on disconnected buses, not served | 50 |" in report.render_md(report.build(case(frames), []))
+
+
+def test_no_dead_bus_load_leaves_the_summary_rows_alone(frames):
+    import report
+    s = case_summary(case(frames))
+    assert s["load_mw_dead_buses"] == 0 and s["generation_mw_dead_buses"] == 0
+    assert "| Load | 420 | 50 |" in report.render_md(report.build(case(frames), []))

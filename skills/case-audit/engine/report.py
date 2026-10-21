@@ -59,6 +59,14 @@ def _kv(windows: list[dict]) -> str:
     return "all kV" if lo <= 0 and hi >= ALL_KV_CEILING else f"{lo:g}–{hi:g} kV"
 
 
+def _mw(solved, dead, applied=True) -> str:
+    """Solved MW, with what sits on disconnected buses beside it, so a total is never silently partial."""
+    if dead == 0:
+        return _n(solved)
+    note = "" if applied else " (setpoint; area and zone multipliers not read)"
+    return f"{_n(solved)} solved + {_n(dead)} on disconnected buses, not served{note}"
+
+
 def render_md(r: dict) -> str:
     s, L = r["case_summary"], []
     if r["source"] == "snapshot":
@@ -75,8 +83,8 @@ def render_md(r: dict) -> str:
     if s["from_unsolved_case"]:
         L += ["The AC power flow did not solve, so these are the case's stored values, not a solution.", ""]
     L += ["| | MW | Mvar |", "|---|---|---|",
-          f"| Load | {_n(s['load_mw'])} | {_n(s['load_mvar'])} |",
-          f"| Generation (online) | {_n(s['generation_mw'])} | {_n(s['generation_mvar'])} |",
+          f"| Load | {_mw(s['load_mw'], s['load_mw_dead_buses'], s['load_mw_dead_buses_multiplier_applied'])} | {_n(s['load_mvar'])} |",
+          f"| Generation (online) | {_mw(s['generation_mw'], s['generation_mw_dead_buses'])} | {_n(s['generation_mvar'])} |",
           f"| Losses | {_n(s['losses_mw'])} | |",
           f"| Headroom on online units (dispatchable) | {_n(s['headroom_dispatchable_mw'])} | |",
           f"| Online Mvar range | | {_n(s['mvar_range'][0])} to {_n(s['mvar_range'][1])} |"]

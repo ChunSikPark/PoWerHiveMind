@@ -53,6 +53,24 @@ def toy() -> dict:
             "Zone": zone, "LimitSet": limitset, "Contingency": contingency}
 
 
+def add_dead_bus(frames, n, load_mw=None, gen_mw=None, kv=230.0, area_mult=None, zone_mult=None):
+    """A bus with no branches, as PowerWorld reads it: Disconnected at 0 pu, LoadMW and GenMW 0,
+    the setpoint only in LoadSMW and GenMWSetPoint. Optionally one in-service load (with its area and
+    zone multipliers, left unread when None) and one unit."""
+    def add(obj, row):
+        frames[obj] = pd.concat([frames[obj], pd.DataFrame([row])], ignore_index=True)
+    add("Bus", {**frames["Bus"].iloc[1].to_dict(), "BusNum": n, "BusName": f"NEW{n}",
+                "BusStatus": "Disconnected", "BusPUVolt": 0.0, "BusNomVolt": kv})
+    if load_mw is not None:
+        mult = {"LoadMultiplier": area_mult, "LoadMultiplier:2": zone_mult}
+        add("Load", {"BusNum": n, "LoadID": "1", "LoadStatus": "Closed", "LoadMW": 0.0, "LoadMVR": 0.0,
+                     "LoadSMW": load_mw, **{k: v for k, v in mult.items() if v is not None}})
+    if gen_mw is not None:
+        add("Gen", {**frames["Gen"].iloc[0].to_dict(), "BusNum": n, "GenID": "N1", "GenMW": 0.0, "GenMVR": 0.0,
+                    "GenMWSetPoint": gen_mw})
+    return frames
+
+
 def case(frames=None, converged=True, **scalars) -> CaseData:
     solve = Solve(ran=True, max_mismatch_mva=0.0 if converged else 50.0, tolerance_mva=0.1)
     return CaseData(frames if frames is not None else toy(),

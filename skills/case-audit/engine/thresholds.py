@@ -20,6 +20,11 @@ GEN_OVER_MIN_MW = 0.1            # proposed default: below this an overshoot is 
 GEN_OVER_STOP_MW = 5.0           # proposed default: not measured - neither public case has a unit
 GEN_OVER_STOP_SHARE = 0.01       # proposed default: the 1 % share of GenMWMax past which an overshoot stops the study
 
+# base.dead_bus_injection  (methods/violation-network-map.md: islanded load solves with no violation)
+DEAD_BUS_STOP_MW = 10.0          # proposed default: not measured. Setpoint MW (load + generation) on dead
+                                 # buses past which the solved case no longer represents the scenario;
+                                 # below it is station service or a placeholder, the size of STUB_LIGHT_MW
+
 # LTC rules  (methods/ltc-regulation-checks.md)
 LTC_BAND_CAN_ACT_PU = 0.2        # proposed default: bands measured to act are 0.02-0.065 pu wide; a
                                  # band copied from the tap range (about 1 pu) never acts
