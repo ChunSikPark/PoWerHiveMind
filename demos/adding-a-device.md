@@ -10,10 +10,10 @@ tags: [demo, esapp, createdata, branch, n-1, worked-example]
 
 ## Abstract
 
-A complete worked run on the public synthetic Synth40 case (37 buses). **Everything below actually happened**,
-including three failed attempts that raised no error at all. This is the single most
-important demo in the kit: `CreateData` accepts a malformed call, reports success, and
-creates nothing. If you read only one demo, read this one.
+A complete worked run on the public synthetic Synth40 case (37 buses). Everything below
+happened, including three failed attempts that raised no error at all. `CreateData`
+accepts a malformed call, reports success, and creates nothing. If you read only one
+demo, read this one.
 
 ## Connections
 
@@ -25,8 +25,6 @@ creates nothing. If you read only one demo, read this one.
 ### The user's prompt
 
 > *"Add a line between bus 27 and bus 31 and tell me if it helps with N-1."*
-
-That is all a user should have to say.
 
 ### Step 1 — establish the baseline
 
@@ -61,7 +59,7 @@ base violations: 12
 
 ### Step 2 — three attempts that all "succeeded" and did nothing
 
-These are the natural things to try. Each ran without raising:
+Each of these natural attempts ran without raising:
 
 ```python
 # attempt A
@@ -91,18 +89,17 @@ The observed result of all three:
      -> branches now 89
 ```
 
-**No exception. No warning. No device.** The buses both exist, no branch 27–31 was
-already there, and the call reported success three different ways.
+None raised an exception or a warning, and none created a device. Both buses exist, no
+branch 27–31 was already there, and the call reported success three different ways.
 
-An agent that trusts the absence of an error will now happily run N-1, get the same 12
-violations, and report "adding this line does not help" — a conclusion drawn from a line
-that was never added. That is the failure mode this whole knowledge base exists to
-prevent.
+An agent that trusts the absence of an error will now run N-1, get the same 12
+violations, and report "adding this line does not help", a conclusion drawn from a line
+that was never added. This knowledge base exists to prevent that failure.
 
 ### Step 3 — stop guessing, read the page
 
-The fix is in [adding-devices-esapp](../methods/adding-devices-esapp.md), and it is not something you would arrive at by
-trying variations:
+The fix is in [adding-devices-esapp](../methods/adding-devices-esapp.md). Trying
+variations would not have found it:
 
 1. Use the **`pw.esa.CreateData(...)` method**, not a `RunScriptCommand` string.
 2. Supply **every** primary, secondary, and required field. For a `Branch` that means
@@ -143,9 +140,9 @@ expected = 1
 assert n1 - n0 == expected, "CreateData silently skipped the device"
 ```
 
-**Never skip this line.** It is the only thing standing between a silent no-op and a
-confident wrong answer. Count before, count after, assert the difference. Do it for
-every `CreateData` call, every time.
+Never skip this line. It is the only thing standing between a silent no-op and a
+confident wrong answer. Count before, count after, and assert the difference for every
+`CreateData` call.
 
 ### Step 5 — answer the actual question
 
@@ -171,10 +168,10 @@ N-1 violations WITH the new line: 10  (base case was 12)
 >
 > Pages used: `methods/adding-devices-esapp.md`, `methods/reading-violationctg.md`.
 
-Note the last two points. Say plainly that nothing was written to disk, and cite the
-pages so a wrong answer is traceable.
+Say plainly that nothing was written to disk, and cite the pages so a wrong answer is
+traceable.
 
 ### The lesson
 
-The correct call is not guessable. Three reasonable attempts failed identically and
-silently.
+Three reasonable attempts failed identically and silently. The correct call has to be
+looked up.

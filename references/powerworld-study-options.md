@@ -181,8 +181,9 @@ only when the pocket carries MW. `Contingency.LoadMW:2` is load lost to the `Min
 not to islanding — read it separately.
 
 **Building the set** — `CTG_AutoInsert_Options`: `ElementType` is `BRANCH` or `GENERATOR`, never
-`GEN` (silently ignored, V). On the Simulator 25 beta build used 2026-09-28, `CTGAutoInsert`
-inserted **zero** contingencies with no error: always count the result against lines plus
+`GEN` (silently ignored; suspected, possibly by design: glitch `2026-10-20-ctgautoinsert-gen-ignored`). On the
+Simulator 25 beta build used 2026-09-28, `CTGAutoInsert` inserted **zero** contingencies with no error (suspected,
+glitch `2026-10-20-ctgautoinsert-zero-insert`): always count the result against lines plus
 two-winding transformers.
 
 ### C. OPF
@@ -191,7 +192,7 @@ two-winding transformers.
 |---|---|---|
 | area under OPF | `Area.BGAGC = "OPF"` (values: Off AGC, Part. AGC, ED, Area Slack, IG Slack, OPF) | V 2026-09-11 |
 | super area under OPF | `SuperArea.BGAGC` — value vocabulary not in the export | S |
-| movable gens | `Gen.GenAGCAble = "YES"`; writing `GenMW` turns it off, so set it after MW writes | V |
+| movable gens | `Gen.GenAGCAble = "YES"`; writing a changed `GenMW` has been seen to turn it off (suspected, glitch `2026-10-20-genmw-write-clears-agc`), so set it after MW writes | V |
 | cost data | `Gen.GenCostModel` ≠ None with `GenCostCurvePoints > 0` or `GenMCost > 0` (a cost above 0 at today's output; see the 2026-10-01 note in `concepts/opf-preconditions.md`) — **data, never fabricated** | V |
 | run LP OPF | `InitializePrimalLP("", STOP); SolvePrimalLP("", STOP);` | V 2026-09-24 (AC, public 40-bus) |
 | DC OPF | DC mode first (`SolvePowerFlow(DC)`), then `SolvePrimalLP` | D |

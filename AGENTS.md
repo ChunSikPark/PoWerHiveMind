@@ -44,7 +44,7 @@ knew.
 
 ## How to find the page — and how much of it to read
 
-HiveMind is 68 pages — 26 in `concepts/`, 27 in `methods/`, 8 in `demos/`, 7 in
+HiveMind is 73 pages — 28 in `concepts/`, 30 in `methods/`, 8 in `demos/`, 7 in
 `references/` — and you will need three to five of them. The ladder below is about
 **finding** the right page cheaply. It is not a budget on how much of that page you read.
 
@@ -89,7 +89,7 @@ Opening one page and reading all of it is the entire point of this base.
 **When search comes back thin, [index.md](index.md) and the routing table below are
 disambiguators, not routers.** Both name topics, and a topic is coarser than a page. That
 gap is what cost them the measurement: agents read a row, picked the right *area*, then
-opened the wrong page inside it — the project page instead of the method page. Use them to
+opened the wrong page inside it. Use them to
 see what areas exist, or to choose between two candidates search already found. Do not
 start there, and do not stop at whatever page a row happens to mention.
 

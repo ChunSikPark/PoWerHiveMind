@@ -2,20 +2,19 @@
 type: tool
 domain: weather
 topic: timestep
-aliases: [grid-workshop-auto-pfw, auto-pfw, pfw-insertion-script, grid-workshop-pfw, pfw_eia,
+aliases: [auto-pfw-scripts, auto-pfw, pfw-insertion-script, pfw_eia,
   PFW_EIA.py, attach-pfw-models, missing-pfw-models]
 tags: [pfw, weather, renewables, wind, solar, timestep, aux, powerworld, tool]
 ---
 
-# Tool: Grid-Workshop `Auto_PFW` — attaching PFW weather models to renewables
+# Tool: `Auto_PFW` — attaching PFW weather models to renewables
 
 ## Abstract
 
-The research group's `OverbyeResearchGroup/Grid-Workshop` repository has an `Auto_PFW` folder
-that attaches PFW (power-flow weather) models to a case's wind and solar units, so TimeStep can
-turn weather into MW. It is where the kit's case-auditor sends you when renewables lack a PFW
-model. Read this before running it: it **silently skips wind units it cannot classify**, so
-always re-count PFW coverage on the copy it saves.
+A research group's `Auto_PFW` scripts attach PFW (power-flow weather) models to a case's wind
+and solar units, so TimeStep can turn weather into MW. They are where the kit's case-auditor
+sends you when renewables lack a PFW model. Read this before running them: they **silently skip
+wind units they cannot classify**, so always re-count PFW coverage on the copy they save.
 
 ## Connections
 

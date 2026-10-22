@@ -17,7 +17,7 @@ solve never complains about. A discrete shunt set to 40 Mvar when its blocks onl
 steps of 15. A unit online below its own minimum output. Every branch rated on A and blank on
 B and C, so an N-1 that monitors B checks nothing. The case-auditor's `lint` profile reads each
 of these straight from the case, with no solve and no write, and names every object by its key
-fields. It never stops a study; it says what is wrong, where, and whether it looks broken or
+fields. It never stops a study. It says what is wrong, where, and whether it looks broken or
 deliberate. On a synthetic planning model, measured 2026-10-10, the shunt-step rule matched an
 independent engineer's hand count exactly, scenario by scenario, across all five dispatch
 scenarios. The units-below-minimum rule found the same units the engineer did.
@@ -56,8 +56,8 @@ A discrete shunt can only sit on a whole number of steps of each block. The rule
 total the blocks can reach (each block from 0 to its step count, summed, rounded to 0.01 Mvar)
 and asks whether `SSNMVR` is within 0.01 Mvar of one of them. Two steps of 15 reach 0, 15 and
 30. A setting of 20 is *between steps*. A setting of 40 lies beyond the 30 maximum, so the rule
-reports it as *beyond its blocks* instead. Every combination counts, not just in-order switching, so the
-check errs towards fewer flags. A shunt with no blocks defined is skipped, because there is
+reports it as *beyond its blocks* instead. Every combination counts, not only in-order switching,
+so the check errs towards fewer flags. A shunt with no blocks defined is skipped, because there is
 nothing to check it against. A shunt whose blocks give more than 100,000 combinations is not
 enumerated. It is listed instead, as an FYI that says it was not checked.
 
@@ -66,21 +66,23 @@ enumerated. It is listed instead, as an FYI that says it was not checked.
 Rating A with blank B and C is common: the public Texas2k case carries it on all 2,562 of its
 rated branches. Whether that matters depends on what the N-1 reads. The rule looks at
 `LSLineRateSet:1` in the limit sets in use. If that letter is B or C and the branches lack it,
-those branches go unmonitored after an outage, and the finding is **Worth a look**, triaged Broken. If the N-1
-reads A, the blanks are data still to fill, and the finding is **FYI**, triaged Your call. A rate set the N-1 uses
-that is empty everywhere is a different, stopping rule: `mon.rate_set_empty`.
+those branches go unmonitored after an outage, and the finding is **Worth a look**, triaged Broken.
+If the N-1 reads A, the blanks are data still to fill, and the finding is **FYI**, triaged Your call.
+A rate set the N-1 uses that is empty everywhere is a different, stopping rule: `mon.rate_set_empty`.
 
 ### A field that was not read
 
 If the case did not return a field, or it reads blank on every row (a number as NaN, text as empty),
-the engine treats it as not read and its rule reports nothing. That happens with an older snapshot, or with a PowerWorld that lacks the field. The engine
-lists the rule under `rules_skipped` naming the field, and a rule whose one half could not run is
-listed as run and as not checked for that half. Silence from a rule is not a pass.
-The one exception is a switched-shunt block slot after the first: PowerWorld leaves an unused slot blank,
-so a blank slot column is data and only a slot the case did not return counts as not read; a release that
-returned blank for a slot a shunt really uses cannot be told apart by the data.
-`BusName` gets no exception: every name blank reads as a field not returned, so `lint.bus_names` is listed
-as not checked rather than flagging every bus.
+the engine treats it as not read and its rule reports nothing. That happens with an older snapshot,
+or with a PowerWorld that lacks the field. The engine lists the rule under `rules_skipped` naming
+the field. A rule whose one half could not run is listed as run and as not checked for that half.
+Silence from a rule is not a pass.
+
+The one exception is a switched-shunt block slot after the first. PowerWorld leaves an unused slot
+blank, so a blank slot column is data, and only a slot the case did not return counts as not read.
+A release that returned blank for a slot a shunt really uses cannot be told apart by the data.
+`BusName` gets no exception: every name blank reads as a field not returned, so `lint.bus_names` is
+listed as not checked instead of flagging every bus.
 
 ### Thresholds
 

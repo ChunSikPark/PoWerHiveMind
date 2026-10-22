@@ -131,8 +131,8 @@ Whether that is a defect depends on the criterion the design is judged against:
   [finding-and-fixing-radial-by-n1-pockets](finding-and-fixing-radial-by-n1-pockets.md)
   already treats such a load as consequential load loss by convention.
 
-Its outage can show **no thermal violation at all**, because the island carries no flow. So
-this is found by Check 1's connectivity and served-MW test, never by an overload screen. In
+Its outage can show **no thermal violation at all**, because the island carries no flow.
+Check 1's connectivity and served-MW test finds it; an overload screen never does. In
 the report, name the transformer, the load behind it, and the criterion you judged against.
 Under a full-delivery brief, say that duplicating the lines did not duplicate the path; under
 TPL-001 P1 alone, report it as consequential load loss, not a violation.
@@ -208,5 +208,4 @@ judgement), the device by its key fields, and the number. For example:
 > outages; the single transformer below them does not.
 
 Then say what was checked and passed, which base-case problems were excluded, and that
-nothing was edited or saved. Leave every fix to the designer. A review that rewrites the
-design has stopped being a review.
+nothing was edited or saved. Leave every fix to the designer.

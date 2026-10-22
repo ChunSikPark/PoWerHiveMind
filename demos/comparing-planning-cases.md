@@ -10,10 +10,10 @@ tags: [demo, planning, case-diff, contingency, aux, esapp, worked-example]
 
 ## Abstract
 
-Two vintages of the same system — a 2016 summer peak and a 2024 summer peak — diffed to
-find what the plan actually builds, then a contingency set generated for **only the new
-devices** and solved. Real numbers throughout: 691 new branches, 199 new generators, and
-a scoping trap that would have made the headline answer **87% wrong**.
+Two vintages of the same system, a 2016 summer peak and a 2024 summer peak, diffed to
+find what the plan builds, then a contingency set generated for **only the new devices**
+and solved. Real numbers throughout: 691 new branches, 199 new generators, and a scoping
+trap that would have made the headline answer **87% wrong**.
 
 ## Connections
 
@@ -46,17 +46,17 @@ for name, s in (("2016", a.summary()), ("2024", b.summary())):
 2024 summerpeak: 2000 buses / 3911 branches / 743 gens / load 87578 MW
 ```
 
-Load grows 67.1 GW → 87.6 GW, **+30.5%** over eight years. That framing matters: the
-build is a response to that growth, and it is the first thing to report.
+Load grows 67.1 GW → 87.6 GW, **+30.5%** over eight years. The build responds to that
+growth, so report it first.
 
 ### Step 2 — diff, but guard against false construction
 
 **A naive diff is wrong in the direction that looks right.** A renumbered bus, a
 relabelled circuit, or a swapped from/to each produce a RETIRED row *and* a matching NEW
 row. An unguarded comparison reports construction that never happened, and the output
-looks entirely plausible.
+looks plausible.
 
-So run the naive diff and the guarded one, and compare them:
+Run the naive diff and the guarded one, and compare them:
 
 ```python
 # --- buses: naive by number, then paired by (name, kV) ---
@@ -92,18 +92,17 @@ BRANCHES naive             : retired-looking 0, new-looking 691
 GENERATORS: retired 0, NEW 199
 ```
 
-**This pair is clean** — no renumbering, no swaps, nothing retired. Pure expansion: 691
-branches and 199 generators added.
+**This pair is clean.** No renumbering, no swaps, nothing retired: 691 branches and 199
+generators added.
 
-That is a finding, not a formality. Run the guarded diff *anyway*, every time. When the
-two counts agree you have earned the right to trust the number; when they disagree, the
-naive answer was fiction and you would never have known.
+Run the guarded diff every time anyway. When the two counts agree you can trust the
+number. When they disagree, the naive answer was fiction and you would never have known.
 
-Devices present in both but with changed parameters are a third category — **UPGRADED**
-— found by comparing ratings and impedances on the common keys, not by set difference.
+Devices present in both but with changed parameters are a third category, **UPGRADED**,
+found by comparing ratings and impedances on the common keys rather than by set difference.
 
 **When the two counts disagree, pair a removal with an addition on a second identity.** A key is a
-label, and labels get rewritten for reasons that have nothing to do with the device. Find an
+label, and labels get rewritten for reasons unrelated to the device. Find an
 attribute that names the *thing* rather than the *record* and that the relabelling does not touch:
 for a bus, `(BusName, BusNomVolt)`, because a renumbered substation keeps its name and its voltage.
 Pair a retired-looking record with a new-looking one only when the rest of its identity matches
@@ -116,8 +115,8 @@ Three rules keep the pairing from hiding real findings:
 2. **One addition can excuse only one removal.** Otherwise two devices that genuinely went away
    both point at one new record and both vanish from the count.
 3. **Mark both halves, or neither.** Excusing the retirement while leaving its partner in the added
-   list is worse than doing nothing: the totals now disagree with each other, and the clean-looking
-   one is the wrong one.
+   list is worse than doing nothing. The totals then disagree with each other, and the clean-looking
+   one is wrong.
 
 **Name what stayed behind.** Reserve "removed" for the strongest claim: the record is gone **and**
 so is the thing it named (neither number nor name survives). Everything weaker gets a verdict that
@@ -182,8 +181,8 @@ new branches: 691
 of which >=345 kV: 31
 ```
 
-Scope before you solve. 691 contingencies on a 2000-bus case is a long wait; the 31
-highest-voltage additions answer the question that matters first.
+Scope before you solve. 691 contingencies on a 2000-bus case is a long wait, and the 31
+highest-voltage additions answer the main question first.
 
 ```python
 sel = hv[:25]
@@ -208,8 +207,7 @@ contingencies in case before LoadAux: 3875
 after LoadAux: 3900  (added 25)
 ```
 
-**Note that first number.** The 2024 case already carried **3,875 contingencies** of its
-own. Which sets up the trap.
+The 2024 case already carried **3,875 contingencies** of its own. That sets up the trap.
 
 ### Step 4 — the trap that makes the answer 87% wrong
 
@@ -240,22 +238,21 @@ from OTHER contingencies already in the case: 208
 
 **`LoadAux` adds contingencies. It does not scope the solve.** `CTGSolveAll` solved all
 3,900, and 208 of the 240 violations belong to contingencies that were already in the
-case and have nothing to do with the plan. The honest number is **32**, not 240 — the
-naive answer overstates by 87%.
+case and have nothing to do with the plan. The honest number is **32**. The naive answer
+overstates by 87%.
 
-Two ways to get this right, and you should do both:
+Do both of these:
 
 1. **Filter results by your label prefix**, as above. Cheap, and it also documents intent.
 2. **Restrict what solves.** Set `Skip` to `YES` on the pre-existing contingencies, or
    build a case that carries only your set. This is the autoinsert-then-restrict pattern
    in [new-device-contingency-aux](../methods/new-device-contingency-aux.md).
 
-Filtering alone still *solves* 3,900 contingencies, so on a large case do the restriction
-too — for the runtime, not just the arithmetic.
+Filtering alone still *solves* 3,900 contingencies, so on a large case restrict as well,
+for the runtime.
 
-And remember PowerWorld **trims whitespace from `CTGLabel` on load**, so strip before
-matching on a prefix. A label that fails to match looks exactly like a contingency with
-no violations.
+PowerWorld **trims whitespace from `CTGLabel` on load**, so strip before matching on a
+prefix. A label that fails to match looks exactly like a contingency with no violations.
 
 ### Step 5 — rank the new devices
 
@@ -271,7 +268,7 @@ agg = (v.groupby(labs[mine])
 
 Rank on **rows and worst severity together**. A device causing one 130% violation is a
 different problem from one causing eight at 101%, and which is worse is a planning call.
-Full scoring method, including why voltage must not rank on `LimViolPct`, is in
+The full scoring method, including why voltage must not rank on `LimViolPct`, is in
 [ranking-new-devices-by-severity](../methods/ranking-new-devices-by-severity.md).
 
 ### What to report back

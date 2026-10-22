@@ -12,7 +12,7 @@ tags: [demo, powerflow, dcpf, ptdf, lodf, esapp, worked-example]
 
 Solving a case and asking the three standard sensitivity questions, on the public synthetic
 Synth40 case (37 buses). Includes the `1e8` sentinel that makes LODF results look insane, and a PTDF
-failure whose obvious recovery **also fails** — both encountered in an actual run, both
+failure whose obvious recovery **also fails**. Both came up in a real run, and both were
 recovered without asking the user.
 
 ## Connections
@@ -46,7 +46,7 @@ V 0.9749-1.0034 pu, overloads 0
 ```
 
 `overloads()`, `violations()`, `mismatch()`, `flows()`, `ptdf()`, `lodf()`, `ybus()` are
-**all methods** — call them. Referencing one without parentheses hands you a bound method
+**all methods**, so call them. Referencing one without parentheses hands you a bound method
 that fails confusingly further down.
 
 Ranking by loading:
@@ -84,9 +84,9 @@ To confirm a solve really ran DC, check that every bus sits at exactly 1.0 pu
 the same trap: call `pw.flatstart()` instead. See
 [handling-errors](../methods/handling-errors.md).
 
-**A DC solve always reports zero mismatch.** It cannot tell you generation is short — the
-slack bus absorbs the shortfall silently. Check the schedule against load directly, and
-say plainly when a result is DC.
+**A DC solve always reports zero mismatch.** It cannot tell you generation is short,
+because the slack bus absorbs the shortfall silently. Check the schedule against load
+directly, and say plainly when a result is DC.
 
 ### LODF — and the sentinel that ruins it
 
@@ -116,9 +116,8 @@ rows total 89, sentinel rows 88, real 1
 ```
 
 Only the outaged branch itself has a defined factor: it loses 100% of its own flow. On
-this small system that outage does not redistribute onto anything with a defined LODF,
-which is a finding about the topology — report it as such, not as "the calculation
-failed."
+this small system that outage does not redistribute onto anything with a defined LODF.
+Report that as a finding about the topology, not as "the calculation failed."
 
 **A result that looks absurd is your bug until proven otherwise.** Never report a
 100,000,000 anything.
@@ -169,9 +168,9 @@ OK  89 branches, 89 with real PTDF
    25 ->  26 ckt 2   PTDF +12.0331
 ```
 
-Two lessons. First, **an error's obvious fix can reproduce the same error** — check that
-the recovery actually satisfies the constraint. Second, do not ask the user about any of
-this. They wanted sensitivities, not a report on area counts.
+Two lessons. First, **an error's obvious fix can reproduce the same error**, so check that
+the recovery satisfies the constraint. Second, do not ask the user about any of this. They
+wanted sensitivities, not a report on area counts.
 
 Signatures, verified:
 
@@ -187,7 +186,7 @@ pw.ybus(dense: bool = False)                          # csr_matrix (37, 37)
 > branch is 27→29 at **80.96%** of its 67.5 MVA rating; the four parallel 19→23 circuits
 > each sit at 77.9%.
 >
-> Outaging 27→29 produces no defined LODF onto other branches — on this system that
+> Outaging 27→29 produces no defined LODF onto other branches. On this system that
 > outage does not redistribute measurably.
 >
 > The case has one area, so I computed PTDFs for a bus-to-bus transfer, bus 23 → bus 26.

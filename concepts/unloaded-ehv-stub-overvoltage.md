@@ -66,8 +66,8 @@ islanding half of this problem needs its own screen.
   the area changed nothing measurable. The nearby reactors were already at full absorption
   (`SSNMVR = SSMinMVR`), and the capacitors nearby were holding up load taps.
 - **A long tie to the biggest reactive substation.** A tie several tens of miles long to a
-  substation with a large reactor did not clear it. The new line's own charging cancelled the benefit, and that
-  reactor was already at full output. **Capability is not room.** Rank landing points by what
+  substation with a large reactor did not clear it. The new line's own charging cancelled the
+  benefit, and that reactor was already at full output. **Capability is not room.** Rank landing points by what
   they can still absorb, not by what they own.
 - **A 138 kV tie** from the stub made it worse, by up to 0.005 pu. It adds a path and nothing
   that absorbs, and it relieves none of the 345 kV charging.
@@ -105,9 +105,9 @@ limit, site absorbing capacity along with the ties.
 ### What the auditor can and cannot tell from one case
 
 The shape is structural: a radial EHV line whose far side has no absorbing room. The rise is
-dispatch-dependent. A case solved with the far-end plant running can sit comfortably in band,
-yet the same case at light load sits above it. So a clean voltage on this shape in the case
-you have does not mean the shape is safe. Check the lightest dispatch you study. Whether to
+dispatch-dependent. A case solved with the far-end plant running can sit in band while the
+same case at light load sits above it, so a clean voltage on this shape in the case you have
+does not mean the shape is safe. Check the lightest dispatch you study. Whether to
 close the stub, add a reactor or accept it is a planning choice the case cannot make for you.
 
 ### How the case-auditor finds it

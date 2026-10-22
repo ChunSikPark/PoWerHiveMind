@@ -34,8 +34,7 @@ Two windows, side by side: Simulator with your case open, and Claude. They never
 each other directly. They pass files through one folder you nominate.
 
 Claude writes a script. You copy it into the folder. Simulator notices it, runs it, deletes
-it, and writes back a log plus whatever CSVs the script asked for. Claude reads those. That
-is the whole loop.
+it, and writes back a log plus whatever CSVs the script asked for. Claude reads those.
 
 This page assumes you are the one moving the file, which is the case when Claude is somewhere
 it cannot reach that folder. If Claude is running on the same machine and can write there, it
@@ -43,10 +42,10 @@ copies its own scripts in and reads its own results, and your job shrinks to the
 recipe 1. Simulator behaves the same either way: it polls the folder and picks up whatever it
 finds.
 
-You choose the folder. Any empty one will do, on any drive you can write to — and if
-Simulator already has a transfer folder configured from an earlier session, use that one
-rather than making a second. Decide now and tell Claude the full path; it should ask rather
-than assume, and it has no way to see your filesystem layout.
+You choose the folder. Any empty one on a drive you can write to will do. If Simulator
+already has a transfer folder configured from an earlier session, use that one rather than
+making a second. Tell Claude the full path. It cannot see your filesystem, so it should ask
+rather than assume.
 
 Everything below writes `<your transfer folder>` where that path goes.
 
@@ -62,7 +61,7 @@ Do this in Simulator. Claude cannot do any of it, and will ask you to.
 sample, so yours will differ. Follow the shape of each step rather than the values.
 
 **3. Switch to Run Mode, then open the Tools tab.** The source deck specifies Run Mode here.
-Do not skip it and assume a script can switch modes for you later.
+Do not skip it on the assumption that a script can switch modes later.
 
 ![The Tools tab in the ribbon](../assets/aux-step-tools.png)
 
@@ -78,9 +77,8 @@ authoritative answer to "which folder is Simulator actually watching".
 
 Everything you need is on that one panel. Two things on it before you move on:
 
-- The heading says **"Only Active when Dialog is Open; Fields Saved in Registry"**. That is
-  the whole story on persistence: the folder and the tick survive a restart, the open dialog
-  does not.
+- The heading says **"Only Active when Dialog is Open; Fields Saved in Registry"**. The
+  folder and the tick survive a restart; the open dialog does not.
 - **"Always Delete an Invalid Input Aux File"** makes Simulator throw away a script it cannot
   parse instead of leaving it in the folder. Leave it ticked. It does not cover everything
   (see [When it goes wrong](#when-it-goes-wrong)), but it removes the most common way a run
@@ -99,9 +97,8 @@ progress there as it runs.
 
 ![The Show Log button](../assets/aux-step-showlog.png)
 
-Watch that log. The output file appears only once a run finishes, so while something is wrong
-the folder tells you nothing. The log separates two failures that otherwise look identical to
-waiting:
+The output file appears only once a run finishes, so while something is wrong the folder
+tells you nothing. The log separates two failures that otherwise look identical to waiting:
 
 - A looping run repeats the same block of lines every poll interval.
 - A failed run prints its error in full, including the cases where no output file is ever
@@ -118,9 +115,9 @@ Steps 5 and 6 are once per machine; the registry keeps them across restarts. Ste
 
 ### Recipe 2 — Prove it is alive before you trust it
 
-**Skip this if you have used the channel before and know it works.** It is here for your
-first run on a machine, where a broken script and a channel that was never running look
-exactly the same from the folder: nothing happens either way.
+**Skip this if you have used the channel before and know it works.** It is for your first
+run on a machine, where a broken script and a channel that was never running look the same
+from the folder. Nothing happens either way.
 
 Do not debug a real script against an unproven channel. Ask for the smallest possible one:
 
@@ -150,7 +147,7 @@ Within a second, two things happen:
 | `SimulatorScriptInput.aux` disappears | Simulator consumed it. The deletion is the acknowledgement |
 | `SimulatorScriptOutput.Txt` appears | The log from that run |
 
-Open it. The last line is what you are looking for:
+Open it and look at the last line:
 
 ```
 Automatic loading of file ...\SimulatorScriptInput.Aux started at 2026-09-21T14:43:01.314Z
@@ -170,13 +167,13 @@ Script dialog got closed, the checkbox is not ticked, or the folder in the dialo
 folder you copied into. Delete `SimulatorScriptInput.aux` before you retry, or it will run
 the moment you fix the setting.
 
-**Read the folder back to each other.** Nothing on the file side can tell you whether
-Simulator is watching the folder you are writing to: there is no heartbeat file and no echo
-of the setting. So when a drop goes unanswered, the first move is for whoever is at the GUI
-to read the **ScriptTransferFileDirectory** box out loud, character for character, and
-compare it to the path the script is being copied into. A trailing space, a different drive
-letter or a near-identical folder name all produce exactly the silence you are looking at,
-and the file side cannot distinguish any of them from a closed dialog.
+**Read the folder back to each other.** Nothing on the file side tells you whether
+Simulator is watching the folder you are writing to. There is no heartbeat file and no echo
+of the setting. When a drop goes unanswered, whoever is at the GUI reads the
+**ScriptTransferFileDirectory** box out loud, character for character, and compares it to
+the path the script is being copied into. A trailing space, a different drive letter or a
+near-identical folder name all produce the same silence, and the file side cannot tell any
+of them from a closed dialog.
 
 ---
 
@@ -189,8 +186,8 @@ to answer:**
 > list what devices are in it? It is read-only, it writes CSVs and changes nothing."*
 
 It should not drop anything until you reply. Your Simulator is live and your case is loaded,
-so the first file that lands runs against your session — that decision is yours, even for a
-read-only scan. If an agent scans without asking, it is not following this page.
+so the first file that lands runs against your session. That decision is yours, even for a
+read-only scan. An agent that scans without asking is not following this page.
 
 It should also not raise this **until you have said the setup is done**. Recipe 1's steps and
 this proposal belong in two separate messages: activation first, ending there, and the scan
@@ -198,9 +195,8 @@ offered only after you confirm the dialog is up. An agent that hands you the set
 script to approve in the same breath is asking you to consent to a drop on a channel that does
 not exist yet.
 
-Say yes. Until it runs, the agent knows nothing about your case: not the bus numbers, not
-whether there are transformers, not whether a contingency set already exists. One drop
-replaces all of that guessing.
+Say yes. Until it runs, the agent does not know the bus numbers, whether there are
+transformers, or whether a contingency set already exists. One drop replaces that guessing.
 
 The script it hands you writes the case summary plus one CSV per device class: buses,
 branches, substations, generators, loads, shunts, contingencies, areas, zones. The pattern
@@ -283,9 +279,8 @@ take them from the *Auxiliary File Format* manual, which has no per-object field
            [], "", [], NO, NO);
 ```
 
-The Area and Zone lines are worth a second look, because guessing here is exactly what the
-warning trap catches. Their MW totals are **`BGLoadMW` / `BGGenMW` / `BGLossMW`**, on a
-balancing-group prefix. The names you would reach for by analogy, `AreaLoadMW` and
+Guessing on the Area and Zone lines is what the warning trap catches. Their MW totals are
+**`BGLoadMW` / `BGGenMW` / `BGLossMW`**, on a balancing-group prefix. The names you would reach for by analogy, `AreaLoadMW` and
 `ZoneLoadMW`, do not exist. Asking for them produces a `Warning:`, not an error, and a CSV
 holding the key column and nothing else while the run reports success.
 
@@ -302,15 +297,8 @@ Three things to know when you read the results:
   describes the `.pwb` on disk; the CSVs describe what is loaded right now. If you changed
   something without saving, the CSVs are the truthful half.
 - **Search the log for `Warning:`.** A scan asks for many field names at once, and a wrong
-  one is only a warning:
-
-  ```
-  Warning: unknown fields will not be written to the file
-  Warning: Variable name 'AREALOADMW' is not defined for Area objects.
-  ```
-
-  That run wrote a 75-byte `SCAN_area.csv` containing the key column and nothing else, and
-  reported success. Nothing else tells you the numbers you asked for are missing.
+  one is only a warning. Nothing else tells you the numbers you asked for are missing. The
+  log lines are under [When it goes wrong](#when-it-goes-wrong).
 
 With those CSVs the agent answers follow-ups without another drop: what the voltage range is,
 how many transformers there are, which branches are most loaded, whether a contingency set
@@ -335,9 +323,8 @@ CSVs:
 | slack output | 200.63 MW | 215.83 MW |
 | worst branch loading | 68.7 % | 91.9 % |
 
-Only bus 3 moves, because it was the one leaning on bus 4's local generation. Line 1–3 goes
-from comfortable to nearly loaded. All of that came out of the CSVs; the log never contained
-it.
+Only bus 3 moves, because it was leaning on bus 4's local generation. Line 1–3 goes from
+comfortable to nearly loaded. All of that came out of the CSVs; the log never contained it.
 
 **Why the script opens branches instead of the bus.** You cannot switch a bus off by setting
 its status. That field reports whether the bus is energised; it does not control it, and
@@ -353,21 +340,19 @@ Three failure shapes, all of which look similar from your side of the folder.
 **The file sits there and nothing happens.** A setup problem: dialog closed, checkbox
 unticked, or wrong folder. Delete the file, fix the setting, drop again.
 
-How long to wait before calling it dead: **30 seconds on a small case, a couple of minutes on
-a large one.** Successful round trips here run 0.08-0.5 s on a seven-bus case, so anything
-past a few seconds is already abnormal; the extra margin is only for a case big enough that
-the solve itself is slow. If the input file has not been touched in 30 seconds, stop waiting.
-It is not slow, it is not running.
+Wait **30 seconds on a small case, a couple of minutes on a large one** before calling it
+dead. Successful round trips here run 0.08-0.5 s on a seven-bus case, so anything past a few
+seconds is already abnormal; the extra margin is only for a case big enough that the solve
+itself is slow. If the input file has not been touched in 30 seconds, it is not running.
 
 **The file sits there but files keep being written.** The script failed partway and Simulator
 is re-running it every poll interval, forever. Output timestamps advance while the input file
 stays put. Delete `SimulatorScriptInput.aux` yourself.
 
-`Always Delete an Invalid Input Aux File` in the setup panel is aimed at exactly this, and
-you should have it ticked. It is not a complete guard, though: a run was observed looping on
-2026-09-21 with a script that parsed fine and then crashed Simulator partway through, which
-is not the same thing as an invalid file. Keep a timeout on anything that drops files
-automatically.
+`Always Delete an Invalid Input Aux File` in the setup panel is aimed at this, and you should
+have it ticked. It is not a complete guard. A run was observed looping on 2026-09-21 with a
+script that parsed fine and then crashed Simulator partway through, which is not an invalid
+file. Keep a timeout on anything that drops files automatically.
 
 **Everything completed, but a column is missing from a CSV.** A bad field name is a
 `Warning:`, not an error. The column is dropped and the run still reports success. Search the
@@ -378,18 +363,18 @@ Warning: unknown fields will not be written to the file
 Warning: Variable name 'AREALOADMW' is not defined for Area objects.
 ```
 
-That run produced a 75-byte CSV with the key column and nothing else, and reported success.
+That run produced a 75-byte `SCAN_area.csv` with the key column and nothing else, and
+reported success.
 
 ### What this mode costs you
 
 - **It is not headless.** A dialog has to stay open, so nothing batches or runs in parallel.
 - **Something has to move the file.** Whoever can write to the watched folder triggers the
-  run. If Claude is running on the same machine and can write there, it drops its own scripts
-  and reads its own results, and you only supply the GUI setup. If it cannot reach the folder,
-  which is the hand-off case this mode exists for, every run waits on you.
-- **Claude never makes Simulator do anything.** It writes a file. Simulator decides, on its
-  own poll interval, to pick it up. That is the whole extent of the control it has, and it is
-  why a dropped script cannot leave your case somewhere you did not ask for.
+  run. If Claude can write there, you only supply the GUI setup. If it cannot reach the
+  folder, which is the hand-off case this mode exists for, every run waits on you.
+- **Claude never makes Simulator do anything.** It writes a file, and Simulator picks it up
+  on its own poll interval. That is all the control Claude has, so a dropped script cannot
+  leave your case somewhere you did not ask for.
 
 In exchange, every script is reviewable before it touches your case, every artifact is a file
 you can read and keep, and you end up with a script you own rather than a session that

@@ -4,7 +4,7 @@
   <img src="assets/juiced.jpg" alt="A juiced-up pixel-art agent with glowing red eyes" width="220">
 </p>
 
-<p align="center"><strong>Your agent on PowerWorldHiveMind.</strong> Version 0.5.0</p>
+<p align="center"><strong>Your agent on PowerWorldHiveMind.</strong> Version 0.5.1</p>
 
 <p align="center"><a href="https://chunsikpark.github.io/PowerWorldHiveMind/"><strong>Open the site</strong></a>: pick a topic, read only that part, and watch the knowledge graph grow.</p>
 
@@ -31,14 +31,14 @@ Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/
 
 Then run `/reload-plugins`, then `/powerworld-hivemind:powerworld-setup`. The setup installs
 the Python packages and checks that this machine can drive PowerWorld, SimAuto licence
-included. That's it.
+included.
 
 When a newer version is published, Claude tells you at the start of a session and offers to
 update. To check, the kit reads one version number from GitHub at most once a day and changes
 nothing on your machine. Set `PWHM_NO_UPDATE_CHECK=1` to turn it off. If you use Claude Code
-in a terminal, setup also offers a PWHM dashboard for your status line: the kit's version, the
-model, your usage limits and how full the context is. It asks first, and if you already have a
-status line it keeps yours and adds just the `[PWHM#<version>]` tag.
+in a terminal, setup also offers a PWHM status line showing the kit's version, the model, your
+usage limits and how full the context is. It asks first, and if you already have a status line
+it keeps yours and adds only the `[PWHM#<version>]` tag.
 
 **Check it worked:** ask what `pw.esa.SaveCase("out.pwb")` does. "Silently writes no file"
 means the kit loaded.

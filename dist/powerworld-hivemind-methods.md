@@ -14,14 +14,14 @@ tags: [esapp, powerworld, createdata, device-creation, dcopf, contingency, n-1]
 
 ## Abstract
 
-How to programmatically create buses, branches (lines/transformers) and set loads in an open
-PowerWorld case with `esapp`, then solve a DC OPF and screen N-1 — the write-side mechanics the
-read-focused [esapp-overview](esapp-overview.md) doesn't cover. Read this before writing any transmission-expansion /
-what-if code. The headline gotcha: `CreateData` **silently no-ops** unless every primary + secondary
-+ required key field is supplied, and PowerWorld truncates `LineCircuit` (and `ShuntID`) to **2 characters**. All
-symbols below were live-verified against the installed package (not guessed). For switched shunts,
-also: a stepped reactor created on a bus that already has a capacitor may not stay on automatic
-control, and `SSRegVolt` is a reading, not a setpoint; the target is `DesiredVoltage`.
+How to create buses, branches (lines/transformers) and loads in an open PowerWorld case with
+`esapp`, then solve a DC OPF and screen N-1. These are the write-side mechanics the read-focused
+[esapp-overview](esapp-overview.md) doesn't cover. Read this before writing any transmission-expansion or
+what-if code. The main gotcha: `CreateData` **silently no-ops** unless every primary, secondary
+and required key field is supplied, and PowerWorld truncates `LineCircuit` (and `ShuntID`) to **2 characters**. All
+symbols below were live-verified against the installed package. For switched shunts, a stepped
+reactor created on a bus that already has a capacitor may not stay on automatic control, and
+`SSRegVolt` is a reading; the target is `DesiredVoltage`.
 
 ## Connections
 
@@ -33,15 +33,14 @@ control, and `SSRegVolt` is a reading, not a setpoint; the target is `DesiredVol
 
 ### The write path: `pw.esa.CreateData` (not the bracket writer)
 
-For creating objects use the SAW script command `CreateData` on `pw.esa`. Wrap creation in EDIT mode:
+To create objects, use the SAW script command `CreateData` on `pw.esa`, wrapped in EDIT mode:
 
-> **Why not the bracket writer?** Through esapp 0.1.x it *rejected* read-only key/status fields
-> outright, which settled the question. On **0.2.1 it only warns and writes anyway**, so
-> `pw[GType] = df` can now create objects too (EDIT mode + `CreateIfNotFound=True` + a complete
-> key set). `CreateData` is still preferred here because it states the intent to create, fails
-> loudly on a malformed field list, and does not bury a real problem under a
-> `UserWarning: Read-only field(s)` that is usually a false alarm — see
-> [esapp](../concepts/esapp.md).
+> **Why not the bracket writer?** Through esapp 0.1.x it rejected read-only key/status fields
+> outright. On **0.2.1 it only warns and writes anyway**, so `pw[GType] = df` can now create
+> objects too (EDIT mode, `CreateIfNotFound=True` and a complete key set). `CreateData` is still
+> preferred: it states the intent to create, fails loudly on a malformed field list, and does not
+> bury a real problem under a `UserWarning: Read-only field(s)` that is usually a false alarm
+> (see [esapp](../concepts/esapp.md)).
 
 ```python
 pw.edit_mode()
@@ -72,8 +71,8 @@ pw.esa.CreateData(
 Check `GType.keys()` / `.secondary()` / `.identifiers()` (classmethods, call with `()`) to see the
 full required set for any type — see [esapp-schema-reference](../references/esapp-schema-reference.md).
 
-**Always verify the count went up.** Because failures are silent, assert `pw.n_bus` / `pw.n_branch`
-increased by the expected amount after creation and raise otherwise — never solve a partially-applied
+**Always verify the count went up.** Failures are silent, so assert `pw.n_bus` / `pw.n_branch`
+increased by the expected amount after creation and raise otherwise. Never solve a partially applied
 design:
 
 ```python
@@ -84,9 +83,9 @@ assert int(pw.n_branch) - n0 == n_expected, "CreateData silently skipped devices
 
 ### Parallel-circuit IDs: any distinct short string (mind the 2-char cap)
 
-Parallel circuits between the same bus pair just need **distinct** `LineCircuit` IDs — any short
-string works: `1`, `2`, `11`, `22`, `33`. The only trap is PowerWorld's ~2-char cap: a 3-char ID gets
-truncated, so distinct-*looking* IDs can collide — `NE1` and `NE2` both become `NE`, and the second
+Parallel circuits between the same bus pair need **distinct** `LineCircuit` IDs. Any short
+string works: `1`, `2`, `11`, `22`, `33`. The trap is PowerWorld's ~2-char cap. A 3-char ID gets
+truncated, so IDs that look distinct can collide: `NE1` and `NE2` both become `NE`, and the second
 silently no-ops. Keep circuit IDs ≤ 2 chars and distinct per pair.
 
 **The same cap applies to every 2-character ID, `ShuntID` included.** PowerWorld's field export
@@ -96,14 +95,13 @@ under the truncated ID, and the lookup that followed failed on a bank that was r
 short numeric IDs: `1`, or the next free number at that bus. The "count moved by exactly N" guard
 above caught it; nothing else did.
 
-> One research pipeline tagged its new circuits with an `N` prefix (`N1`, `N2`) **only** so its
-> own code could detect which devices were new — that prefix is a project convention, not a
-> PowerWorld requirement.
+> One research pipeline tagged its new circuits with an `N` prefix (`N1`, `N2`) only so its
+> own code could detect which devices were new. PowerWorld does not require the prefix.
 
 ### Setting a load: write `LoadSMW`
 
-`LoadSMW` is the scheduled ("pure") load value — the constant-power setpoint you specify. `LoadMW` is
-the load's actual MW **when it is connected / in service**. So to place or change a load, write
+`LoadSMW` is the scheduled ("pure") load value, the constant-power setpoint you specify. `LoadMW` is
+the load's actual MW **when it is connected / in service**. To place or change a load, write
 `LoadSMW`; read `LoadMW` for the connected value.
 
 ```python
@@ -115,9 +113,9 @@ pw.esa.CreateData("Load", ["BusNum", "LoadID", "LoadSMW", "LoadSMVR", "LoadStatu
 
 Measured 2026-09-07 on a ~10k-bus synthetic case (about a thousand existing shunts), adding about ten capacitor banks.
 
-**`ChangeParametersMultipleElement` cannot create a shunt** - it answers `Object not found` for
+**`ChangeParametersMultipleElement` cannot create a shunt.** It answers `Object not found` for
 every row, because it only modifies objects that already exist. Creation goes through the bracket
-writer, which despite this page's general advice above *does* work for `Shunt`:
+writer, which, despite the general advice above, works for `Shunt`:
 
 ```python
 from esapp.components import Shunt
@@ -127,14 +125,14 @@ pw.run_mode()
 assert len(pw.esa.GetParametersMultipleElement("Shunt", ["BusNum","ShuntID"])) - n0 == n_expected
 ```
 
-**`SSMinMVR` and `SSMaxMVR` are NOT writable.** They are *derived* from the blocks. Pass them and
+**`SSMinMVR` and `SSMaxMVR` are NOT writable.** They are derived from the blocks. Pass them and
 esapp 0.1.x raised `Cannot set read-only field(s)`; **0.2.1 only warns, sends the write, and
-PowerWorld discards it** — so on 0.2.1 you get a silent no-op instead of an error. Size the bank
+PowerWorld discards it**, so on 0.2.1 you get a silent no-op instead of an error. Size the bank
 through the block instead and read the limits back afterwards to confirm.
 
 Unlike the `Branch`/`Gen` false alarms in [esapp](../concepts/esapp.md), this one is a **true**
 read-only: PowerWorld's own `enterable` column is blank for both fields, which is why the write
-vanishes. That is the test to apply whenever you see the warning —
+vanishes. Apply this test whenever you see the warning:
 
 ```python
 fl = pw.esa.GetFieldList('shunt')
@@ -145,11 +143,11 @@ fl[fl.internal_field_name.isin(['SSMinMVR','SSMaxMVR'])][['internal_field_name',
 `enterable` blank for both; `pw[Shunt] = df` with `SSMinMVR = -999.0` raised nothing and left
 the value at `-15.0`.
 
-**The block spelling is `SSBlockMVarPerStep` - capital V, and block 0 carries NO `:0` suffix**
-(`:1` through `:9` are blocks 1-9). Same for `SSBlockNumSteps`. This is settled by esapp's own
-`Shunt.settable()`, not inferred: `SSBlockMvarPerStep:0` is tolerated on the READ side, which is
-exactly what makes the wrong spelling survive - PowerWorld accepts an unrecognised field silently,
-so a misspelled block name leaves a shunt with capacity and no block definition and no error.
+**The block spelling is `SSBlockMVarPerStep` (capital V), and block 0 carries NO `:0` suffix**
+(`:1` through `:9` are blocks 1-9). Same for `SSBlockNumSteps`. esapp's own `Shunt.settable()`
+settles this. `SSBlockMvarPerStep:0` is tolerated on the READ side, which is how the wrong spelling
+survives. PowerWorld accepts an unrecognised field silently, so a misspelled block name leaves a
+shunt with capacity, no block definition and no error.
 
 A complete, working continuous capacitor bank regulating its own bus:
 
@@ -164,18 +162,18 @@ A complete, working continuous capacitor bank regulating its own bus:
 ```
 
 `SSNMVR` seeded at 0 can diverge a stressed case by yanking reactive sources to zero as the
-solver's initial guess - see [violation-remediation](../demos/violation-remediation.md).
+solver's initial guess (see [violation-remediation](../demos/violation-remediation.md)).
 
 **Sizing: let PowerWorld measure it, do not estimate.** Install a deliberately oversized continuous
-bank, solve, and read back `SSNMVR` - the dispatched value IS the requirement. Then reinstall at
+bank, solve, and read back `SSNMVR`. The dispatched value IS the requirement. Then reinstall at
 that value (rounded up to a standard bank size) and confirm nothing rails at its own cap, which
-would mean the requirement was truncated by the probe. Required MVAr does not track depth of
-violation: on that case a bus needing +0.0335 pu took 10 MVAr while one needing +0.0277 took 50,
-because the difference is system strength at the bus, not how far it had sagged.
+would mean the probe truncated the requirement. Required MVAr does not track depth of
+violation: on that case a bus needing +0.0335 pu took 10 MVAr while one needing +0.0277 took 50.
+System strength at the bus decides it, not how far the bus had sagged.
 
 **Regulation is a deadband, not a target.** With `[SSVLow, SSVHigh] = [0.96, 1.06]`, a bank that
 lands the bus anywhere inside that band has no reason to back off, so the final dispatch depends on
-where the solve started. If you need provably-minimal dispatch, tighten the band - do not shrink
+where the solve started. If you need provably minimal dispatch, tighten the band; do not shrink
 the bank. **Disputed 2026-09-29:** a measurement on a large synthetic regional planning model found
 every continuous shunt that was neither at a limit nor at zero sitting exactly on its
 `DesiredVoltage`, which reads as steering to a target rather than holding anywhere in the band.
@@ -199,9 +197,9 @@ raised. Every other variant held `YES`:
 | discrete capacitor | yes, beside a continuous **reactor** (2026-09-30) | YES |
 
 The last row is the mirror case, measured 2026-09-30 on the same model at six sites in five
-operating conditions: a stepped capacitor added next to an existing adjustable reactor kept `YES`
-through creation, a solve and a re-assertion in every case. The refusal is specific to a stepped
-reactor joining a capacitor, not to mixing directions on one bus. A related observation, also
+operating conditions. A stepped capacitor added next to an existing adjustable reactor kept `YES`
+through creation, a solve and a re-assertion in every case. So the refusal is specific to a stepped
+reactor joining a capacitor; mixing directions on one bus is fine. A related observation, also
 suspected (2026-10-20, Simulator build 2026-09-25): a new discrete shunt whose `DesiredVoltage` is
 0 had `AutoControl` turned back to NO by the next solve, and kept YES once `DesiredVoltage` was set.
 
@@ -224,10 +222,10 @@ range, or the bank steers toward a target it can never reach.
 
 ### Transformer vs line: you MUST flag it — kV mismatch is not enough
 
-A branch whose two ends sit at different nominal kV is *physically* a transformer, but PowerWorld will
+A branch whose two ends sit at different nominal kV is physically a transformer, but PowerWorld does
 **not** infer that. `BranchDeviceType` is **read-only** ("determined by other settings"), so a plain
-`CreateData` with only line fields lands the device as a `Line` even across a 500→230 kV step — the
-exact bug that put 500/230 transformers into a case as lines. Flag it explicitly with `LineXfmr="YES"`
+`CreateData` with only line fields lands the device as a `Line` even across a 500→230 kV step. That
+bug once put 500/230 transformers into a case as lines. Flag it explicitly with `LineXfmr="YES"`
 plus the transformer nominal fields:
 
 ```python
@@ -246,7 +244,7 @@ Synth2k: agent design → 10 lines + 10 transformers; expert → 13 + 12.
 
 ### Substations
 
-Substations have **no key fields** and are **not needed for DC power flow** — don't create them for a
+Substations have **no key fields** and are **not needed for DC power flow**, so don't create them for a
 DC study. Their lat/lon is only useful for right-of-way / distance (cost) calculations.
 
 ### Solving a DC OPF and reading the objective
@@ -273,8 +271,8 @@ after a DC solve. The 1.0 pu check after the OPF is the test.
 
 `pw.overloads(threshold=100.0)` returns branches at/over `threshold` percent. The LP OPF **binds lines
 to exactly 100.000% of rating** at the economic optimum, and solver float noise then reads
-~100.000001% — a fully-loaded (not overloaded) line. Use a small tolerance so a binding constraint
-isn't misreported as a violation:
+~100.000001% on a line that is fully loaded, not overloaded. Use a small tolerance so a binding
+constraint isn't misreported as a violation:
 
 ```python
 overloaded = pw.overloads(threshold=100.1)   # >100.1% = a real overload; <=100.1% = at-limit
@@ -283,7 +281,7 @@ overloaded = pw.overloads(threshold=100.1)   # >100.1% = a real overload; <=100.
 ### N-1 on new devices — just run the contingency analysis (don't hand-roll it)
 
 PowerWorld's built-in **contingency analysis** applies each outage, re-solves, records
-violations/non-convergence, and **restores the base case automatically** — you never open or re-close
+violations/non-convergence, and **restores the base case automatically**. You never open or re-close
 anything yourself. Run it in DC by solving the base case with the DC method and setting the
 CTG method to `DC`:
 
@@ -301,13 +299,13 @@ n_diverged  = int((ctg["CTGSolved"] != "YES").sum())
 n_violating = int((ctg["CTGViol"] > 0).sum())
 ```
 
-The contingencies themselves must exist in the case first — define one per new device (open that
+The contingencies themselves must exist in the case first. Define one per new device (open that
 line/transformer), e.g. via `ContingencyBuilder`/`SimAction` (`esapp.utils`) or by auto-inserting
 N-1 branch contingencies. `CTGViol`/`CTGSolved` on the `Contingency` object give per-contingency
 violation counts and convergence; `Branch.LineMaxPercentContingency` gives the worst loading seen.
 
-For AC, solve with `pw.pflow()` (an AC method) and set the CTG method to `AC`. A manual snapshot→open→re-solve
-loop is unnecessary — it just re-implements, worse, what `CTGSolveAll` already does.
+For AC, solve with `pw.pflow()` (an AC method) and set the CTG method to `AC`. Don't write a manual
+snapshot→open→re-solve loop; it re-implements, worse, what `CTGSolveAll` already does.
 
 ### Recovering the devices a case already added (diff a modified vs base case)
 
@@ -324,7 +322,7 @@ added_buses    = set(bus_kv(modified_pw)) - set(bus_kv(base_pw))
 
 A branch whose two endpoint buses have different nominal kV is a transformer; equal kV is a line.
 
-> House rules honored: drive SimAuto via `esapp` (not raw `esa`); always keep an object's key
+> Rules followed here: drive SimAuto via `esapp` (not raw `esa`); always keep an object's key
 > field(s) on any write or it silently no-ops (see [esapp](../concepts/esapp.md)).
 
 
@@ -346,9 +344,9 @@ tags: [esapp, powerworld, simauto, dispatch, scenario, dcpf, genmw, genstatus, s
 
 How to turn a computed dispatch (a MW number per generator) into a runnable scenario case:
 write `GenMW`, switch the unused units `Open`, scale load to the scenario's level, solve DC,
-and save. The headline gotcha is **the DC solve will fake a balance rather than tell you the
-fleet is short** — it pushes the entire deficit through the slack *bus's* generators, past
-nameplate, and the resulting branch overloads look like a transmission finding while being a
+and save. The main gotcha: **the DC solve fakes a balance instead of telling you the
+fleet is short.** It pushes the entire deficit through the slack *bus's* generators, past
+nameplate, and the resulting branch overloads look like a transmission finding but are a
 pure artifact. Verify the schedule against load **before** you trust any flow. Second trap:
 esapp's `pw[Obj, field] = values` setter is **positional over the whole object table**, so a
 filtered subset writes nothing, silently. Live-verified on Synth9k/Synth8k 2031, 2026-08-18.
@@ -360,7 +358,7 @@ filtered subset writes nothing, silently. Live-verified on Synth9k/Synth8k 2031,
   [adding-devices-esapp](adding-devices-esapp.md) (same key-field discipline, and the `CreateData` silent no-op) ·
   [converting-lines-to-transformers](converting-lines-to-transformers.md) (the other place esapp's static whitelist is wrong) ·
   [case-impedance-completeness](../concepts/case-impedance-completeness.md) (**check this before promising anyone AC** — the cases
-  these scenarios are built from are DC-only skeletons) · validating the saved file
+  these scenarios are built from are DC-only skeletons) · *Verify it worked* below
   (reopen the saved `.pwb` cold; a save that "succeeded" is not evidence)
 
 ## Content
@@ -372,11 +370,11 @@ filtered subset writes nothing, silently. Live-verified on Synth9k/Synth8k 2031,
    without a license risk. The case write is a separate, dumb step.
 
 2. **Scale load to the scenario level.** Write `LoadSMW` (and `LoadSMVR` by the same factor,
-   to hold power factor — DC ignores Q, but the case stays usable later). Do **not** assume
-   every load scales: on the 2031 planning cases the few hundred buses named `*_DataCenter` /
+   to hold power factor; DC ignores Q, but the case stays usable later). Do **not** assume
+   every load scales. On the 2031 planning cases the few hundred buses named `*_DataCenter` /
    `*_LargeLoad` (about 29% of peak load) are flat 24/7 and are held fixed, so the scenario % applies
-   only to the several thousand ordinary loads. That tag lives **only in `Load.BusName`** — `Label`,
-   `CustomString*` are empty and `Interruptible` is `NO` on every record.
+   only to the several thousand ordinary loads. That tag lives **only in `Load.BusName`**: `Label`
+   and `CustomString*` are empty, and `Interruptible` is `NO` on every record.
 
 3. **Write `GenMW` and `GenStatus` together, as full-length columns.**
 
@@ -387,11 +385,11 @@ filtered subset writes nothing, silently. Live-verified on Synth9k/Synth8k 2031,
        pw[Gen, col] = s.astype(str).tolist() if s.dtype == object else s.tolist()
    ```
 
-   `GenStatus` is `"Open"` for every unit dispatched to 0 MW — that is what "take it out of
-   service for this scenario" means.
+   `GenStatus` is `"Open"` for every unit dispatched to 0 MW. That is how a unit is taken out of
+   service for this scenario.
 
 4. **Keep every generator on the slack BUS closed**, even at 0 MW, or the solve has nothing
-   to swing. Note *bus*, not unit: the slack bus hosts **about a dozen** generators on both the 8k and 9k
+   to swing. *Bus*, not unit: the slack bus hosts **about a dozen** generators on both the 8k and 9k
    planning cases, and a naive "keep the first gen at the slack bus" rule under-reports the
    swing by 10×.
 
@@ -407,19 +405,20 @@ filtered subset writes nothing, silently. Live-verified on Synth9k/Synth8k 2031,
 
 ### The trap: a DC solve fakes the balance at the slack bus
 
-**Post-solve generation always equals load. That is not evidence of anything.** If the
+**Post-solve generation always equals load, so it proves nothing.** If the
 scheduled dispatch cannot meet the load, PowerWorld closes the gap by driving the slack bus's
 generators as far past their own `GenMWMax` as it takes.
 
 Measured on `Synth8k_draft`, in a high-load, no-solar scenario, short **~31
-GW**: each of the generators at the slack bus was pushed **+2,840.8 MW over nameplate** — a
-44.5 MW unit landed at 2,885 MW — producing **hundreds of branches over 100% and a 683.4% maximum**.
+GW**: each of the generators at the slack bus was pushed **+2,840.8 MW over nameplate** (a
+44.5 MW unit landed at 2,885 MW), producing **hundreds of branches over 100% and a 683.4% maximum**.
 Those overloads are entirely an artifact of 31 GW injected at one 345 kV bus.
 
-It is **not** AGC doing this, so do not go looking there: area `AGC_AGCStatus` is `0` on all 8 zones (recorded under the nonexistent name `AGC_AGCStatus`; the area field is `Area.BGAGC`, see [opf-preconditions](../concepts/opf-preconditions.md))
-and exactly **1** of roughly 1.5k generators is `GenAGCAble`.
+It is **not** AGC doing this. Area AGC status read `0` on all 8 zones, and exactly **1** of roughly
+1.5k generators is `GenAGCAble`. (That status was recorded under the nonexistent name
+`AGC_AGCStatus`; the area field is `Area.BGAGC`, see [opf-preconditions](../concepts/opf-preconditions.md).)
 
-The check that actually works, before reading a single flow:
+The check that works, before reading a single flow:
 
 ```python
 short = abs(scheduled_gen_mw - target_load_mw) >= 1.0   # compare the SCHEDULE, not the solve
@@ -437,9 +436,9 @@ whose branch loading is fiction.
 ### The trap: the positional setter
 
 `pw[Obj, field] = values` is **positional over the entire object table**. Handing it a
-filtered subset resolves every record to NAN and writes nothing — no exception, no warning.
-Build the full-length column (edit by key into a copy of the full table) and write that. Same
-family as the `CreateData` silent no-op in [adding-devices-esapp](adding-devices-esapp.md): **assert the effect,
+filtered subset resolves every record to NAN and writes nothing, with no exception or warning.
+Build the full-length column (edit by key into a copy of the full table) and write that. As with
+the `CreateData` silent no-op in [adding-devices-esapp](adding-devices-esapp.md), **assert the effect;
 never trust the absence of an error.**
 
 ### Verify it worked
@@ -462,8 +461,9 @@ Five scenarios × two fleets, same loads (~140 GW peak, same ~40 GW fixed block)
 | Synth9k 2031 (post-swap, +thermal) | ~100 GW | **5 of 5 balance at exactly 0.0 MW** |
 | Synth8k 2031 draft (pre-swap) | ~65 GW | 3 of 5; **one scenario short ~4 GW, another short ~31 GW** |
 
-The 8k shortfalls are genuine nameplate deficits — the whole conventional fleet runs flat out
-— consistent with an earlier real-hour dispatch rebuild, larger here only because the datacenter block is held at full load while the rest scales down.
+The 8k shortfalls are genuine nameplate deficits: the whole conventional fleet runs flat out.
+That matches an earlier real-hour dispatch rebuild. The gap is larger here only because the
+datacenter block is held at full load while the rest scales down.
 
 **Both base cases are DC-only skeletons** (`LineR ≤ 1e-6` and `LineC == 0` on 97.5% / 100% of
 closed lines; median X/R **100,010** and **113,465**), so every scenario case built from them
@@ -509,8 +509,7 @@ your own work. This page is the setup handshake, the rules, and a working templa
 
 ### What this mode is for
 
-This is **PowerWorld and LLM interaction programming**: the unit of exchange between the
-agent and Simulator is a file, not a function call. The agent writes a script, you drop it
+This is **PowerWorld and LLM interaction programming**. The agent writes a script, you drop it
 in, Simulator runs it and writes back. Both sides read the same artifacts.
 
 That shape has its own advantages, independent of tooling:
@@ -519,19 +518,16 @@ That shape has its own advantages, independent of tooling:
   that you can read, diff, archive and send to someone. There is no opaque call whose
   behaviour you have to take on trust.
 - **The human is in the loop by construction.** You see every script before it runs. For work
-  that edits a case, that is a feature rather than friction.
-- **The deliverable is the script.** What the agent produces is a `.aux` you keep and re-run
+  that edits a case, that is a feature.
+- **The deliverable is the script.** The agent produces a `.aux` you keep and re-run
   yourself, not a transcript of an API session that only existed once.
 - **No code of yours touches PowerWorld.** Nothing imports a COM library, nothing holds a
   handle on Simulator, nothing can leave it in a state you did not ask for.
 
-That last point draws a boundary around PowerWorld, not around code in general.
-
 ### You still write code, it just runs on your side
 
-This mode is not "no scripting". The log is English prose and the answers are in CSVs, so
-the caller does real work to find out what happened, and an agent working this way writes and
-runs that code constantly. Four jobs:
+The log is English prose and the answers are in CSVs, so the caller does real work to find out
+what happened, and an agent working this way writes and runs that code constantly. Four jobs:
 
 - **Delivery.** Copy the file in, poll for the input file to disappear, and pull your own
   file on a timeout. A run that fails the wrong way is never cleaned up, so without a timeout
@@ -544,9 +540,6 @@ runs that code constantly. Four jobs:
 - **Validating before you drop.** Check the object types and field names against PowerWorld's
   field export, and check that every `DATA` block carries its full key, before the file goes
   in. A bad name costs a re-execution loop and a manual recovery; catching it costs a lookup.
-
-Code on your side, files across the boundary. What you give up is an automation surface into
-Simulator, not automation.
 
 Use [esapp](../concepts/esapp.md) when you want speed and automation: it returns real values,
 branches on them, runs headless and in parallel, and needs nobody to move a file between
@@ -580,21 +573,21 @@ filled in, before you write a single line of aux:
 After that, any file copied into the folder as `SimulatorScriptInput.aux` runs automatically,
 one poll interval later.
 
-Step 5 earns its place. The output file appears only once a run finishes, so for every
-failure that never finishes (an abort, a loop, a poller that is not running) the folder stays
-silent and the log is the only thing that says which one you have. A looping run shows the
-same block of lines once per poll interval.
+Step 5 matters because the output file appears only once a run finishes. For every failure that
+never finishes (an abort, a loop, a poller that is not running) the folder stays silent and the
+log is the only thing that says which one you have. A looping run shows the same block of lines
+once per poll interval.
 
-Two things here cost time when you do not know them:
+Three things here cost time when you do not know them:
 
 - **The settings persist in the registry, the dialog does not.** The panel says so itself:
   its heading reads *External Script Control (Only Active when Dialog is Open; Fields Saved
   in Registry)*. `ScriptTransferFileEnabled`, `ScriptTransferFileDirectory` and
   `ScriptInputOutputPollSec` survive a restart, so the browsing step is once per machine.
 - **Tick `Always Delete an Invalid Input Aux File` while you are in there.** It makes
-  Simulator discard a script it cannot parse rather than leaving it in the folder to be
-  retried. It is not a complete guard against the re-execution loop, since a script can parse
-  cleanly and still fail mid-run, but it removes the most common cause.
+  Simulator discard a script it cannot parse instead of leaving it in the folder to be
+  retried. A script can still parse cleanly and fail mid-run, so this does not fully guard
+  against the re-execution loop, but it removes the most common cause.
 - **Closing the dialog stops the poller while the flag still reads enabled.** The dropped
   file sits there, which looks exactly like a crash, a failed run, and a run still in
   progress. If a drop is not picked up, check the dialog before you debug the aux.
@@ -605,11 +598,11 @@ asked, **then stop and wait for an answer:**
 > *"Channel is live. I cannot see your case from here. Do you want me to scan it first and
 > list what devices are in it? It is read-only, it writes CSVs and changes nothing."*
 
-**Ask which folder. Do not pick one.** The transfer folder is the user's choice — they may
+**Ask which folder. Do not pick one.** The transfer folder is the user's choice. They may
 already have one configured from a previous session, they may want it on a particular drive,
 and on a shared or managed machine the obvious location may not be writable. Ask, and use the
-answer verbatim. `<your transfer folder>` below stands for whatever they tell you; it is a
-placeholder, not a suggestion.
+answer verbatim. `<your transfer folder>` below is a placeholder for whatever they tell you,
+not a suggestion.
 
 **Two turns, never one.**
 
@@ -625,10 +618,9 @@ writes and that it is read-only, and wait again.
 Collapsing these into one message is the most common way this goes wrong, and it reads as
 pressure to skip the setup.
 
-**Propose, then wait. Do not drop the file until they answer.** Volunteering the idea is the
-helpful part; running it unasked is not. The user is sitting in front of a live Simulator
-with their own case loaded, and a dropped script executes against it the moment it lands —
-so the first drop of a session is theirs to approve, even when it only reads.
+**Propose, then wait. Do not drop the file until they answer.** The user is sitting in front
+of a live Simulator with their own case loaded, and a dropped script executes against it the
+moment it lands, so the first drop of a session is theirs to approve, even when it only reads.
 
 Until that runs the agent knows nothing about the case: not the bus numbers, not whether
 there are transformers, not whether a contingency set already exists. Anything it proposes
@@ -721,10 +713,10 @@ its own input file on a timeout rather than wait for a signal that is not coming
 ### CaseSummaryGet describes the file, not your edits
 
 `CaseSummaryGet` with a blank first argument describes the `.pwb` file behind the current
-case rather than the case as you have edited it. The spec says "the pwb file for the current
+case, not the case as you have edited it. The spec says "the pwb file for the current
 case" and means it literally. Unsaved in-memory changes are invisible to it, so diffing two
-summaries across an unsaved edit shows no difference at all, which reads exactly like a
-change that never happened. Read the CSVs.
+summaries across an unsaved edit shows no difference, which looks exactly like a change that
+never happened. Read the CSVs.
 
 ### Template
 
@@ -890,9 +882,9 @@ Only one surviving bus moves, because it was the one leaning on the outaged bus'
 generation. The five voltage-controlled buses hold their setpoints exactly.
 
 The restore returns every bus to `Connected` with voltage magnitudes identical to six decimals.
-Angles differ in the fifth decimal and the slack by about a kilowatt: Newton–Raphson
-converging from the outaged solution rather than the loaded state. **That is solver tolerance,
-not a failed restore**, and expecting an exact match will make a correct run look broken.
+Angles differ in the fifth decimal and the slack by about a kilowatt, because Newton–Raphson
+converges from the outaged solution instead of the loaded state. **That is solver tolerance,
+not a failed restore.** Expecting an exact match will make a correct run look broken.
 
 
 ---
@@ -918,7 +910,7 @@ solve never complains about. A discrete shunt set to 40 Mvar when its blocks onl
 steps of 15. A unit online below its own minimum output. Every branch rated on A and blank on
 B and C, so an N-1 that monitors B checks nothing. The case-auditor's `lint` profile reads each
 of these straight from the case, with no solve and no write, and names every object by its key
-fields. It never stops a study; it says what is wrong, where, and whether it looks broken or
+fields. It never stops a study. It says what is wrong, where, and whether it looks broken or
 deliberate. On a synthetic planning model, measured 2026-10-10, the shunt-step rule matched an
 independent engineer's hand count exactly, scenario by scenario, across all five dispatch
 scenarios. The units-below-minimum rule found the same units the engineer did.
@@ -957,8 +949,8 @@ A discrete shunt can only sit on a whole number of steps of each block. The rule
 total the blocks can reach (each block from 0 to its step count, summed, rounded to 0.01 Mvar)
 and asks whether `SSNMVR` is within 0.01 Mvar of one of them. Two steps of 15 reach 0, 15 and
 30. A setting of 20 is *between steps*. A setting of 40 lies beyond the 30 maximum, so the rule
-reports it as *beyond its blocks* instead. Every combination counts, not just in-order switching, so the
-check errs towards fewer flags. A shunt with no blocks defined is skipped, because there is
+reports it as *beyond its blocks* instead. Every combination counts, not only in-order switching,
+so the check errs towards fewer flags. A shunt with no blocks defined is skipped, because there is
 nothing to check it against. A shunt whose blocks give more than 100,000 combinations is not
 enumerated. It is listed instead, as an FYI that says it was not checked.
 
@@ -967,21 +959,23 @@ enumerated. It is listed instead, as an FYI that says it was not checked.
 Rating A with blank B and C is common: the public Texas2k case carries it on all 2,562 of its
 rated branches. Whether that matters depends on what the N-1 reads. The rule looks at
 `LSLineRateSet:1` in the limit sets in use. If that letter is B or C and the branches lack it,
-those branches go unmonitored after an outage, and the finding is **Worth a look**, triaged Broken. If the N-1
-reads A, the blanks are data still to fill, and the finding is **FYI**, triaged Your call. A rate set the N-1 uses
-that is empty everywhere is a different, stopping rule: `mon.rate_set_empty`.
+those branches go unmonitored after an outage, and the finding is **Worth a look**, triaged Broken.
+If the N-1 reads A, the blanks are data still to fill, and the finding is **FYI**, triaged Your call.
+A rate set the N-1 uses that is empty everywhere is a different, stopping rule: `mon.rate_set_empty`.
 
 ### A field that was not read
 
 If the case did not return a field, or it reads blank on every row (a number as NaN, text as empty),
-the engine treats it as not read and its rule reports nothing. That happens with an older snapshot, or with a PowerWorld that lacks the field. The engine
-lists the rule under `rules_skipped` naming the field, and a rule whose one half could not run is
-listed as run and as not checked for that half. Silence from a rule is not a pass.
-The one exception is a switched-shunt block slot after the first: PowerWorld leaves an unused slot blank,
-so a blank slot column is data and only a slot the case did not return counts as not read; a release that
-returned blank for a slot a shunt really uses cannot be told apart by the data.
-`BusName` gets no exception: every name blank reads as a field not returned, so `lint.bus_names` is listed
-as not checked rather than flagging every bus.
+the engine treats it as not read and its rule reports nothing. That happens with an older snapshot,
+or with a PowerWorld that lacks the field. The engine lists the rule under `rules_skipped` naming
+the field. A rule whose one half could not run is listed as run and as not checked for that half.
+Silence from a rule is not a pass.
+
+The one exception is a switched-shunt block slot after the first. PowerWorld leaves an unused slot
+blank, so a blank slot column is data, and only a slot the case did not return counts as not read.
+A release that returned blank for a slot a shunt really uses cannot be told apart by the data.
+`BusName` gets no exception: every name blank reads as a field not returned, so `lint.bus_names` is
+listed as not checked instead of flagging every bus.
 
 ### Thresholds
 
@@ -1020,13 +1014,13 @@ tags: [esapp, powerworld, simauto, branch, transformer, linexfmr, editmode]
 
 How to reclassify existing `Branch` objects as transformers when a case models every branch as a
 line even where the two ends sit at different nominal kV. Two gotchas, both live-verified on
-Synth8k: **(1)** `BranchDeviceType` is derived and read-only — the real switch is `LineXFMR = "YES"`
-plus `XFNominalKV`/`XFNominalKV:1`; **(2)** esapp flags every `XF*` field read-only from its own
-**static whitelist**, which is wrong — the fields are writable in PowerWorld EDIT mode. On esapp
+Synth8k. **(1)** `BranchDeviceType` is derived and read-only; the real switch is `LineXFMR = "YES"`
+plus `XFNominalKV`/`XFNominalKV:1`. **(2)** esapp flags every `XF*` field read-only from its own
+**static whitelist**, which is wrong: the fields are writable in PowerWorld EDIT mode. On esapp
 0.2.1 that flag is only a `UserWarning` and `pw[Branch] = df` works; on 0.1.x it raised and you had
 to go around esapp via `pw.esa.ChangeParametersMultipleElement`. With `XFFixedTap = 1.0`
 and `LineC = 0`, the conversion is electrically a **no-op** (verified: max |ΔV| = 0.0 pu,
-max |ΔMW| = 0.0) — pure reclassification, R+jX untouched.
+max |ΔMW| = 0.0). It is pure reclassification, with R+jX untouched.
 
 ## Connections
 
@@ -1043,8 +1037,8 @@ with every branch typed `Line`, including the step-down connections. Symptom: `p
 returns empty and `BranchDeviceType.value_counts()` is 100% `Line`, yet many branches have
 `BusNomVolt != BusNomVolt:1`.
 
-The mismatched-nominal-kV test is the right detector — check the pairs it finds are sane step-downs
-before trusting it. On Synth8k the only pairs were 765/345, 345/138, 138/69 (about 12% of branches).
+The mismatched-nominal-kV test is the right detector. Check that the pairs it finds are sane
+step-downs before trusting it. On Synth8k the only pairs were 765/345, 345/138, 138/69 (about 12% of branches).
 
 ### The two traps
 
@@ -1052,9 +1046,9 @@ before trusting it. On Synth8k the only pairs were 765/345, 345/138, 138/69 (abo
 `YES`. Setting `LineXFMR` alone is the switch; the `XF*` fields are the transformer's parameters.
 
 **esapp's read-only list is a static whitelist, not PowerWorld truth.** It marks every `XF*`
-field read-only — `['LineXFMR', 'XFAuto', 'XFNominalKV', 'XFNominalKV:1', 'XFFixedTap',
+field read-only (`['LineXFMR', 'XFAuto', 'XFNominalKV', 'XFNominalKV:1', 'XFFixedTap',
 'XFMVABase', 'XFTapMin', 'XFTapMax', 'XFStep', 'XFTapDegree', 'XFRegMin', 'XFRegMax',
-'XFRegBus', 'XFUseLineZ', 'XFPhaseType']` — and PowerWorld disagrees. What that costs you
+'XFRegBus', 'XFUseLineZ', 'XFPhaseType']`), and PowerWorld disagrees. What that costs you
 depends on your esapp version:
 
 | esapp | `pw[Branch] = df` with `XF*` columns |
@@ -1066,8 +1060,8 @@ depends on your esapp version:
 2-row `pw[Branch] = df` carrying `LineXFMR='YES'` raised nothing and flipped
 `BranchDeviceType` from `Line` to `Transformer`.
 
-So **on 0.2.1 the bracket writer is the recipe** — just don't run under
-`-W error::UserWarning`, which turns that harmless warning back into a hard failure.
+So **on 0.2.1 the bracket writer is the recipe**. Don't run under `-W error::UserWarning`,
+which turns that harmless warning back into a hard failure.
 
 ### The recipe (esapp 0.2.1)
 
@@ -1077,7 +1071,7 @@ pw[Branch] = df                    # keys + XF* columns; warns, writes
 pw.run_mode()
 ```
 
-`df` must carry the key columns (`BusNum`, `BusNum:1`, `LineCircuit`) — the bracket read
+`df` must carry the key columns (`BusNum`, `BusNum:1`, `LineCircuit`). The bracket read
 includes them automatically, so a read-modify-write round-trip is safe. A filtered subset
 is fine: PowerWorld matches rows by key, so writing 1586 of 13523 branches touches only
 those 1586.
@@ -1101,13 +1095,13 @@ with `fields` (keys first, as always):
  "XFTapDegree", "XFRegMin", "XFRegMax"]    # 0.0, 0.51, 1.5
 ```
 
-`LineCircuit` must be a **string** (`"1"`, not `1`). `XFConfiguration` is derived — it self-populates
-to `Unknown`; don't try to set it.
+`LineCircuit` must be a **string** (`"1"`, not `1`). `XFConfiguration` is derived: it self-populates
+to `Unknown`, so don't try to set it.
 
 ### House defaults (from Synth2k_series2)
 
-Worth knowing these are not invented: all 1351 transformers in
-`Synth2k_series2_case1` share **identical** settings, so this is the series' convention:
+All 1351 transformers in `Synth2k_series2_case1` share **identical** settings, so this is the
+series' convention:
 
 | Field | Value | Meaning |
 |---|---|---|
@@ -1123,13 +1117,12 @@ Worth knowing these are not invented: all 1351 transformers in
 | `LineC` | `0.0` | transformers carry no line charging |
 
 `XFAuto=NO` + `XFTapPos=0` + `XFFixedTap=1.0` means **fixed-tap, non-regulating**. If a study needs
-these regulating voltage (e.g. reactive power planning), that is a separate setup — regulated bus
-and setpoint scheme — not covered here.
+these regulating voltage (e.g. reactive power planning), that is a separate setup (regulated bus
+and setpoint scheme) not covered here.
 
 ### Verify it was a no-op
 
-The whole point of copying `XFFixedTap = 1.0` is that the power flow should not move. Solve before
-and after and assert it:
+With `XFFixedTap = 1.0` the power flow should not move. Solve before and after and assert it:
 
 ```python
 pw.pflow(); before = pw[Branch, "LineMW"]["LineMW"]; vb = pw.voltage(complex=False)[0]
@@ -1143,25 +1136,24 @@ A branch with real line charging **may** move when reclassified, since a transfo
 treated as magnetizing susceptance rather than π-model charging. It may also not: one 2026-10-20
 run converted a single branch on a public synthetic case with its `LineC` kept, and the solution
 was identical (41.917784% loading before and after). That is one branch, measured once, so run the
-before/after assertion above rather than assuming either way. Zeroing nonzero charging is a
-modelling decision, not a cleanup; surface it rather than doing it silently.
+before/after assertion above instead of assuming either way. Zeroing nonzero charging is a
+modelling decision, not a cleanup; surface it instead of doing it silently.
 
-Then save via the aux script command, never the COM function — see [save-powerworld-case](save-powerworld-case.md):
+Then save via the aux script command, never the COM function (see [save-powerworld-case](save-powerworld-case.md)):
 
 ```python
 pw.esa.RunScriptCommand(f'SaveCase("{out}", PWB);')
 assert os.path.exists(out)
 ```
 
-Reopen the saved file and re-check `BranchDeviceType.value_counts()`; EDIT-mode writes that look fine
-in-session are worth confirming survived the round-trip.
+Reopen the saved file and re-check `BranchDeviceType.value_counts()` to confirm that EDIT-mode
+writes which looked fine in-session survived the round-trip.
 
 ### Worked application
 
-an 8,000-bus working model (reactive power planning inputs):
-13523 branches, all typed `Line`, 1586 with mismatched nominal kV and all with `LineC = 0`.
-Converted to 1586 transformers with the table above; power flow bit-identical; written to
-`..._xfmr.pwb` (a new file — the source WIP case was left untouched).
+An 8,000-bus synthetic working model: 13523 branches, all typed `Line`, 1586 with mismatched
+nominal kV and all with `LineC = 0`. Converted to 1586 transformers with the table above; power
+flow bit-identical; written to `..._xfmr.pwb` (a new file; the source WIP case was left untouched).
 
 
 ---
@@ -1218,7 +1210,7 @@ Read the stop reason before running any probe. With island handling on
 (`Sim_Solution_Options.EvalSolutionIsland` and `AllowMultIslands` = YES, Island rows on in
 `CTG_Options`), PowerWorld keeps an energized island and balances it with that island's own AGC
 units. When they cannot, it stops at **RESERVE LIMITS** and the outage reads unsolved. That is a
-power-balance limit, not a Newton failure, and probes 2–4 below do not apply.
+power-balance limit, so probes 2–4 below do not apply.
 
 The **Island Reserve Limits** row in `ViolationCTG` says where it ran out: a bus and an MW. A
 positive MW is a shortfall the island cannot cover (deficit); a negative MW is a surplus it cannot
@@ -1284,9 +1276,10 @@ solution.
 ### What the probes found (example study)
 
 Every unsolved outage in the example was a **voltage collapse in a pocket that one outage left on
-a single long tie**: none was an island, a real-power infeasibility, or a thermal overload (nothing near the collapsing pocket exceeded its rating at the last solvable step).
-Local generators near several pockets still had reactive headroom that could not reach the
-collapsing bus. The fix is structural:
+a single long tie**. None was an island, a real-power infeasibility, or a thermal overload: nothing
+near the collapsing pocket exceeded its rating at the last solvable step. Local generators near
+several pockets still had reactive headroom that could not reach the collapsing bus. The fix is
+structural:
 [finding-and-fixing-radial-by-n1-pockets](finding-and-fixing-radial-by-n1-pockets.md).
 
 ### Traps, each of which reports success
@@ -1295,14 +1288,14 @@ collapsing bus. The fix is structural:
   the example study a previous `CTGApply`'s topology survived `LoadState()`, and every later probe
   in the same process measured the previous outage's pocket (an outage far away "showed" the first
   one's collapse). A raw-COM repro (2026-10-21) restored MW and branch status, so the `CTGApply`
-  case is unreproduced; but it did **not** restore branches created or deleted in between, nor
-  impedance edits (`LineR`). So an impedance walk (probe 3) "undone" by `LoadState` is not undone.
+  case is unreproduced. But it did **not** restore branches created or deleted in between, nor
+  impedance edits (`LineR`), so an impedance walk (probe 3) "undone" by `LoadState` is not undone.
   Possibly by design. Workaround either way: run one outage per fresh
   process, or **fingerprint** before every probe (closed-branch count plus a voltage near the
   element) and stop on a mismatch. A control that only checks "the base still solves" passes this
   bug.
 - **`SetData("Sim_Solution_Options", ["DCApprox"], ["YES"])` does not make `SolvePowerFlow()`
-  solve DC.** It still runs Newton, so "DC fails" is just the AC failure again. Use
+  solve DC.** It still runs Newton, so "DC fails" is the AC failure again. Use
   `SolvePowerFlow(DC)` as a script command
   ([powerworld-study-options](../references/powerworld-study-options.md)).
 - **`DoOneIteration=YES` does not step Newton through a failure.** Each failed single step resets
@@ -1314,6 +1307,180 @@ collapsing bus. The fix is structural:
   Restore the element by hand, solve, then call it inside `try`.
 - **Labels passed through a text file on Windows carry a trailing `\r`.** PowerWorld trims it,
   so the solve is right, and every result dict keyed on the label silently misses.
+
+
+---
+
+# ==== emergency-ratings-for-a-synthetic-case.md ====
+
+---
+type: method
+domain: synthetic-grid
+topic: contingency
+aliases: [emergency-ratings-for-a-synthetic-case, rate-b-c-design, emergency-rating-design, rate-b-rate-c]
+tags: [synthetic-grid, contingency, powerworld, thermal]
+---
+
+# Method: Designing emergency ratings (Rate B / C) for a synthetic case
+
+## Abstract
+
+How to give every branch of a synthetic case its own Rate B and Rate C from a reviewer's aggregate statistics
+(mean, min, max uplift per voltage class and device type), instead of one flat ratio. Covers the class mapping,
+the per-branch draw, why % beats MVA, C >= B, and what must happen after, plus the basis behind any uplift: a planning manual's
+Rate 1–5 definitions, a published FAC-008 method, and IEEE 738 / C57.91 on catalogue ratings. Read before setting
+any emergency rating.
+
+## Connections
+
+- **Up:** [Home](../index.md)
+- **Across:** [remediating-base-case-violations](remediating-base-case-violations.md) (copy the rating
+  set when cloning a branch) · [powerworld-limitset-setdata](powerworld-limitset-setdata.md) (the limit set contingency analysis reads) ·
+  [timestep-dispatch-into-design-bands](timestep-dispatch-into-design-bands.md) (the same idea for dispatch: match a distribution, not one value)
+
+## Content
+
+### Why not one flat ratio
+
+A flat rule (for example every line B = 1.25 x A, every transformer 1.15 x A, C = B) gives every device of a type
+identical headroom. A reviewer reads that as unrealistic, and it is: post-contingency loading in % of Rate B then
+ranks branches exactly as % of Rate A does, so the emergency rating adds no information. Vary it at three levels
+instead: by voltage class, by device type, and by branch.
+
+### The basis: what each rating means, and where an uplift comes from
+
+**Definitions (a US ISO's public steady-state planning procedure manual, §4.4.1.4).** Rate 1 Normal (continuous), Rate 2 Emergency (2 h),
+Rate 3 15-Minute (after a step from 90% of normal), Rate 4 Transformer 2-Hour / Branch Conductor, Rate 5 Relay
+Loadability. "By definition, Rate 5 >= Rate 3 >= Rate 2 >= Rate 1 and Rate 4 >= Rate 2 >= Rate 1." Security studies
+default to Rate 2. A rating may not exceed its most limiting series element, so terminal equipment caps Rate 1 and
+Rate 2. In PowerWorld terms A = Rate 1 (intact case), B = Rate 2 (contingencies), C = Rate 3, hence `C >= B`. **The
+manual gives no uplift number.** Each transmission owner sets its own method under NERC FAC-008, so cite a method for
+any ratio, never the manual.
+
+**A published FAC-008 method** (one US utility, 2020 revision): bare overhead conductor at 75 °C
+normal and 100 °C for a 4-hour emergency, at 40 °C ambient; autotransformers per IEEE C57.91 at 115% for 4 h and
+125% for 30 min; generator step-ups given no emergency rating above nameplate. That is the usual source of a flat
+"lines a bit over 1.2, transformers 1.15" rule. [Certain, read at source]
+
+**IEEE 738 on the case's own conductors** (calculated 2026-10-18 for a ~9k-bus synthetic case). A synthetic
+case's line Rate A usually comes from a catalogue table. Dividing its MVA by √3·kV recovers the classic catalogue
+ampacity: 75 °C conductor, 25 °C ambient, 2 ft/s wind, full sun. An IEEE 738 steady-state run at those conditions
+reproduces the table within about 3% from 336 to 2156 kcmil. [Likely] What follows from that:
+- At the same weather, a 75 → 100 °C emergency step gives **1.22–1.24 × A** across conductor sizes. The tables give
+  the same amps per subconductor at every voltage, so one ratio fits every line class.
+- **Rate A is optimistic for a 40 °C summer peak.** The same 100 °C emergency at 40 °C ambient gives only about
+  1.07–1.13 × the catalogue A. Using that number mixes a weather correction into the uplift; keep the two apart.
+- A 125 °C emergency gives about 1.45–1.53 × A, too far without an annealing study.
+- Rate C: the IEEE 738 transient from 90% preload up to 100 °C in 15 minutes gives about 1.3–1.6 × A, rising with
+  conductor size. Terminal equipment caps it well below that, so the 15-minute rating is set by terminal gear, not
+  conductor.
+
+**Transformers.** An IEEE C57.91 thermal model (140 °C hot spot, 35–40 °C ambient, typical parameters, not a
+nameplate) gives about 1.25–1.35 for 2 h and 1.19–1.25 for 4 h. A published 1.15 for 4 h sits below that because it
+also covers bushings and other parts the model leaves out. **Do not use the ONAN → ONAF nameplate step (about 1.33)
+as an emergency factor** if Rate A is already the forced-cooled rating: it counts the same fans twice.
+Step-ups: emergency = normal under the method above, and a unit
+cannot push more than its maximum output through its step-up anyway. [Likely; the C57.91 parameters are typical
+values]
+
+**Why not run IEEE 738 per line for a planning case.** The conductor data carry no temperatures and no emergency
+column, so each line's ratio needs assumed temperatures and weather, and the answer reflects those choices more
+than the conductor. It also does nothing for transformers, about a quarter of the branches. Per-class bands drawn per
+branch (below) give the same spread with stated assumptions.
+
+### Inputs
+
+Per (voltage class, device type), from the reviewer's statistics:
+
+| field | definition |
+|---|---|
+| uplift % | `100 x (B - A) / A`, and the same for C |
+| mean uplift % | the class average; the one number the design must reproduce |
+| mean MVA uplift | `B - A` averaged over the class; used as a check only |
+| min / max | usually 0 and an extreme tail; **never use them as the band** |
+
+If the statistics carry only mean, min and max, the spread is unknown and any band width is a judgement call. Say so
+in the report.
+
+### Mapping a branch to a class
+
+- **Line:** its nominal kV.
+- **Two-winding transformer:** the high/low kV pair, with every side at or below 35 kV in one `<=35` bucket.
+  Generator step-ups land in `<kV>/<=35`. Pairs the statistics do not list go to an "other pairs" row.
+- **Three-winding transformer:** PowerWorld models each winding as a branch to a star bus at 1 kV, so classify each
+  winding by its own terminal kV. The `<=35` row is the tertiaries.
+- **A class with no statistics** (for example a voltage the reviewer's system lacks) falls back to the nearest
+  class below of the same device type. Report every fallback.
+
+Every branch must map to exactly one row. Count the unmatched before writing anything.
+
+### The rule
+
+1. Rate A is never touched.
+2. Per branch, draw `p` uniformly in `[0.5 m, 1.5 m]`, where `m` is the class mean %. Use a fixed seed so a rerun
+   writes the same ratings. `B = A x (1 + p / 100)`.
+3. Draw C the same way from its own class mean, then lift it to at least B: **`A <= B <= C` on every branch**, as
+   the rating definitions above require.
+4. Skip breakers, jumpers and zero-impedance ties, and any branch with Rate A = 0. List the skipped ones.
+5. Overwrite an existing B or C only after saving the originals (keys plus old B and C) as the undo.
+6. Read every written rating back, and assert A unchanged and `A <= B <= C`. Ratings are single precision, so the
+   tolerance is about 0.05 MVA, not 1e-6.
+
+### Why the band is 0.5x to 1.5x the mean
+
+- **Min to max is useless.** With a 0% floor and an extreme top, a uniform draw lands far above the real mean. The
+  top tail also gives a few branches a Rate B so loose they can never overload, which hides real N-1 problems.
+- **A band a few points wide is a flat ratio again.** Every device of the class gets nearly the same uplift.
+- **0.5x to 1.5x keeps the class mean on average** (a uniform draw centred on it; check the realized mean per
+  class) and gives a visible spread. If the statistics include percentiles,
+  use the 25th to 75th instead; that is measured, not chosen.
+- **Model a share at 0% only if you know the share.** A minimum of 0 says at least one device has B = A, not how many.
+
+### Why % and not MVA
+
+Emergency uplift is thermal, so it scales with device size. A fixed MVA uplift taken from someone else's fleet scales
+backwards: tiny on a large unit, huge on a small one. Use the reviewer's mean MVA uplift as a **report-only** check.
+Divide it by the mean % and you get the reviewer's implied mean Rate A; compare that with your own class mean Rate A.
+A large gap means the two populations differ in size, not that the % rule is wrong. Measured 2026-10-20 on a
+synthetic ~9k-bus case: about half the classes matched within about 15%. On the step-up classes, % gave several times
+the reviewer's MVA average, because the reviewer's class was mostly much smaller units than the synthetic case's
+step-ups.
+
+### When the statistics show mean C below mean B
+
+If every device had `C >= B`, the class mean C % could not be below the class mean B % over the same devices. A lower
+C mean therefore means a different population (blank C excluded, for example) or a C column that is not the
+15-minute rating. Do not copy it into the case. Force `C >= B` and report how many C draws were lifted.
+
+### After the ratings are written
+
+- **Contingency analysis must monitor Rate B.** Filling B changes nothing if the contingency limit set still reads A.
+  The field is `LimitSet.LSLineRateSet:1` (contingency rate set); `LimitSet.LSLineRateSet` is the normal one, and
+  no `CTG_Options` field overrides either (Simulator 25 field export). Write the **whole** `LimitSet` row, or
+  `SetData` fails on missing key fields ([powerworld-limitset-setdata](powerworld-limitset-setdata.md)). Read it back
+  comparing only the letter, since a case with named rate sets returns `B: RATE2`. Then read `Branch.LSLineRateSet:1` (read-only) to confirm what
+  each branch actually uses.
+- **Keep normal on A and contingency on B, and know what that costs.** With the two set differently, a pre-contingency
+  `Branch.LinePercent` divides by A and a post-contingency `ViolationCTG.LimViolPct` divides by B, so the two
+  percentages are not comparable. Compare in MVA, or label each percentage with its rating.
+- **Rerun the full N-1.** A per-branch draw puts some branches below the old flat ratio, so a violation list built
+  against the old limits misses rows. Re-checking only the old violations is not enough.
+- **Report the spread** per class: count, min / median / max uplift %, C draws lifted to B, and the MVA check. That
+  table is the evidence that the ratings are not unified.
+
+### Restricted statistics
+
+A reviewer's statistics may be restricted to internal review. Your % times your own Rate A gives their number back,
+so the band file stays local and out of every shared report; the report shows spread and pass/fail flags, not the
+reviewer's values. Banding and widening put a chosen distribution in the case, not their exact table. Whether that is
+far enough from the source is the data owner's call.
+
+### Upgrade path
+
+A random draw has no reason behind any one branch's value. If a reviewer asks "why 27% here and 21% there", tie
+line uplift to conductor type through the IEEE 738 transient rating (IEEE 738 §4.4.2) and transformer uplift
+to IEEE C57.91 loading. At a fixed temperature step and fixed weather the steady-state line ratio barely varies by
+conductor (1.22–1.24, basis section above); the 15-minute transient ratio does (about 1.3–1.6, rising with size).
 
 
 ---
@@ -1342,16 +1509,11 @@ The entry-point how-to for driving PowerWorld from Python with `esapp`: open a c
 ## Content
 
 **Step 1 of this reading sequence** → next: [timestep-simulation-setup](timestep-simulation-setup.md).
-What esapp *is* (the full API map): [esapp](../concepts/esapp.md). The COM server underneath:
-[powerworld-simauto](../concepts/powerworld-simauto.md).
-
-This is the "how do I actually drive a PowerWorld case from Python" entry point.
-All snippets below are verified against `C:\path\to\esapp`.
 
 ## 0. Prereqs
 
-Windows + PowerWorld Simulator installed (SimAuto is a COM server). Use the
-project venv `C:\path\to\.venv` (Python 3.13, `esapp` editable).
+Windows + PowerWorld Simulator installed (SimAuto is a COM server), and a Python environment
+with `esapp` installed (verified on Python 3.13).
 See [esapp-environment](../concepts/esapp-environment.md) for the exact environment.
 
 ## 1. Open a case
@@ -1394,13 +1556,13 @@ loads[["LoadMW", "LoadMVR"]] *= 1.10
 pw[Load] = loads                      # bulk update; must carry primary keys
 ```
 
-Bulk `pw[Type] = df` can also create new objects — but only in EDIT mode
+Bulk `pw[Type] = df` can also create new objects, but only in EDIT mode
 (`pw.edit_mode()`) with `CreateIfNotFound=True`, and the DataFrame must carry a complete
 key set. A filtered subset is fine: PowerWorld matches rows by key, so writing 3 rows
 touches 3 objects (the positional `pw[Obj, field]` form differs; see [AGENTS.md](../AGENTS.md) code rule 2).
 
 On esapp 0.1.x a read-only column made the whole write raise. **On 0.2.1 it only emits
-`UserWarning: Read-only field(s)` and the write is attempted anyway** — and that warning is
+`UserWarning: Read-only field(s)` and the write is attempted anyway.** That warning is
 more often wrong than right (112 `Branch` fields, 33 `Bus`, 5 `Gen`, 1 `Load` are enterable
 in PowerWorld but flagged read-only by esapp). Treat it as advisory, check
 `pw.esa.GetFieldList(<type>)`'s `enterable` column for the real answer, and confirm writes
@@ -1440,11 +1602,11 @@ with pw.snapshot():             # auto-saves/restores case state
 Tune the solver via descriptor attributes before solving:
 `pw.max_iterations = 30`, etc. Not `pw.dc_mode = True` or `pw.flat_start = True`: a
 scripted solve ignores both. Use `pw.pflow(method="DC")` for a DC solve and
-`pw.flatstart()` for a flat start — see [handling-errors](handling-errors.md).
+`pw.flatstart()` for a flat start (see [handling-errors](handling-errors.md)).
 
 ## Where to go next
 
-> **Note:** Older repos import `esa`; esapp is the updated, better-documented version of the same thing — write esapp. (Library choice only — unrelated to the TimeStep-vs-Transient-Stability distinction.)
+> **Note:** Older repos import `esa`; esapp is the updated, better-documented version of the same thing, so write esapp. (This is a library choice only, unrelated to the TimeStep-vs-Transient-Stability distinction.)
 
 - Run a study over time → [timestep-simulation-setup](timestep-simulation-setup.md) (then [timestep-simulation](../concepts/timestep-simulation.md))
 - Pull weather into the study → [pww-data](../concepts/pww-data.md)
@@ -1472,10 +1634,10 @@ tags: [synthetic-grid, contingency, n-1, voltage, topology, remediation, powerwo
 ## Abstract
 
 A pocket is **radial-by-N-1** when it reaches the bulk grid through two ties and one outage
-leaves it on a long, weak survivor — nothing islands, yet the pocket collapses. This page gives
+leaves it on a long, weak survivor. Nothing islands, yet the pocket collapses. This page gives
 a whole-case screen that finds them, the siting rules for the new tie (where it must land, and
 which ties look useful but do not help), and the in-memory harness that measures candidates.
-It also covers the extreme case — a **radial tree** that one outage islands outright — with a
+It also covers the extreme case, a **radial tree** that one outage islands outright, with a
 whole-grid bridge screen, tie rules per tree shape, and why shared tree-to-tree ties mostly fail.
 
 ## Connections
@@ -1498,20 +1660,20 @@ whole-grid bridge screen, tie rules per tree shape, and why shared tree-to-tree 
 Two shapes showed up, both measured 2026-09-23 on a synthetic ~9k-bus planning model:
 - **A large load tap with one real 138 kV feed.** Its "second path" is a step-down to 69 kV that
   cannot carry the load. It passes a screen for "radial at its own voltage level" because a
-  second path exists — it is just the wrong voltage.
+  second path exists, at the wrong voltage.
 - **A string of substations fed from both ends.** Any link of the string, or either end feed,
-  leaves part of the string hanging from the other end. One pocket, several failing outages —
-  site one fix, not one per outage.
+  leaves part of the string hanging from the other end. One pocket has several failing outages,
+  so site one fix, not one per outage.
 
-In both the reactance from the collapsing bus to the 345 kV+ grid rose roughly x2.5–x14 when the
-outage opened, and a capacitor could not save it: a bus heading to 0.2–0.5 pu gets a few
+In both, the reactance from the collapsing bus to the 345 kV+ grid rose roughly x2.5–x14 when the
+outage opened, and a capacitor could not save it. A bus heading to 0.2–0.5 pu gets a few
 percent of a shunt's nameplate, so a shunt is the wrong instrument here.
 
 ### Screen: find them in the whole case, linearly
 
 1. **Ground = buses on the >= 300 kV *line* network.** Not every >= 300 kV bus: a stub 345 kV bus
    (the high side of a step-up, with no 345 kV line out) can sit *inside* a pocket, and
-   grounding it makes the whole pocket look stiff. Local generator buses are not ground either —
+   grounding it makes the whole pocket look stiff. Local generator buses are not ground either:
    the units near failing pockets were at their limits during the collapse.
 2. `B` = the X-only Laplacian of closed branches over the non-ground buses; factorise once.
    `Z_kk` from `B^-1` is each bus's Thevenin reactance to the EHV grid.
@@ -1525,18 +1687,18 @@ percent of a shunt's nameplate, so a shunt is the wrong instrument here.
 5. Rank, then **AC-check the top of the list** in every dispatch (`CTGApply` + one solve).
 
 Validation, same model: the screen ranked **every** known failing outage in its top 13 of ~900
-flagged. Its first two versions missed most of them — one by grounding stub 345 kV buses, one
-by a 2.5x gate that a failing tap sat just below — so check a screen against known failures
+flagged. Its first two versions missed most of them (one by grounding stub 345 kV buses, one
+by a 2.5x gate that a failing tap sat just below), so check a screen against known failures
 before trusting its silence. The AC check of the next 40 flags found **no new divergence** and a
-short watchlist at 0.90–0.93 pu: the screen ranks margin, it does not predict failure alone.
+short watchlist at 0.90–0.93 pu. The screen ranks margin; it does not predict failure alone.
 
 ### Siting the fix
 
 - **A tie back into the pocket does not help the end-feed outage.** For a string whose only
   source sits at one end with zero reactive capability, a tie into the middle of the string
-  fixed every outage *along* the string and not the loss of the end feed; that one needed a
-  second way **out of the source's bus to a substation outside the pocket**. Two lines — one
-  mid-string, one exit at the injection — closed all of them. Giving the zero-Q unit ±0.95 pf
+  fixed every outage *along* the string but not the loss of the end feed. That one needed a
+  second way **out of the source's bus to a substation outside the pocket**. Two lines, one
+  mid-string and one exit at the injection, closed all of them. Giving the zero-Q unit ±0.95 pf
   capability alone fixed only half: a pocket with generation can still collapse when that
   generation is modelled with no reactive capability.
 - **Land on the meshed grid, never on another load pocket.** Candidate landings: a 138 kV
@@ -1549,34 +1711,34 @@ short watchlist at 0.90–0.93 pu: the screen ranks margin, it does not predict 
   7–11 substation-hops away through the network; a neighbourhood built by hop count misses it.
   Delaunay 1–3 neighbours over every substation, within a reach cap.
 - **Rate the template to clear the load**, then pick by length. A new tie's impedance decides
-  its own flow: it can carry most of the load even intact — measured up to ~94 % on one where
+  its own flow, and it can carry most of the load even intact: measured up to ~94 % on one where
   the old feed was twice as long.
 
 ### Islanding trees: the whole-grid bridge screen
 
-When one outage **islands** a pocket rather than weakening it, the screen is pure topology and needs
+When one outage **islands** a pocket instead of weakening it, the screen is pure topology and needs
 no solve:
 
 1. Build the **substation** graph from in-service inter-substation branches, keeping parallel
    circuits as separate edges so a double circuit is never a bridge. Put 3-winding star buses in the
-   substation their windings reach — they carry no substation of their own.
-2. Find the **bridges** (Tarjan, iterative — the graph is too deep for recursion). The largest
+   substation their windings reach, since they carry no substation of their own.
+2. Find the **bridges** (Tarjan, iterative; the graph is too deep for recursion). The largest
    2-edge-connected piece is the **meshed core**.
-3. Root the bridge tree at the core. Each bridge hangs a **pocket** — everything on the far side —
+3. Root the bridge tree at the core. Each bridge hangs a **pocket** (everything on the far side),
    and nested bridges along one branch group under the tree's **attachment** bridge. Tag each tree by
    the attachment bridge's kV and total the load and generation it strands (worst dispatch).
 
-Two things this screen leaves out on purpose, both better handled elsewhere: transformer-only
-islanding inside a substation (a generator step-up, a load hung on its own split bus behind one short
-line) — the second of these is a modelling convention on many synthetic cases, touches nearly every
-load, and is treated as **consequential load loss** rather than a violation (by convention here) —
-and radial 69 kV taps, which are ordinary sub-transmission design. The fix for an internal split bus
-is a second bus tie, not a line.
+This screen leaves out two things on purpose, both better handled elsewhere:
+- **Transformer-only islanding inside a substation** (a generator step-up, a load hung on its own
+  split bus behind one short line). The split-bus load is a modelling convention on many synthetic
+  cases, touches nearly every load, and is treated here by convention as **consequential load loss**
+  instead of a violation. The fix for an internal split bus is a second bus tie, not a line.
+- **Radial 69 kV taps**, which are ordinary sub-transmission design.
 
 **Check it against PowerWorld's own islanding result before trusting its silence.** Measured
 2026-09-28 on a synthetic ~9k-bus planning model: the screen listed every between-substation
 islanding outage at 138 kV and above that a full N-1 with islanding reporting found, and missed none.
-How to get that N-1 result is on [reading-violationctg](reading-violationctg.md) — the island option
+How to get that N-1 result is on [reading-violationctg](reading-violationctg.md); the island option
 alone reports nothing.
 
 **What it found there**, as shapes rather than counts: a few percent of substations sit in radial
@@ -1585,7 +1747,7 @@ trees; at 345 kV the stranded MW is almost all **generation on a single line**, 
 
 ### Siting a tie for an islanding tree
 
-The radial-pocket rules above still hold — land on the meshed core, never on another pocket, check
+The radial-pocket rules above still hold: land on the meshed core, never on another pocket, and check
 what the landing depends on. The tree shape adds four:
 
 - **A chain takes one tie, from its far end.** A tie from the dead end back to the core makes every
@@ -1593,17 +1755,17 @@ what the landing depends on. The tree shape adds four:
 - **Start at the plant only when the plant's path to the far end is weaker than the plant.** On two
   345 kV plant trees whose substations were joined by a **138 kV** line, the far-end tie pushed the
   plant through that line at **1.4–2.0x its rating** when the plant's own exit opened. Tie from the
-  plant instead — and then the far end, on the other side of the plant, needs **its own** tie.
+  plant instead, and then the far end, on the other side of the plant, needs **its own** tie.
 - **A branching tree needs a tie per branch.** A hub with two spokes and one exit cannot be closed by
   one line; the leftover spoke islands whatever else is built.
 - **Spread the landings.** Two ties from one tree into the same substation, or a new tie onto a
   substation that already feeds another tree, stacks several plants behind one station: it passes
   every single-branch outage and fails the substation outage. It also concentrates new line charging
-  where a light-load region may already sit high — see
-  [unloaded-ehv-stub-overvoltage](../concepts/unloaded-ehv-stub-overvoltage.md). Prefer a landing
+  where a light-load region may already sit high (see
+  [unloaded-ehv-stub-overvoltage](../concepts/unloaded-ehv-stub-overvoltage.md)). Prefer a landing
   that shares nothing with the tree's existing feed.
 
-A tie is a same-voltage line between two existing buses — no transformer — so the source and the
+A tie is a same-voltage line between two existing buses with no transformer, so the source and the
 landing must both already have a network bus at the tree's kV.
 
 ### Fewer lines: shared ties, and why most fail
@@ -1624,19 +1786,144 @@ five topology-chosen shared lines failed, two ways.
 Built only from lines that passed all five dispatches on their own, the shared-tie portfolio used
 about **20% fewer lines than one tie per tree for about 4% more miles**, every tree closed. The best
 shared ties join two generation trees a short distance apart whose feeds are strong. **Measure the
-portfolio's lines one at a time before believing its count** — the greedy that picks them cannot see
+portfolio's lines one at a time before believing its count.** The greedy that picks them cannot see
 flow.
 
 ### Measuring candidates in memory
 
 Build each candidate as a template same-kV line (R/X/B scaled by miles, rating copied) in the
 open case ([adding-devices-esapp](adding-devices-esapp.md)), solve N-0, apply each target outage
-the way the sweep does (`CTGApply` + one solve from the intact solution), read convergence, the
-lowest pocket voltage and the worst pocket loading, then undo and **fingerprint** (closed-branch
-count + a pocket voltage) before the next candidate — undoing a cloned transformer by opening it
-failed to restore the case once and only the fingerprint caught it. Pass = converges, pocket >=
+the way the sweep does (`CTGApply` + one solve from the intact solution), and read convergence, the
+lowest pocket voltage and the worst pocket loading. Then undo and **fingerprint** (closed-branch
+count + a pocket voltage) before the next candidate. Undoing a cloned transformer by opening it
+failed to restore the case once, and only the fingerprint caught it. Pass = converges, pocket >=
 0.90 pu, nothing over Rate A, in every dispatch. Confirm the winner with PowerWorld's own
 `CTGSolve` on the label, then a full N-1 with the new lines' own contingency records.
+
+
+---
+
+# ==== fixing-plant-islands-from-single-outages.md ====
+
+---
+type: method
+domain: synthetic-grid
+topic: contingency
+aliases: [plant-islanding-screen, islanding-screen, direct-345, resource-island-screen, single-outage-islands]
+tags: [synthetic-grid, contingency, n-1, islanding, topology, gsu, remediation, powerworld]
+---
+
+# Method: Finding and fixing plant islands from single outages
+
+## Abstract
+
+A topology screen, independent of dispatch, that finds every single outage cutting a generating plant off the
+grid, sorts the cut-off pockets into four shapes, and fixes the shapes that fail. It rests on one rule: a pocket
+with units and load stays energized and fails to balance, while a pocket with units only goes dead.
+
+## Connections
+
+- **Up:** [Home](../index.md)
+- **Across:** [diagnosing-a-non-converging-contingency](diagnosing-a-non-converging-contingency.md) (what a RESERVE LIMITS stop means) ·
+  [finding-and-fixing-radial-by-n1-pockets](finding-and-fixing-radial-by-n1-pockets.md) (the load-pocket sibling: one outage leaves a weak tie) ·
+  [removing-empty-buses](removing-empty-buses.md) (cut-offs that strand nothing) · [gsu-outages-in-n1](../concepts/gsu-outages-in-n1.md) (the step-up outages this
+  screen leaves to the generator-outage question) · [reading-violationctg](reading-violationctg.md) (`Contingency.LoadMW`, Island rows) ·
+  [lodf](../concepts/lodf.md) (the same cut test from the PTDF side) · [agc-participation-factors](../concepts/agc-participation-factors.md) (who balances the main grid)
+
+## Content
+
+### The rule the screen rests on
+
+When one outage cuts a pocket off the grid, what happens next depends on what the pocket holds:
+
+| Pocket holds | What PowerWorld does | Shows up as |
+|---|---|---|
+| units only | the pocket goes dead; the plant trips | a solved outage, no row. The main grid must cover the lost MW |
+| units and load | keeps it energized and balances it with the pocket's own units | unsolved at RESERVE LIMITS when they cannot ([diagnosing-a-non-converging-contingency](diagnosing-a-non-converging-contingency.md)) |
+| load only | drops the load | a solved outage; `Contingency.LoadMW` > 0 ([reading-violationctg](reading-violationctg.md)) |
+| nothing | nothing | nothing (an empty bus, or a 3W bank's own star and tertiary) |
+
+A units-only pocket fails only when it holds the system slack, so give the slack two paths first (see
+[gsu-outages-in-n1](../concepts/gsu-outages-in-n1.md)). Measured 2026-10-19/20 on a ~9k-bus synthetic case, five dispatches: **every pocket
+that could not balance had load on the cut-off side**, and no pocket without load failed.
+
+### The screen: topology only, every single outage
+
+1. Build the graph of closed branches. A 3W bank is three windings meeting at its star bus, and its outage opens
+   all three.
+2. For each outage, remove its element and find what is cut off from the piece that holds the slack.
+3. Label each cut-off piece by what it holds (table above). Drop a 3W bank's own dead star and tertiary before
+   counting: they are cut off by the bank's own outage and strand nothing.
+4. Keep the pieces with units ("resource islands"), and group outages that strand the same plant into one fix
+   group, keyed by the substation that connects the plant to the grid.
+5. Leave out the outage of a single step-up (GSU) feeding a single unit: that is a generator outage. A step-up
+   feeding several units is also a generator-outage question ([gsu-outages-in-n1](../concepts/gsu-outages-in-n1.md)), so list those plants apart.
+
+It needs no solve, so it runs in seconds and holds for every dispatch on the same network. Run the AC check only
+on the candidates. On the case above, roughly one single outage in sixty stranded at least one unit, and grouping
+by plant roughly halved the list.
+
+**Re-derive it once before applying fixes.** An independent rebuild from the written spec matched the original
+outage for outage (2026-10-20), and it caught three definitions that read wrong:
+- A cut-off with no unit is not automatically "pure load". Some have no load either.
+- "MW exposed" is ambiguous. The largest outage per substation counts a plant once; a sum over outages counts it
+  once per outage that strands it. Say which one.
+- "Failed" must include islanded load, not only unsolved outages. A pocket whose only unit is a battery at 0 MW
+  is pure load in that dispatch, and the outage solves while quietly dropping a few MW. Read `Contingency.LoadMW`.
+
+### The four shapes
+
+Classify each fix group by the bus between the plant's step-ups and the grid (the "middle bus": a cut-off bus that
+is not a unit terminal, star or tertiary). Shares are from the case above:
+
+| Shape | Share of groups | Failed to balance | Fix |
+|---|---|---|---|
+| A: empty 138 kV middle bus behind one 345/138 transformer | ~2 in 5 | none (the plant just trips) | Direct 345, or accept the plant trip |
+| B: the 138 kV middle bus carries load | ~1 in 5 | all of them | move the load to the GSU low side, then Direct 345 |
+| C: plant on a bus fed by one line | ~1 in 4 | about a quarter: small battery or solar plus a few MW of load | second line or tie, measured |
+| D: other shapes | ~1 in 6 | rare | its own design |
+
+### Direct 345 (shape A)
+
+Remove the empty 138 kV bus and its 345/138 transformer, and connect each plant step-up straight to the 345 kV bus:
+
+- **Move each GSU's high side** to the 345 kV bus (PowerWorld `Move`, so the record keeps its rating, tap, lock and
+  contingency element).
+- **Keep the series impedance:** new GSU impedance = GSU + removed transformer / w, where w is that GSU's share of the
+  plant's total GSU MVA. With several GSUs, the added parts in parallel sum back to exactly the removed transformer.
+  For a 3W bank, add its high and 138 kV windings and ignore an idle tertiary.
+- **Keep the GSU tap.** Do not multiply it by the removed transformer's tap. That tap was mostly an LTC position
+  holding the removed bus, and the two transformers face opposite ways, so the product is not the series ratio.
+- **Regulation:** units that held the removed bus now hold the 345 kV bus at the case's 345 kV setpoint rule. If
+  another plant already holds that bus at a different setpoint, keep that setpoint: two regulators on one bus must
+  agree.
+- **Contingencies:** delete the removed transformer's outage and relabel the moved GSUs' outages to their new ends.
+
+Measured on the case above, at the 345 kV setpoint rule: the largest base-case voltage rise was about 0.02 pu, no
+bus went above 1.05 pu, and every Direct 345 group passed in all five dispatches.
+
+### Middle bus with load (shape B)
+
+Here the 138 kV middle bus holds the step-ups, one small load and the 345/138 transformer, and nothing else. Move
+the load to the low-voltage side of the largest unit's GSU (same MW, Mvar, ID, status and zone), then apply Direct
+345. The transformer outage that islanded the pocket no longer exists. Each moved GSU's outage now trips a unit and
+its load together, which solves. **Moving load needs the case owner's go-ahead.**
+
+Checked on the case above (2026-10-20): total load unchanged to 0.000 MW, every outage within two substation hops
+of a change solved before and after, and no new or worse violation in any dispatch.
+
+### Line-fed and other shapes (C, D)
+
+Measure options rather than reasoning about them: a second transformer, a tie line to a nearby substation, a second
+circuit, a second jumper. **Pass** means the group's outage solves in every dispatch and nothing new appears: no new
+or worse violation, no newly unsolved outage, nothing new in the base case. On the case above, about nine options in
+ten passed in all five dispatches. Accept a plant-only trip as a generator loss; it is not an islanding defect.
+
+### Re-screen after any AGC or dispatch change
+
+Pass and fail depend on who can balance a pocket. Batteries on AGC balanced several small battery pockets; after
+batteries were taken off AGC (no state of charge, see [agc-participation-factors](../concepts/agc-participation-factors.md)), those pockets failed again.
+Re-run the AC check on every candidate whenever the AGC set or the dispatch changes.
 
 
 ---
@@ -1655,8 +1942,8 @@ tags: [errors, troubleshooting, recovery, agent-behaviour, powerworld, esapp]
 
 ## Abstract
 
-What to do when something fails. Most PowerWorld failures are recoverable by the agent
-alone, so recover and keep going — the user asked for an analysis, not a running
+What to do when something fails. The agent can recover from most PowerWorld failures
+alone, so recover and keep going. The user asked for an analysis, not a running
 commentary on your debugging. This page sorts failures into **fix it yourself**,
 **fix it and mention it**, and **stop and ask**, and gives the recovery for each. It
 also covers the harder case: the call that did not fail but did nothing.
@@ -1677,8 +1964,8 @@ also covers the harder case: the call that did not fail but did nothing.
 | **2 — Fix and mention** | You recovered, but the recovery changed the answer's meaning | Fix it, continue, and state it in the final report |
 | **3 — Stop and ask** | A fact about the machine, or a decision that is genuinely the user's | Stop. Say exactly what is blocked and why |
 
-The default is tier 1. Escalating a tier-1 problem to the user is itself a failure —
-"should I install pandas?" is not a question worth a human's attention.
+The default is tier 1. Escalating a tier-1 problem to the user is itself a failure.
+"Should I install pandas?" does not need a human.
 
 ---
 
@@ -1693,8 +1980,7 @@ ModuleNotFoundError: No module named 'pandas'
 ```
 
 Install it and carry on. `pip install esapp`, `pip install pywin32`,
-`pip install TeamOverbyeWeather`. Dependencies are plumbing; the user asked for an
-analysis. If `pip` itself fails on permissions, retry with `--user` before escalating.
+`pip install TeamOverbyeWeather`. If `pip` itself fails on permissions, retry with `--user` before escalating.
 
 **You used the wrong access path.** These are the common ones, all verified:
 
@@ -1705,12 +1991,15 @@ analysis. If `pip` itself fails on permissions, retry with `--user` before escal
 | `pw.flows`, `pw.ptdf`, `pw.lodf`, `pw.ybus` | all methods — call them | Same |
 | `pw.dc_mode(True)` or `pw.dc_mode = True` | `pw.pflow(method="DC")` | `dc_mode` is not a method, and assigning it does not make a scripted solve run DC (see *Power flow did not converge* below) |
 
-**A field name is wrong.** Do not guess a second time. Read the whole table and look:
+**A field name is wrong.** Do not guess a second time. Ask PowerWorld for the field list and look:
 
 ```python
-df = pw[Branch, :]
-print([c for c in df.columns if "mva" in c.lower()])
+fl = pw.esa.GetFieldList('branch')
+print(fl[fl.internal_field_name.str.contains("mva", case=False)].internal_field_name.tolist())
 ```
+
+Don't read every field with `pw[Branch, :]` to find a name: on some cases that read hits a suspected access
+violation (glitch `2026-10-20-savedata-all-field-av`).
 
 Then check [esapp-schema-reference](../references/esapp-schema-reference.md). Guessing field names is how you spend an hour.
 
@@ -1729,7 +2018,7 @@ resolve against PowerWorld's working directory, not your script's.
 
 ### The dangerous case: it did not fail, it did nothing
 
-This deserves its own section because no exception handler will catch it.
+No exception handler will catch this.
 
 PowerWorld frequently accepts a malformed request, reports success, and changes nothing.
 An agent that treats "no exception" as "it worked" produces a confident wrong answer,
@@ -1763,7 +2052,7 @@ have proven otherwise. Never report them as results.
 
 ### Tier 2 — recover, then say so
 
-**The recovery changed what the answer means.** A real example from this case:
+**The recovery changed what the answer means.** A real example on Hawaii40:
 
 ```
 PowerWorldError: Error in script action execution:
@@ -1781,12 +2070,12 @@ snk = int(next(b for b in l.index if int(b) != src))   # must differ
 P = pw.ptdf(seller=src, buyer=snk)
 ```
 
-Note the second failure hiding inside the first: on this case the largest generator and
-the largest load are **the same bus**, so the naive recovery reproduces the original
-error. Force the buses to differ.
+A second failure hides inside the first. On this case the largest generator and the
+largest load are **the same bus**, so the naive recovery reproduces the original error.
+Force the buses to differ.
 
-Report it as: *"the case has a single area, so I computed a bus-to-bus PTDF from bus 23
-to bus 26 instead"* — because the user's mental model of the answer is now different.
+Report it, because the answer now means something different to the user: *"the case has
+a single area, so I computed a bus-to-bus PTDF from bus 23 to bus 26 instead"*.
 
 **Power flow did not converge.** Escalate through the ladder, do not give up at step 1:
 
@@ -1804,7 +2093,7 @@ also resets generator voltage setpoints to 1.0 pu
 ([powerworld-study-commands](../references/powerworld-study-commands.md), from PowerWorld's manual). `pw.pflow(method="DC")` leaves the case in
 DC mode until an AC method solves it again.
 
-If only the DC solve converges, **say so** — a DC answer is not an AC answer.
+If only the DC solve converges, **say so**. A DC answer is not an AC answer.
 
 **The result is empty.** A filter that returns nothing is usually a filter bug, not a
 finding. Loosen it, confirm the unfiltered set is non-empty, then narrow again. Report
@@ -1868,8 +2157,8 @@ possible.
    varying parameters.
 6. **Only then** consider whether it is genuinely tier 3.
 
-Track which pages you used. When you finish, cite them — a wrong answer then points at a
-page that needs fixing, rather than at "the AI got it wrong."
+Track which pages you used and cite them when you finish, so a wrong answer points at a
+page that needs fixing rather than at "the AI got it wrong."
 
 
 ---
@@ -1900,10 +2189,9 @@ How to write code that reads and analyzes the solar/wind generation CSVs produce
 **Step 4 (final) of this reading sequence.** ← prev: [pww-data](../concepts/pww-data.md) · start over:
 [esapp-overview](esapp-overview.md).
 
-You've written the simulation ([timestep-simulation-setup](timestep-simulation-setup.md)) and produced the output
-CSVs — this page is how those CSVs are structured and how to write code that reads
-and reduces them. The analysis target here is the **solar/wind generation files**,
-not a network/contingency report.
+Once [timestep-simulation-setup](timestep-simulation-setup.md) has produced the output
+CSVs, this page covers how they are structured and how to read and reduce them. It
+covers the **solar/wind generation files**, not a network or contingency report.
 
 ### What the simulation produces
 Each run writes **two CSVs**: one solar, one wind. Naming:
@@ -1931,9 +2219,9 @@ in order, come from these generator fields:
 | `Longitude` | `Longitude` |
 
 Below the header rows, each data row is one UTC hour and each cell is that
-generator's MW for that hour. The conversion has already happened by this point —
-this file is post-conversion. Its labels are marked UTC but run early, so read
-*Timestamps* below before joining this CSV to anything on time.
+generator's MW for that hour. The time conversion has already run, and its labels are
+marked UTC but run early. Read *Timestamps* below before joining this CSV to anything
+on time.
 
 ### How the values get there
 - **Timestamps:** PowerWorld's **raw** export (`TimeStepSaveResultsByTypeCSV`) writes
@@ -1958,7 +2246,7 @@ this file is post-conversion. Its labels are marked UTC but run early, so read
 > path (the results post-processor's module / `process_results` / the pipeline's CLI entry script).
 
 ### Reading / analyzing the CSVs
-Because the first 8 rows are metadata, load with pandas accordingly, e.g.:
+The first 8 rows are metadata, so split them off when loading:
 
 ```python
 import pandas as pd
@@ -1983,7 +2271,7 @@ Then any N-1 results. A 2026-10-20 run that reported only post-contingency rows 
 intact 141% overload.
 
 ### File the answer back
-A good analysis is a knowledge-base asset, not chat exhaust. Per [AGENTS](../AGENTS.md), save notable
+Per [AGENTS](../AGENTS.md), save notable
 comparisons or charts as a new `concept`/`method` page, and link it from
 [timestep-simulation](../concepts/timestep-simulation.md) and [index](../index.md).
 
@@ -2015,9 +2303,9 @@ tags: [powerworld, esapp, transformer, ltc, tap, switched-shunt, voltage, case-q
 
 ## Abstract
 
-A case can carry a full fleet of live load tap changers (LTCs) and still control voltage badly,
-because what decides the outcome is not whether the LTCs are switched on but **which bus each
-one holds and how it drives toward its band**. Three defects are common, and each one leaves
+A case can carry a full fleet of live load tap changers (LTCs) and still control voltage badly.
+Switching the LTCs on decides little. The outcome turns on **which bus each one holds and how
+it drives toward its band**. Three defects are common, and each one leaves
 the power flow converging with no warning. (1) **A regulator pointed at nothing.** The regulated
 bus (`Branch.XFRegBus` for an LTC, `Shunt.SSRegNum` for a switched shunt) does not exist or is
 disconnected. (2) **`XFRegTargetType = Middle`**, the shipped value. When the regulated bus
@@ -2163,7 +2451,7 @@ EHV bus hanging off the first by one line cleared with it.
 
 **Standing check.** At any bus that violates with no local reactive source, list the
 transformers touching it and read their `XFRegBus`. An LTC at `LineTap = XFTapMax` (or
-`XFTapMin`) with a non-zero `XFRegError` is not failing to help. It is actively pushing.
+`XFTapMin`) with a non-zero `XFRegError` is actively pushing the bus out of band.
 
 Holding the LV side is right for a distribution tap feeding load and wrong for a bulk
 transformer between two transmission voltages. The case alone cannot say which one was
@@ -2181,8 +2469,8 @@ limits (`BusVoltLim = NO` everywhere) they read the limit group's 0.9 / 1.1 on e
 Set `XFRegBus`, the band and the target type, and let the LTC find its own position. Do not
 compute a tap yourself. Hand arithmetic brings its own direction trap:
 `new_tap = old_tap × (v_measured / v_target)` is the natural guess, and it is backwards. The
-correct form is `new_tap = old_tap × (v_target / v_measured)`, and whether the tap sits at the
-`XFNominalKV` end or the `:1` end is worth re-measuring on each new case family.
+correct form is `new_tap = old_tap × (v_target / v_measured)`. Re-measure on each new case
+family whether the tap sits at the `XFNominalKV` end or the `:1` end.
 
 ```python
 pw.edit_mode()
@@ -2207,8 +2495,8 @@ Three exclusions, each measured:
    the machines there were already pinned at `GenMVRMin` with nothing left to give.
 2. **Do not "repair" `XFTapMin = 1.00`.** A range that cannot go below nominal looks like a data
    defect. Widening it to 0.90 on two undervoltage units let each LTC hold its source bus by
-   pulling down the load bus behind it, from about 0.94 to about 0.89, in every dispatch, including one that had
-   been clean. Both sides were already low, so there was nothing to borrow. That floor was a
+   pulling down the load bus behind it, from about 0.94 to about 0.89, in every dispatch,
+   including one that had been clean. Both sides were already low, so there was nothing to borrow. That floor was a
    guard.
 3. **Never lower `XFTapMin`. Raise `XFTapMax` only where it sits below the unit's own tap
    position.** Widening ranges wholesale to 0.90–1.10 let one 345 kV bus swing 0.11 pu on travel
@@ -2289,14 +2577,13 @@ tags: [esapp, powerworld, simauto, contingency, aux, n-1, limit-monitoring, area
 
 How to turn **a list of devices** (e.g. the branches and generators that are new in a
 planning case) into a PowerWorld contingency set, restrict violation reporting to **the
-areas you care about**, and ship both as one `.aux` file that loads into the case — without
+areas you care about**, and ship both as one `.aux` file that loads into the case, without
 ever saving the case. The mechanism is **autoinsert-then-restrict**: run the case's own
 `CTGAutoInsert`, match your devices to the labels it produced, and write only those out.
 Hand-writing `Contingency` records from scratch invents labels PowerWorld would not use.
 
-Five things here are silent failures, all live-measured on
-`Synth2k_case` on 2026-08-17 — each produces a plausible wrong
-answer, not an error:
+Five things here are silent failures, each live-measured on `Synth2k_case` on 2026-08-17.
+Each produces a plausible wrong answer instead of an error:
 
 > **`ElementType`, `DeleteExisting` and `Handle3WXF` are *concise* names.** PowerWorld's
 > object-field export lists two names per field, and these three appear only in the Concise
@@ -2306,14 +2593,14 @@ answer, not an error:
 > search the export on either column before concluding a field is missing.
 
 1. **`CTG_AutoInsert_Options` rejects `ElementType=GEN` without complaining** and leaves it
-   at `BRANCH`. You ask for 743 generator outages and get 3,911 branch ones.
+   at `BRANCH` (suspected, possibly by design: glitch `2026-10-20-ctgautoinsert-gen-ignored`). You ask for 743 generator outages and get 3,911 branch ones.
 2. **The `CTGElement` SUBDATA action string must be quoted.** Unquoted, PowerWorld parses
    the *first* contingency and drops the other 690 with no error.
-3. **`LoadAux` needs an ABSOLUTE path** — a relative one resolves against `pwrworld.exe`'s
+3. **`LoadAux` needs an ABSOLUTE path.** A relative one resolves against `pwrworld.exe`'s
    working directory, not yours.
-4. **`LoadAux` merges, it does not replace.** Loading a 220-contingency list into a case
-   that already has a set gives you both.
-5. **`Ctg_Options.CTG_ReportMonitoredAreas` is a decoy** — it only affects text-file report
+4. **`LoadAux` merges, it does not replace.** Loading a contingency list into a case that
+   already has a set gives you both.
+5. **`Ctg_Options.CTG_ReportMonitoredAreas` is a decoy.** It only affects text-file report
    writing. The real area switch is `Area.BGReportLimits`.
 
 ## Connections
@@ -2343,9 +2630,8 @@ pw.esa.RunScriptCommand("EnterMode(RUN);")
 > reported success.** Suspected PowerWorld issue, not yet confirmed: the cause may still turn
 > out to be a setting. The workaround below holds either way. The condition is
 > `CTGAutoInsert` run straight after `Delete(Contingency)`. Measured 2026-10-19 on a public
-> synthetic grid. The same block gave
-> the full branch set on 2026-08-17 (the counts below), so the page's recipe changed under a
-> newer build. It was not misused.
+> synthetic grid. The same block gave the full branch set on 2026-08-17 (the counts below),
+> so the behaviour changed with the newer build, not through misuse.
 > [powerworld-study-options](../references/powerworld-study-options.md) saw zero inserts on a
 > Simulator 25 build on 2026-09-28 as well.
 >
@@ -2358,7 +2644,8 @@ pw.esa.RunScriptCommand("EnterMode(RUN);")
 > autoinsert's, so match devices by unordered bus pair plus circuit (Step 2), never by label.
 
 `ElementType` is `BRANCH` or **`GENERATOR`** — **never `GEN`**. `GEN` is accepted by the
-parser, silently ignored, and leaves the previous value in place:
+parser, silently ignored, and leaves the previous value in place (suspected, possibly by design:
+glitch `2026-10-20-ctgautoinsert-gen-ignored`). Use `GENERATOR` either way:
 
 ```python
 pw.esa.RunScriptCommand("SetData(CTG_AutoInsert_Options,[ElementType],[GEN]);")
@@ -2368,7 +2655,7 @@ pw.esa.GetParametersSingleElement("CTG_AutoInsert_Options", ["ElementType"], [""
 ```
 
 **Always read the option back and assert it** before `CTGAutoInsert`. `Handle3WXF` applies
-to branches only. On case 3 this yields **3,911 branch** contingencies (= its branch count)
+to branches only. On Synth2k case 3 this yields **3,911 branch** contingencies (= its branch count)
 and **743 generator** ones (= its generator count).
 
 ### Step 2 — match your devices to the labels autoinsert chose
@@ -2382,7 +2669,7 @@ Read `ContingencyElement` with an explicit field list
 | 3W xfmr | `BRANCH …` | both ends | circuit | `T_…` prefix |
 | generator | `GEN 1004 1` | bus / **`0`** | **the `GenID`** | `G_001004ODONNELL11U1` |
 
-Two matching rules that are easy to get wrong, both inherited from [reading-violationctg](reading-violationctg.md):
+Two matching rules, both inherited from [reading-violationctg](reading-violationctg.md):
 
 - **`ContingencyElement` has no `LineCircuit`.** The circuit ID is `ElementID` (verified on
   a 3-circuit bank: `'1'`, `'10'`, `'20'`). For generators `ElementID` is the `GenID`.
@@ -2391,8 +2678,7 @@ Two matching rules that are easy to get wrong, both inherited from [reading-viol
 
 ### Step 3 — write the AUX, in PowerWorld's own shape
 
-Get the ground truth from PowerWorld rather than guessing — it will export the set it is
-holding:
+Do not guess the format. PowerWorld will export the set it is holding:
 
 ```python
 # Write ONLY through RunScriptCommand -- the COM SaveCase method silently no-ops,
@@ -2435,8 +2721,8 @@ Area (AreaNum,BGReportLimits)
 }
 ```
 
-Measured on case 3 (8 areas, 2,000 buses, 3,911 branches), reading the **effective** flags
-`Bus.BusMonEle:1` / `Branch.LineMonEle:1` — not the requested ones:
+Measured on Synth2k case 3 (8 areas, 2,000 buses, 3,911 branches), reading the **effective**
+flags `Bus.BusMonEle:1` / `Branch.LineMonEle:1`, not the requested ones:
 
 | monitored areas | buses monitored | branches monitored |
 |---|---|---|
@@ -2444,8 +2730,8 @@ Measured on case 3 (8 areas, 2,000 buses, 3,911 branches), reading the **effecti
 | `5` (North Central) | 483 = area 5 exactly | 866 = its own 822 **+ 44 ties** |
 | `3, 5` | 630 | 1341 |
 
-**A bus is monitored when its area is; a branch when EITHER end is** — so tie lines into the
-region are included automatically, which is the opposite of the `ViolationCTG.AreaNum` trap
+**A bus is monitored when its area is; a branch when EITHER end is.** Tie lines into the
+region are included automatically. That is the opposite of the `ViolationCTG.AreaNum` trap
 in [reading-violationctg](reading-violationctg.md), where a naive filter *drops* them. Related knobs found in the
 same field-list dig: `Area.BGReportLimMinKV` / `BGReportLimMaxKV` (monitor only a kV band)
 and `Branch.LineMonEle` / `Bus.BusMonEle` (switch off one device).
@@ -2480,7 +2766,7 @@ shipped one.
 
 ### Verify it worked
 
-Load the file back into the open case and assert — never trust the write:
+Load the file back into the open case and assert. Never trust the write:
 
 ```python
 pw.esa.RunScriptCommand("EnterMode(EDIT);")
@@ -2491,24 +2777,24 @@ pw.esa.RunScriptCommand("EnterMode(RUN);")
 
 Assert **three** things, because each failure looks like success:
 
-1. the loaded `CTGLabel` set equals what you wrote — a parse failure loads a prefix;
-2. the `ContingencyElement` **count** equals what you wrote — a contingency with no element
-   loads fine and outages nothing, which reads as "the grid survives everything";
+1. the loaded `CTGLabel` set equals what you wrote (a parse failure loads a prefix);
+2. the `ContingencyElement` **count** equals what you wrote (a contingency with no element
+   loads fine and outages nothing, which reads as "the grid survives everything");
 3. every area's `BGReportLimits` came back as intended.
 
 ### Gotchas beyond the five in the Abstract
 
 - **A device that gets no contingency is normal, not a bug.** Autoinsert requires both ends
   ≥ 69 kV **and** `LineStatus == 'Closed'`, and `Handle3WXF=INSERT3WXF` collapses a
-  3-winding transformer's three branch rows into **one** contingency — so three device rows
+  3-winding transformer's three branch rows into **one** contingency, so three device rows
   legitimately map to one label. Report the bucket with a per-device reason; do not abort.
 - **The dominant unmatched cause on a real planning model is the 3-winding transformer's
   star bus, and it presents as a kV failure, not as a 3WXF one.** A 3W transformer is
   modelled as three branches meeting at a **fictitious star/tertiary bus carried at ~1 kV
   nominal**, so the winding branches touching it fail the 69 kV floor and autoinsert never
-  builds a branch contingency for them. (measured 2026-08-17, on regional planning cases: 111
-  of 273 new branches.) Do not read that bucket as missing coverage — the transformer
-  itself is covered by the single collapsed `T_…` contingency; what is absent is a separate
+  builds a branch contingency for them (measured 2026-08-17 on regional planning cases:
+  roughly two in five new branches). Do not read that bucket as missing coverage. The single
+  collapsed `T_…` contingency covers the transformer itself. What is absent is a separate
   outage of an internal winding, which is not a real N-1 event.
 - **`GetFieldList` on an object name that does not exist can fault `pwrworld.exe`** with an
   access violation rather than returning an error. Do not fuzz object names.
@@ -2536,7 +2822,7 @@ How to change PowerWorld's own limit-monitoring thresholds (`LimitSet` object �
 `LSPULow`/`LSPUHigh` and N-1 contingency `LSCtgPULow`/`LSCtgPUHigh`) from a script command or from
 esapp. The headline gotcha: **`SetData` on `LimitSet` errors "some of the key fields is missing"
 unless you supply the ENTIRE field row**, not just the key field(s) plus the fields you want to
-change — unlike most other PowerWorld objects, where key + changed fields is enough. Live-verified
+change. Most other PowerWorld objects need only the key plus the changed fields. Live-verified
 by round-tripping the same case's `LimitSet` values through a CSV export/reimport and a
 `SetData` script command.
 
@@ -2550,13 +2836,13 @@ by round-tripping the same case's `LimitSet` values through a CSV export/reimpor
 
 ### The gotcha
 
-A short `SetData` call naming only the key field and the fields you want to change —
+A short `SetData` call that names only the key field and the fields you want to change:
 
 ```
 SetData(LimitSet, [LSNum, LSPULow, LSPUHigh, LSCtgPULow, LSCtgPUHigh], [1, 0.920, 1.080, 0.880, 1.120]);
 ```
 
-— fails with **"some of the key fields is missing"**, even though `LSNum` (the object's key field)
+fails with **"some of the key fields is missing"**, even though `LSNum` (the object's key field)
 *is* in the list. `LimitSet` (unlike `Bus`/`Gen`/`Shunt`) apparently needs its full row supplied to
 resolve unambiguously. The only proven-working shape is to supply **every field PowerWorld exports
 for the object**, changed values included, unchanged values copied through verbatim:
@@ -2593,13 +2879,12 @@ wrote 'A'  ->  read back 'A: RATE1'
 ```
 
 Measured on a regional planning case (2026-08-17). **Synth2k returns the bare `'A'`**, so this
-never appears there — it shows up only on a case whose rate sets are *named*, which a real
+never appears there. It shows up only on a case whose rate sets are *named*, as a real
 planning model's are.
 
-The write took. A raw comparison nonetheless fails it, and the natural error message
-("the limits did not take — every violation would be measured against the wrong limit") is
-then the exact opposite of the truth, on a run that is fine. **Compare the letter before the
-colon**, so a genuine mismatch (`A` wanted, `B` stored) is still caught:
+The write took, but a raw comparison fails it. The natural error message ("the limits did
+not take — every violation would be measured against the wrong limit") then says the
+opposite of the truth on a run that is fine. **Compare the letter before the colon**, so a genuine mismatch (`A` wanted, `B` stored) is still caught:
 
 ```python
 def rate_set_letter(value) -> str:
@@ -2618,18 +2903,18 @@ divide by different ratings, silently.
 |---|---|
 | `LSNum` / `LSName` | key fields — `1` / `"Default"` is the case's default (usually only) LimitSet |
 | `LSPULow` / `LSPUHigh` | **normal-operations** voltage band (pu) |
-| `LSCtgPULow` / `LSCtgPUHigh` | **N-1 contingency** voltage band (pu) — this is the threshold PowerWorld's own CTG/limit-monitoring flags violations against, distinct from any Python-side `v_min`/`v_max` check a pipeline does after reading `BusMin/MaxVoltageContingency` |
+| `LSCtgPULow` / `LSCtgPUHigh` | **N-1 contingency** voltage band (pu): the threshold PowerWorld's own CTG/limit monitoring flags violations against, distinct from any Python-side `v_min`/`v_max` check a pipeline does after reading `BusMin/MaxVoltageContingency` |
 
 ### Two ways to apply it
 
-**1. Manual, in the PowerWorld script command bar** — paste the single-line `SetData(...)` block
-above (values edited to taste). Useful for a one-off manual test/round-trip check.
+**1. Manually, in the PowerWorld script command bar.** Paste the `SetData(...)` block above
+with your values. Useful for a one-off manual test or round-trip check.
 
-**2. From Python (esapp)** — do NOT hand-write the full-field `SetData` call in code; read the
-current full row, patch only the target columns, write the full row back. `pw.esa.SetData(...)` and
-`pw.esa.ChangeParametersMultipleElement(...)` are both thin passthroughs to the raw SimAuto call (no
-key-field auto-resolution, no partial-write convenience) — so the same "supply everything" rule
-applies programmatically. Pattern:
+**2. From Python (esapp).** Do NOT hand-write the full-field `SetData` call in code. Read the
+current full row, patch only the target columns, and write the full row back. `pw.esa.SetData(...)`
+and `pw.esa.ChangeParametersMultipleElement(...)` are both thin passthroughs to the raw SimAuto call
+(no key-field auto-resolution, no partial-write convenience), so the same "supply everything" rule
+applies in code:
 
 ```python
 LIMITSET_FIELDS = ["LSNum", "LSName", "LSPULow", "LSPUHigh", ...]   # all ~48 fields, PowerWorld's own export order
@@ -2643,24 +2928,21 @@ def set_ctg_voltage_limits(pw, v_min=0.90, v_max=1.10):
     pw.esa.RunScriptCommand("EnterMode(RUN);")
 ```
 
-This generalizes to any case (reads whatever LimitSet rows actually exist, rather than hardcoding
-one case's original values) and touches only the 2 target columns while carrying every other field
-through unchanged — the read-modify-write shape sidesteps hand-transcribing values entirely.
+This works on any case, because it reads whatever LimitSet rows exist instead of hardcoding one
+case's values. It changes only the 2 target columns and carries every other field through
+unchanged, so nothing is hand-transcribed.
 
 ### Why this matters for N-1 work
 
 A reactive planning pipeline checked contingency voltage violations in Python
-(`Bus.BusMin/MaxVoltageContingency` against a hardcoded `[0.90, 1.10]` band). That
-Python-side check was never actually tied
-to PowerWorld's own `LimitSet.LSCtgPULow/LSCtgPUHigh` — the case's native limit monitoring could
-silently disagree with the band the Python code assumes. Setting the contingency limits
-explicitly closes that gap:
-call it once after opening/building a case to force the case's own contingency band to match the
-band the rest of the pipeline checks against.
+(`Bus.BusMin/MaxVoltageContingency` against a hardcoded `[0.90, 1.10]` band). That check was
+never tied to PowerWorld's own `LimitSet.LSCtgPULow/LSCtgPUHigh`, so the case's native limit
+monitoring could silently disagree with the band the Python code assumes. Call
+`set_ctg_voltage_limits` once after opening or building a case, so the case's own contingency
+band matches the band the rest of the pipeline checks against.
 
-> House rules honored: full-row read-modify-write via `esapp` (not a hand-maintained partial
-> `SetData` literal in code); values verified by reading them back, mirroring the assert-after-save
-> discipline in [save-powerworld-case](save-powerworld-case.md).
+> Read the values back after writing, as with the assert-after-save check in
+> [save-powerworld-case](save-powerworld-case.md).
 
 
 ---
@@ -2679,10 +2961,9 @@ tags: [powerworld, simauto, esapp, setup, troubleshooting, preflight]
 
 ## Abstract
 
-Run this before writing any analysis code. It takes about five seconds and answers the
-only question that matters at the start of a session: can this machine drive PowerWorld
-from Python at all? Five checks, each with the exact error you get when it fails and
-what that error actually means. Skipping this is why an agent writes two hundred lines
+Run this before writing any analysis code. It takes about five seconds and answers one
+question: can this machine drive PowerWorld from Python at all? Five checks, each with
+the exact error you get when it fails and what that error means. Skipping this is why an agent writes two hundred lines
 of a study and then discovers on the last line that SimAuto was never licensed.
 
 ## Connections
@@ -2694,8 +2975,8 @@ of a study and then discovers on the last line that SimAuto was never licensed.
 ## Content
 
 > **Agents: run this first.** Do not write analysis code before the preflight passes.
-> A failure here is not a bug in your code — it is a fact about the machine, and no
-> amount of rewriting the analysis will fix it. Report which check failed and stop.
+> A failure here is a fact about the machine, not a bug in your code, and no amount of
+> rewriting the analysis will fix it. Report which check failed and stop.
 
 ### The preflight script
 
@@ -2709,7 +2990,7 @@ to run `/powerworld-hivemind:powerworld-setup` (it installs esapp, TeamOverbyeWe
 pywin32 and openpyxl). **Never pip-install on your own.**
 
 Checks 1-4 are about the **machine** and need no case file; check 5 opens **your case**.
-Call `preflight_machine()` on its own when you do not have a case yet — during setup, say —
+Call `preflight_machine()` on its own when you do not have a case yet (during setup, say),
 and `preflight(case_path)` when you do.
 
 ```python
@@ -2771,7 +3052,7 @@ def preflight_machine() -> bool:
 
 def preflight_case(case_path: str) -> bool:
     """Check 5: this particular case opens. Run preflight_machine() first."""
-    # 5. The case itself opens and solves.
+    # 5. The case itself opens.
     if not Path(case_path).is_file():
         print(f"FAIL 5/5  case not found: {case_path}")
         return False
@@ -2809,18 +3090,16 @@ if __name__ == "__main__":
 | `com_error: (-2147221164, 'Class not registered', ...)` | Same as above, or a 32/64-bit mismatch between Python and Simulator | Match the bitness. A 32-bit Simulator will not serve a 64-bit Python |
 | A COM error mentioning **licence**, **not authorized**, or **add-on** | Simulator is installed and licensed, but the **SimAuto add-on is a separate licence** and yours does not include it | This cannot be fixed in code. Talk to whoever administers your PowerWorld licence |
 | SimAuto starts but a feature errors | Possibly a version difference | Check the build date against [version-requirements](../concepts/version-requirements.md) before assuming a page is wrong |
-| `PowerWorldPrerequisiteError` | **Not** a version or licence problem — the case lacks a prerequisite state | e.g. clearing TimeStep results that do not exist yet. Do the prerequisite step first |
+| `PowerWorldPrerequisiteError` | **Not** a version or licence problem. The case lacks a prerequisite state | e.g. clearing TimeStep results that do not exist yet. Do the prerequisite step first |
 | `case not found` | Path typo, or a relative path resolving somewhere unexpected | Use an absolute path. Always |
 | Case opens but `n_bus` is 0 | The file opened but is not a valid case | Confirm the `.pwb` is not corrupt; try opening it in Simulator directly |
 
 ### The licence check, specifically
 
-This is the check people forget, so it gets its own note.
-
 **PowerWorld Simulator and the SimAuto add-on are licensed separately.** A machine can
 have a fully valid, fully working Simulator installation and still be unable to run a
-single line of this kit, because automation is a different SKU. Simulator's own GUI will
-give you no hint of this — it works fine.
+single line of this kit, because automation is a different SKU. Simulator's own GUI works
+fine and gives no hint of this.
 
 The symptom is that check 4 fails while Simulator itself launches normally. If you can
 open your case by double-clicking it but `Dispatch("pwrworld.SimulatorAuto")` raises,
@@ -2830,7 +3109,7 @@ that is the licence, not your code.
 
 Check 4 prints the Simulator build date. Put it in your report. Field availability and
 script-action behaviour both shift between releases, and they shift silently, so when a
-result later looks wrong the build date is the first thing worth checking.
+result later looks wrong, check the build date first.
 
 `RequestBuildDate` is a Delphi serial date (days since 1899-12-30), not a version number.
 For the full version string and what this kit was verified against, see
@@ -2846,12 +3125,12 @@ win32com.client.Dispatch("pwrworld.SimulatorAuto")   # raises if PowerWorld auto
 ```
 
 If that line runs without raising, everything downstream in this kit is available to
-you. If it raises, nothing is, and no rewrite of the analysis will change that.
+you. If it raises, nothing is.
 
 ### What preflight does not tell you
 
 It confirms you can *drive* PowerWorld. It says nothing about whether the case is
-suitable for the study you have in mind — whether it solves, whether it has the
+suitable for the study you have in mind: whether it solves, whether it has the
 generators or weather models you need, whether its limits are configured. Those are
 questions for the analysis itself, starting at [esapp-overview](esapp-overview.md).
 
@@ -2878,29 +3157,28 @@ Given a contingency AUX built by [new-device-contingency-aux](new-device-conting
 device that is new in a planning case — solve it and answer **which new device is worst**.
 
 **One file comes out: `devices.csv`, one row per new device, ranked worst first.** It is
-the only file at the top of the output directory; the per-metric sorts and the
-per-violation-row evidence live one level down in `_audit/`. The question it answers is the
-one that gets asked out loud — *without device X, what does this case experience?* — so a
-device that was never tested must still have a row, or "absent" and "harmless" become the
-same thing.
+the only file at the top of the output directory. The per-metric sorts and the
+per-violation-row evidence live one level down in `_audit/`. It answers *without device X,
+what does this case experience?*, so a device that was never tested must still have a row,
+or "absent" and "harmless" become the same thing.
 
-**The single ordering rests on one idea: the FRACTION BEYOND THE LIMIT.** Percent-of-rating
-and per-unit volts genuinely do not share a unit — but each quantity *divided by the limit
-it actually violated* is dimensionless, and those are comparable without inventing an
-exchange rate. That is what makes a 0.80 pu bus (0.158 beyond a 0.95 floor) outrank a 101%
-branch (0.010 beyond its rating), which no per-metric sort does. It still asserts that a 5%
-overload and a 5% voltage excursion are comparably bad — but that claim is visible and
-checkable, which "percent vs per-unit" never was. The per-metric sorts in `_audit/` keep
+**The single ordering uses the FRACTION BEYOND THE LIMIT.** Percent-of-rating and per-unit
+volts do not share a unit, but each quantity *divided by the limit it violated* is
+dimensionless, and those are comparable without inventing an exchange rate. So a 0.80 pu bus
+(0.158 beyond a 0.95 floor) outranks a 101% branch (0.010 beyond its rating), which no
+per-metric sort does. It still asserts that a 5% overload and a 5% voltage excursion are
+comparably bad, but that claim is visible and checkable, which "percent vs per-unit" never
+was. The per-metric sorts in `_audit/` keep
 the two apart on their own units; this is the one sanctioned crossing.
 
 Six things here decide whether the ranking means anything, and each fails silently:
 
 1. **Subtract the base case — AND attribute the magnitude.** A branch already at 105%
    appears under *every* contingency, so without subtraction every device inherits the same
-   overloads (**38% of all rows** on one measured run, 464,794 of 1,218,162). But the
-   subtraction only decides *whether* a row counts: a branch at 220% nudged to 221% survives
-   it legitimately and then reports **221%** for a device that caused **+1%**. Score
-   `min(exceedance, addition)` — see *Attribution* below. Measured at a 60% threshold:
+   overloads (**38% of all rows** on one measured Texas2k run, 464,794 of 1,218,162). The subtraction only decides
+   *whether* a row counts: a branch at 220% nudged to 221% survives it legitimately and then
+   reports **221%** for a device that caused **+1%**. Score `min(exceedance, addition)` (see
+   *Attribution* below). Measured at a 60% threshold:
    **97.8% of caused thermal rows are on an already-violating branch, the reported
    exceedance is a median 82.6x what the device added, and 883 of 890 devices move.**
 2. **Rank voltage on distance OUTSIDE the band, never on `LimViolPct`.** Low and high volts
@@ -2915,7 +3193,7 @@ Six things here decide whether the ranking means anything, and each fails silent
 5. **Report the bus AS IT SITS, not only its excursion.** `0.037 pu outside the band` and
    `0.913 pu` are the same bus, and only one of them reads as serious. The excursion is
    measured against whichever band the run was configured with, so a reader who forgets the
-   band reads a severe bus as trivial. Carry both — the score is built from the excursion
+   band reads a severe bus as trivial. Carry both. The score is built from the excursion
    and must stay auditable.
 6. **A device's own area is not the reporting scope.** They routinely differ, and the file
    gives no hint that they do. See *The area trap* below.
@@ -2934,8 +3212,8 @@ Six things here decide whether the ranking means anything, and each fails silent
 
 ### Attribution: what the outage is actually responsible for
 
-Subtracting the base case is only half the job, and the missing half is invisible: the row
-set is corrected while the *magnitudes* are not. Score each row as the smaller of
+Subtracting the base case corrects the row set but not the *magnitudes*, and nothing shows
+the gap. Score each row as the smaller of
 
     exceedance   how far past the limit the element ended up
     addition     how far the outage moved it
@@ -2949,7 +3227,7 @@ set is corrected while the *magnitudes* are not. Score each row as the smaller o
 You can blame a device for neither more damage than exists, nor more than it put there. The
 `min` self-corrects when the base was *below* the limit as well: a branch at 88% taken to
 157% has addition 69 but exceedance 57, and only 57 points of it are a violation at all.
-A row with no base value was clean, so the whole exceedance is the device's — missing base
+A row with no base value was clean, so the whole exceedance is the device's. Missing base
 data must never silently zero a real violation.
 
 | category | exceedance | addition |
@@ -2959,8 +3237,8 @@ data must never silently zero a real violation.
 | `voltage_high` | `(V - limit)/limit` | `(V - base_V)/limit` |
 
 `T` is the run's thermal threshold, so thermal normalizes exactly as voltage does. **Read
-the base value with the SAME key the subtraction uses** — unordered bus pair plus
-normalized circuit — or a row is filtered against one baseline and scored against another,
+the base value with the SAME key the subtraction uses** (unordered bus pair plus
+normalized circuit), or a row is filtered against one baseline and scored against another,
 which is worse than either alone.
 
 **`LimViolLimit` on a thermal row is the branch's MVA RATING, not 100.** Measured 21, 46,
@@ -2968,19 +3246,18 @@ which is worse than either alone.
 other's field yields percent-minus-MVA, which is a plausible-looking number.
 
 **Average as well as worst, on the attributed quantity.** The mean over a device's rows
-separates one catastrophic element from twenty mildly-over ones — which the count only
-half-answers. Computed on absolute percent it would re-inherit the whole base-case
+separates one catastrophic element from twenty mildly-over ones, which the count only
+half-answers. Computed on absolute percent, it would re-inherit the whole base-case
 contamination. Measured: the top devices score ~1.16 on their worst element and average
 ~0.010 across ~190 rows.
 
 ### The output table: natural units only
 
 **A number the reader cannot interpret is not a result.** The score below is correct,
-dimensionless, and unreadable to someone opening a spreadsheet — and requiring them to
-learn the scoring scheme before they can read the answer is the wrong trade for a file
-whose whole purpose is to be opened by other people. So the file carries **only** percent
-of rating, per unit, and counts; the arithmetic that produced the ordering moves to a
-sidecar. The rank stays auditable, it is just not in the way.
+dimensionless, and unreadable to someone opening a spreadsheet. Other people open this file,
+and they should not have to learn the scoring scheme first. So the file carries **only**
+percent of rating, per unit, and counts. The arithmetic behind the ordering moves to a
+sidecar, where the rank stays auditable.
 
 | column | unit |
 |---|---|
@@ -2993,25 +3270,24 @@ sidecar. The rank stays auditable, it is just not in the way.
 | `converged` `count_verified` | integrity flags |
 
 **`count_verified` means "no row was dropped between the solve and this table", and it
-covers TWO ways rows go missing, not one.** It was originally keyed only off the row-count
-mismatch guard, which let a run discard **2,972 unclassified violation rows on one planning model and
-still write `count_verified = True` on all 297 devices** — the audit trail was correct and
+covers TWO ways rows go missing.** It was first keyed only off the row-count mismatch
+guard. That let a run discard **2,972 unclassified violation rows on a planning model
+and still write `count_verified = True` on all 297 devices**: the audit trail was correct and
 the file people open was not. An unclassified row now taints its device exactly as a count
-mismatch does. The general rule: a
-bucket that means *"rows were dropped"* must reach the summary artifact, because `_audit/`
-is not what gets mailed.
+mismatch does. In general, a bucket that means *"rows were dropped"* must reach the summary
+artifact, because `_audit/` is not what gets mailed.
 
 **Worst and average answer different questions**, and the count answers neither. A device
 whose worst overload is 157% and whose average is also 157% overloads exactly one branch;
 one with a high worst and a low average has a single hot spot among many marginal
-violations. Averages must be taken in the SAME natural unit as the worst — an average of
-the dimensionless score reads as noise (`0.064`), and an average of two different units at
+violations. Take averages in the SAME natural unit as the worst. An average of the
+dimensionless score reads as noise (`0.064`), and an average of two different units at
 once is meaningless even though it is well-defined.
 
 **`worst_*` means most attributable, not highest number.** The reported rows are the ones
-that drove the rank. Once the base case is attributed those need not be the arithmetic
-maximum — a 221%-on-a-220%-branch loses to a 150%-from-clean one — and printing the
-maximum beside a rank derived from a different row is how the two disagree in public.
+that drove the rank. Once the base case is attributed, those need not be the arithmetic
+maximum (a 221%-on-a-220%-branch loses to a 150%-from-clean one). Printing the maximum
+beside a rank derived from a different row is how the two disagree in public.
 
 **What was deliberately taken OFF the file**, and the cost: `severity_score`,
 `severity_from`, `avg_severity`, the band excursion, and the per-device *how much did this
@@ -3022,7 +3298,7 @@ was traded for a table anyone can read.
 
 ### The one ordering: fraction beyond the limit
 
-`rank` is dense `1..N` — no ties, no gaps — and orders **diverged first**, then
+`rank` is dense `1..N` (no ties, no gaps) and orders **diverged first**, then
 `severity_score` descending, then `CTGLabel` ascending so two runs of the same case agree.
 
 `severity_score` is each violation's fraction beyond the limit it actually violated:
@@ -3034,7 +3310,7 @@ was traded for a table anyone can read.
 | `voltage_high` | `(V - limit)/limit` | 1.10 pu vs a 1.05 ceiling -> `0.048` |
 
 The units cancel, so this is a real dimensionless quantity rather than a fudge factor. **Do
-not collapse it to `abs(pct/100 - 1)`** — it is arithmetically identical on all three
+not collapse it to `abs(pct/100 - 1)`.** It is arithmetically identical on all three
 categories today, but it gets `voltage_low` right for the wrong reason and would keep
 "working" silently if a polarity were ever redefined.
 
@@ -3044,11 +3320,11 @@ one scores `NaN` and ranks first. **There is deliberately no `status` column**: 
 stay filterable data rather than a string to parse, and `ranked_by` says which in words.
 
 Derive those labels from the COUNTS, never from the score. A silent device carries a real
-`0.0`, not `NaN`, so a test keyed on a missing score never fires for it — a mistake that
-leaves the label silently blank on exactly the rows it was written for.
+`0.0`, not `NaN`, so a test keyed on a missing score never fires for it, and the label stays
+blank on exactly the rows it was written for.
 
 The percentage for voltage is `LimViolPct` **for the row already chosen as worst by
-severity**, never a re-max on pct — for `voltage_low`, *lower* pct is worse, so re-maxing
+severity**, never a re-max on pct. For `voltage_low`, *lower* pct is worse, so re-maxing
 selects the least severe bus while looking entirely correct.
 
 ### The per-metric sorts, and why they survive in `_audit/`
@@ -3059,34 +3335,34 @@ selects the least severe bus while looking entirely correct.
 | voltage | worst pu distance **outside** the band | per unit |
 | count | violations the outage caused | count |
 
-Percent-of-rating is what makes differently-rated branches comparable — a 250% overload
-outranks a 200% regardless of the MVA behind it. Voltage cannot use percent: measured,
+Percent-of-rating makes differently-rated branches comparable: a 250% overload outranks a
+200% one regardless of the MVA behind it. Voltage cannot use percent: measured,
 `Bus Low Volts` rows sit *below* their limit with `LimViolPct` in 94-100 (lower is worse)
 while `Bus High Volts` sit *above* with pct 100-103 (higher is worse). Ranking both on pct
 orders overvoltages exactly backwards. Distance outside the band fixes it: 0.87 pu against a
-0.90 floor and 1.13 against a 1.10 ceiling both score 0.03, and are genuinely equally bad.
+0.90 floor and 1.13 against a 1.10 ceiling both score 0.03 and are equally bad.
 
-"Worst single violation" and "broke the most things" are different questions, which is why
-the count is its own axis rather than a tiebreaker — and why the single `severity_score`
-ordering does not retire these. It answers the first question only.
+"Worst single violation" and "broke the most things" are different questions, so the count
+is its own axis rather than a tiebreaker. The single `severity_score` ordering answers only
+the first, so it does not retire these lists.
 
 ### The area trap
 
 A device's own area and the **reporting scope** are different things, and nothing in the
 file says so. Violations are scoped by `Area.BGReportLimits` in the AUX, which monitors
-*violated elements*, not outaged devices — so a device far outside the monitored region is
+*violated elements*, not outaged devices. A device far outside the monitored region is
 still solved and still counted, because its outage can violate something inside.
 
 Measured on Synth2k with two of eight areas monitored: **364 of the 531 out-of-area devices
 caused in-region violations.** So `n_violations = 0` on an out-of-area device means "causes
-nothing in the monitored region", never "was not checked" — and filtering the device table
-on area to "recover the region" silently discards 364 real results while looking like a
+nothing in the monitored region", never "was not checked". Filtering the device table on
+area to "recover the region" silently discards 364 real results while looking like a
 sensible narrowing.
 
 ### Subtracting the base case
 
 Solve the base power flow first and record what was **already** violating, from
-`Branch.LinePercent` and `Bus.BusPUVolt` — *not* from `ViolationCTG`, which is
+`Branch.LinePercent` and `Bus.BusPUVolt`, *not* from `ViolationCTG`, which is
 per-contingency and says nothing about the base state. Then a post-contingency violation
 counts only if the outage **caused it or made it worse**:
 
@@ -3096,10 +3372,10 @@ counts only if the outage **caused it or made it worse**:
 | voltage low | `BusPUVolt < v_min` | post pu < base pu |
 | voltage high | `BusPUVolt > v_max` | post pu > base pu |
 
-Three identity rules, each of which silently subtracts nothing if got wrong:
+Three identity rules. Get any one wrong and the subtraction silently removes nothing:
 
 - **The branch key is the UNORDERED bus pair.** Identity is direction-sensitive in the raw
-  data, so an ordered key matches nothing — which looks exactly like a base case with no
+  data, so an ordered key matches nothing, which looks exactly like a base case with no
   violations.
 - **The circuit ID is compared as normalized text.** `'10'` from one table, `10.0` after a
   CSV round-trip.
@@ -3109,10 +3385,10 @@ Three identity rules, each of which silently subtracts nothing if got wrong:
 **Comparing percent to percent is only valid because both rate sets are pinned.** Write
 `LSLineRateSet` *and* `LSLineRateSet:1` to the same value and assert it (see
 [powerworld-limitset-setdata](powerworld-limitset-setdata.md)); then the base percent and the contingency percent share a
-denominator. Do **not** "fix" this by comparing MVA instead — it was tried: `LinePercent` is
-a *from-end* percent (from-end MVA ÷ LinePercent recovers exact ratings — 149.000001,
-221.000004, 4352.000046 — while the larger of the two ends gives 149.46, 221.11, which are
-not ratings), but `LimViolValue` is not guaranteed to be that same end. The swap moved 5,092
+denominator. Do **not** "fix" this by comparing MVA instead; it was tried. `LinePercent` is
+a *from-end* percent: from-end MVA ÷ LinePercent recovers exact ratings (149.000001,
+221.000004, 4352.000046), while the larger of the two ends gives 149.46, 221.11, which are
+not ratings. `LimViolValue` is not guaranteed to be that same end. The swap moved 5,092
 rows on a measured run for no gain, trading a denominator pinned by construction for an
 end-mismatch pinned by nothing.
 
@@ -3144,8 +3420,8 @@ MEASURED on a planning model: three buses carry a **1.05** ceiling while the run
 **1.10**. Sitting at ~1.053 they are inside the configured band, so the baseline never
 recorded them; their post-contingency rows carried no `base_value`, were read as violations
 the outage CREATED, and survived `--only-new`. **657 of 673 reported rows were those three
-buses under all 219 devices** — 219 of 220 devices ranked as causing something, off a
-base-case condition. Overlap with the base-case high-voltage set: **0 of 3**. A flat band
+buses, re-reported under all 219 devices**, so 219 of 220 devices ranked as causing
+something, off a base-case condition. Overlap with the base-case high-voltage set: **0 of 3**. A flat band
 cannot detect this; the buses never exceed 1.10 at all.
 
 Two traps in the fix itself:
@@ -3161,23 +3437,21 @@ Two traps in the fix itself:
 
 PowerWorld's own `CTG_Options.CTG_WhatToDoWithBC` (0 = do not report base-case violations;
 1 = report all; 2 = change-from-base criteria) and this tool's Python-side `--only-new` are
-**redundant, not conflicting** — verified rather than assumed. Setting the option to `0` on
+**redundant, not conflicting**, verified rather than assumed. Setting the option to `0` on
 Synth2k case4 and running with `--include-worsened` yields **the identical 36-row set** that
-`--only-new` yields on the unmodified case: same rows, zero difference either way. Two
-independent mechanisms, one inside PowerWorld's contingency engine and one in Python,
-agreeing exactly.
+`--only-new` yields on the unmodified case: same rows, zero difference either way.
 
-Two honest qualifications. The `CTGViol` COUNTS differ (82 vs 153 summed over those 36
+Two qualifications. The `CTGViol` COUNTS differ (82 vs 153 summed over those 36
 rows), because PowerWorld reports fewer violations per contingency when it is suppressing
-base-case ones — the row SET is identical, the per-contingency tallies are not. And the two
+base-case ones; the row SET is identical, the per-contingency tallies are not. And the two
 runs were not config-identical: the `= 0` run screened every voltage level while the
 `--only-new` run used a 69 kV floor. The comparison still holds because the kV filter
 dropped nothing on this case (its lowest violated element is 115 kV), but that is a
 property of Synth2k rather than of the equivalence.
 
 `base_case_violations.csv` is unaffected by the option, because it is read from
-`Branch.LinePercent` / `Bus.BusPUVolt` and never from `ViolationCTG` — a `= 0` run still
-records its 6 base-case violations and simply drops 0 of them as pre-existing.
+`Branch.LinePercent` / `Bus.BusPUVolt` and never from `ViolationCTG`. A `= 0` run still
+records its 6 base-case violations and drops 0 of them as pre-existing.
 
 **So there is no reason to modify and re-save a case for this.** The flag does the same job
 and leaves the case untouched, which matters when the cases are CEII and read-only.
@@ -3195,8 +3469,8 @@ case3 is the control: zero base-case violations, so the filter is a proven no-op
 **87.1% of the WITH rows were already-broken elements**, six pre-existing violations
 inflated the device count **12.6x**, and the thermal median moved `100.125 -> 104.383` while
 the **maximum stayed at 153.647** — the worst outage survives either way. The 8
-low-voltage rows survive both ways too, which is what shows the filter discriminating
-rather than just cutting.
+low-voltage rows survive both ways too, so the filter discriminates rather than just
+cutting.
 
 ### Configuring a run
 
@@ -3220,18 +3494,18 @@ base-case subtraction are independent and compound hard. Measured on Synth2k cas
 attributable rows, subtraction drops 508, `--only-new` drops 242, **36 survive** (890
 devices to 20 ranked). A near-empty result is far likelier to be three filters stacking than
 a clean grid, so the run header prints the band, the kV floor and the reporting mode, and
-every silent device carries three counters — `n_violations_raw` (pre-filter),
+every silent device carries three counters: `n_violations_raw` (pre-filter),
 `n_below_kv`, `n_worsened_only`. **Never add a filter without a per-device counter beside
 it**: it shipped once without one, and at `--min-kv 200` the branch ranked #2 at 133.9% of
 rating came out at rank 585 reading `n_violations = 0`.
 
-**`MIN_KV` screens the VIOLATED element, on its HIGHER end, strictly above.** Not the
-outaged device — a generator sits at its terminal kV (13.8-20 kV on Synth2k), so screening
-devices would delete every generator contingency while looking like a voltage filter. The
-higher end is a deliberate trade, and NOT (as first written) for consistency with
-`device_attributes`, whose `kv` is an identity label rather than a membership test: the
+**`MIN_KV` screens the VIOLATED element, on its HIGHER end, strictly above.** It does not
+screen the outaged device: a generator sits at its terminal kV (13.8-20 kV on Synth2k), so
+screening devices would delete every generator contingency while looking like a voltage
+filter. The higher end is a deliberate trade. It is NOT (as first written) for consistency
+with `device_attributes`, whose `kv` is an identity label rather than a membership test. The
 strict both-ends rule is cleaner on distribution but drops a 500/161 autotransformer from a
-200 kV screen, and a vanished bulk asset beats clutter. Consequence to know: at
+200 kV screen, and losing a bulk asset is worse than some clutter. One consequence: at
 `--min-kv 100` every 115/13.8 step-down passes. `element_kv_low` is carried so the strict
 rule can be applied afterwards without re-solving. A transformer overload is ONE MVA limit
 on the whole device, so `element_kv` is a convention about the ASSET, not a property of the
@@ -3247,16 +3521,16 @@ difference is solver noise, RELATIVE to the base value. Deliberately not a flag:
 solver-precision number is a property of the numerics, not a planner's decision, and a flag
 invites silencing a flaky run by inflating it into a materiality threshold.
 
-**Do not confuse any of this with `set_limit_monitoring.py`.** That standalone script sets
-`CTG_Options.CTG_WhatToDoWithBC` (0 = do not report base-case violations; 1 = report all;
-2 = change-from-base criteria) and is **not part of this pipeline**. Applying 0 to a case
+**Do not confuse any of this with a standalone script that sets
+`CTG_Options.CTG_WhatToDoWithBC`** (0 = do not report base-case violations; 1 = report all;
+2 = change-from-base criteria). It is **not part of this pipeline**. Applying 0 to a case
 this tool consumes double-filters: PowerWorld suppresses base-case violations before Python
 sees them, deleting the worsened rows the subtraction deliberately keeps.
 
 ### Solving it across processes
 
 The set comes from an AUX, so each worker can `Delete(Contingency)` + `LoadAux` the **same
-file** and solve its own chunk — provably the same set, and no saved case required (see
+file** and solve its own chunk: provably the same set, and no saved case required (see
 [parallel-contingency-solve](../concepts/parallel-contingency-solve.md), whose original form needed one). The merge is a plain
 **concat** of per-contingency `ViolationCTG` rows, not that page's per-bus envelope merge,
 which cannot say *which* outage caused what.
@@ -3281,31 +3555,25 @@ tolerance fix, and what to actually assert:
 - `rank` may differ only among devices whose `severity_score` differs by less than
   `WORSENING_REL_TOL`. Measured: 10 of 890 devices REORDER, by at most 5 positions, all in
   ranks 131-238, none in the material band, with a maximum severity difference among those
-  ten of **8.5e-07**. That is not a suite-wide bound and must not be quoted as one — 110
+  ten of **8.5e-07**. That is not a suite-wide bound and must not be quoted as one: 110
   devices carry a nonzero severity difference, the largest being **1.1e-06**. They simply
   do not reorder, because the gap to their neighbour is wider than the wobble.
 
 ## Provenance
 
-**2026-08-22 (b)** — **the baseline was judging buses against the wrong number.** A bus can
-carry its own contingency voltage limits that override the `LimitSet` band the tool writes,
-and the baseline was testing every bus against the configured `v_min`/`v_max`. On that planning model
-three buses at a 1.05 ceiling, sitting at ~1.053, were therefore invisible to it — and
-**657 of 673 reported rows were those three buses re-reported under all 219 devices**, with
-219 of 220 devices ranked as causing something. `from_case` now reads
-`BusVoltCtgLimHigh`/`Low` and judges each bus against the limit PowerWorld applied,
-falling back to the band only where a case reports none. Comparing those limits needs the
-relative floor too: they come back single-precision (1.10 -> 1.10000002), and an exact test
-reported 4000 phantom overrides on a Synth2k case where every bus carries exactly the band.
+**2026-08-22 (b)** — **the baseline was judging buses against the wrong number** (see *The
+bus's own voltage limit, not the band you configured*). It tested every bus against the
+configured `v_min`/`v_max`. The baseline loader now reads `BusVoltCtgLimHigh`/`Low` and
+judges each bus against the limit PowerWorld applied, falling back to the band only where a
+case reports none. Comparing those limits needs a relative tolerance too: they come back
+single-precision (1.10 -> 1.10000002), and an exact test reported 4000 phantom overrides on a
+Synth2k case where every bus carries exactly the band.
 
-Separately verified, and it settles a question that had been assumed both ways:
+Separately verified, settling a question that had been assumed both ways:
 **`CTG_WhatToDoWithBC = 0` and `--only-new` produce the identical 36-row set** on Synth2k
-case4. Redundant, not conflicting; no case needs modifying or re-saving to get the
-behaviour. `set_limit_monitoring.py`, which sets that option, turned out never to have run
-at all — its input path pointed at a case that does not exist — and it verified its own
-write from memory BEFORE saving, so a no-op save would have passed. Both fixed.
-
-Suite 292 -> 305 tests.
+case4 (see the section above). The standalone script that sets that option turned out never to have run at all
+(its input path pointed at a case that does not exist), and it verified its own write from
+memory BEFORE saving, so a no-op save would have passed. Both fixed.
 
 
 **2026-08-22** — **two scope filters added, one absolute tolerance replaced, and a
@@ -3321,8 +3589,8 @@ with one unresolvable end was screened on the other, so a 345/13.8 transformer m
 filtered and an unfiltered run byte-identical on disk.
 
 `THERMAL_TOL`/`VOLTAGE_TOL` (absolute 1e-6) replaced by one **relative**
-`WORSENING_REL_TOL = 1e-4` via `baseline.worsened()`, mirroring the fix `limits.py` had
-already made for its own read-back check. An absolute 1e-6 on a percent near 100 asks for
+`WORSENING_REL_TOL = 1e-4` in the baseline's worsened test, mirroring the fix the limit
+writer had already made for its own read-back check. An absolute 1e-6 on a percent near 100 asks for
 ~1e-8 relative precision — below one float32 ULP there (7.6e-6) and far below solver
 repeatability, so it was not a tolerance, it was `>`. Measured: a branch at 100.072085% in
 the base case read 100.072148% after one outage, 6.3e-5 pp, and the absolute test admitted
@@ -3331,7 +3599,7 @@ row**; devices "causing a violation" 431 to 252, with all 36 material devices st
 top 36. **The "byte-identical ranked CSVs" claim recorded here on 2026-08-18 is retracted**
 -- see *Solving it across processes* for the invariant that does hold.
 
-Suite 238 to 292 tests. The regression test pins the DERIVATION, not the number: the floor
+The regression test pins the DERIVATION, not the number: the floor
 must exceed float32 resolution at a base of 100, which is what would have caught the
 original.
 
@@ -3348,9 +3616,8 @@ and `avg_severity` were both recomputed independently from the raw rows and matc
 **2.8e-16** and **1.05e-16**.
 
 Two facts found along the way, each of which produces a plausible wrong number rather than
-an error: **`LimViolLimit` on a thermal row is the branch's MVA rating** (21, 46, 57, 4352),
-not 100 — so thermal must score off `LimViolPct`; and the LimitSet read-back used an
-**absolute** `1e-6` tolerance on `LSLinePercent`, which lives near 100 where float32 cannot
+an error: **`LimViolLimit` on a thermal row is the branch's MVA rating**, not 100 (see
+*Attribution*); and the LimitSet read-back used an **absolute** `1e-6` tolerance on `LSLinePercent`, which lives near 100 where float32 cannot
 resolve that finely. Wrote 60.0, read back 60.00000238418579, run aborted claiming every
 violation was measured against the wrong limit. The default 100.0 passed **only because 1.0
 is exactly representable in binary**, hiding it for every threshold except the default; the
@@ -3402,8 +3669,8 @@ single solve; the per-bus envelope (`BusMin/MaxVoltageContingency`) collapses ev
 one worst case and cannot say *which* outage did it.
 
 Six traps, each of which produces a **plausible wrong answer rather than an error**. The
-first four were live-measured on `Synth2k_case` on 2026-08-16; the fifth and sixth only
-appear on cases Synth2k cannot produce, which is the point of them:
+first four were live-measured on `Synth2k_case` on 2026-08-16; the fifth and sixth appear
+only on cases Synth2k cannot produce:
 
 1. **`AreaNum` is the branch's OWN area and reads `0` on a tie-line.** Filtering on it
    silently drops every cross-area violation. The endpoint areas are `AreaNum:1` / `:2`.
@@ -3414,22 +3681,22 @@ appear on cases Synth2k cannot produce, which is the point of them:
    rows came out of a freshly-opened case.
 4. **A bare `pw[ViolationCTG]` returns 2 columns.** You must pass an explicit field list.
 5. **The `LimViolCat` vocabulary is case-dependent, not fixed.** An amp-rated branch
-   reports `Branch Amp`, which Synth2k never emits — so a classifier measured there drops
+   reports `Branch Amp`, which Synth2k never emits, so a classifier measured there drops
    every one of those overloads as an unknown category and still completes, still writes
    plausible CSVs, and still reports a grid it never screened.
 6. **`LimViolID:1` identifies a monitored END, not an element.** A branch monitored at both
    ends appears under two ids, so grouping on the raw string counts ends and reports them as
    distinct violated elements.
 
-Also settled here: the claim in `contingency_esapp.py`'s module docstring that esapp's typed
-read of `ViolationCTG` errors *"interface unknown"* on Synth2k **does not reproduce**.
+Also settled here: an earlier claim that esapp's typed read of `ViolationCTG` errors
+*"interface unknown"* on Synth2k **does not reproduce**.
 
 ## Connections
 
 - **Up:** [esapp](../concepts/esapp.md)
 - **Across:** [new-device-contingency-aux](new-device-contingency-aux.md) (building the set you solve, and scoping
   monitoring to an area) · [powerworld-limitset-setdata](powerworld-limitset-setdata.md) · [parallel-contingency-solve](../concepts/parallel-contingency-solve.md) · [lodf](../concepts/lodf.md) ·
-  [powerworld-simauto](../concepts/powerworld-simauto.md) · critical-branch screening
+  [powerworld-simauto](../concepts/powerworld-simauto.md)
 - **Deeper:** [esapp-package-backend](../references/esapp-package-backend.md)
 
 ## Content
@@ -3474,17 +3741,15 @@ to appear, with the note *"treat this as a vocabulary to fail loudly against, no
 exhaustive enum."* **That note was right, and ignoring it cost a wrong answer.** Synth2k
 rates every branch in MVA, so `Branch Amp` was never seen there; a real utility planning
 model rates part of its system in amps and PowerWorld emits **both strings from the same
-solve**, on disjoint sets of branches. In one measured run, 2,972 real overloads on a
-planning model
-(101.7%–240.7% of rating, all 297 contingencies) were classified `unknown` and dropped
-while the run reported 18 violations and looked clean.
+solve**, on disjoint sets of branches. In one measured run on a planning model, 2,972 real
+overloads (101.7%–240.7% of rating, all 297 contingencies) were classified `unknown` and
+dropped while the run reported 18 violations and looked clean.
 
-Two rules follow, and they are not the same rule:
+Two rules follow:
 
-- **`Branch Amp` is thermal.** Score it off `LimViolPct` exactly as `Branch MVA` — percent
+- **`Branch Amp` is thermal.** Score it off `LimViolPct` exactly as `Branch MVA`. Percent
   is percent regardless of the rating's unit, so the two never need an exchange rate. But
-  `LimViolValue` / `LimViolLimit` on those rows **are amps** (284–2,176 A on that model) and
-  must never be compared against an MVA row's.
+  `LimViolValue` / `LimViolLimit` on those rows **are amps** (284–2,176 A on that model) and must never be compared against an MVA row's.
 - **`Unsolved` is not.** It is `CTGSolved = NO` arriving through the violation table.
   Ranking it as a violation scores a contingency the run established *nothing* about.
 
@@ -3493,7 +3758,7 @@ Before trusting a thermal count on a new case, check what the case rates in:
 
 ### Trap 1 — `AreaNum` is the branch's own area, and it is `0` on a tie-line
 
-This is the expensive one. The four `AreaNum` slots are not four copies of the same thing:
+This is the expensive one. The four `AreaNum` slots mean different things:
 
 | slot | meaning |
 |---|---|
@@ -3505,8 +3770,8 @@ This is the expensive one. The four `AreaNum` slots are not four copies of the s
 Measured on branch 1004 (Far West) → 3133 (West):
 `AreaNum=0, AreaNum:1=1, AreaNum:2=3, AreaNum:3=1`.
 
-On an intra-area branch all four read the same number, which is exactly why this is easy to
-miss — you have to look at a tie-line to see the difference at all. **1,933 of 36,122
+On an intra-area branch all four read the same number, so the difference shows only on a
+tie-line. **1,933 of 36,122
 thermal rows** on the observed run were tie-lines, i.e. `AreaNum == 0`.
 
 > **A region filter written as `AreaNum in R` drops every tie-line violation and looks
@@ -3527,8 +3792,8 @@ comparable) and **voltage on the signed pu deviation** from `LimViolValue`. Per-
 sets (`LSCtgBusLowRateSet` / `LSCtgBusHighRateSet`) also mean `LimViolLimit` need not be
 constant across rows, so percent is not comparable bus-to-bus either.
 
-`LimViolValue == LimViolLimit * LimViolPct / 100` held on **120,428 of 120,428 rows** — so
-the typed value is trustworthy, and the arithmetic is a good cross-check assertion.
+`LimViolValue == LimViolLimit * LimViolPct / 100` held on **120,428 of 120,428 rows**. The
+typed value is trustworthy, and the arithmetic makes a good cross-check assertion.
 
 ### Trap 3 — results persist in the `.pwb`
 
@@ -3543,7 +3808,8 @@ the set you meant to solve.
 `CTGSolveAll` applies each outage to the **stored contingency reference**, not to the state
 the case is in now. Move the operating point (a TimeStep hour, a new dispatch, an edit) and
 solve without `pw.esa.CTGSetAsReference()`, and every contingency is solved against the old
-reference. Nothing errors, and the rows look real.
+reference. Nothing errors, and the rows look real. Status: suspected, possibly by design: glitch `2026-10-20-ctg-reference-timestep`; call `CTGSetAsReference()`
+whichever it turns out to be.
 
 Measured 2026-10-20 on Simulator build 2026-09-25, on the public Texas2k grid with a weather
 file: three TimeStep hours with renewable output from about 2.7 GW to 7.6 GW, each set with
@@ -3571,7 +3837,7 @@ pw[ViolationCTG, VIOLATION_FIELDS]  # -> everything you asked for
 ### Trap 6 — one identity per MONITORED END, not per element
 
 A branch appears under a **separate `LimViolID:1` per monitored end**. The two strings differ
-only in the monitored-bus token, and the direction token does **not** discriminate — both ends
+only in the monitored-bus token, and the direction token does **not** discriminate; both ends
 can report the same direction. Measured 2026-09-14 on a real planning-model export: about one
 id in a hundred was the second end of a branch already counted, and the two ends reported
 materially different percentages.
@@ -3579,14 +3845,14 @@ materially different percentages.
 So **grouping on the raw id string counts monitored ends, not elements.** Any "distinct violated
 elements" figure produced that way is an end count wearing an element count's name.
 
-The element key is `(min(from, to), max(from, to), circuit)` — drop the monitored-end and
-direction tokens, normalise the endpoint order — and severity is the **max across ends**,
+The element key is `(min(from, to), max(from, to), circuit)`: drop the monitored-end and
+direction tokens and normalise the endpoint order. Severity is the **max across ends**,
 because the end is where the measurement was taken and not part of the identity. This matters
 most under a one-element-per-round remediation loop: ungrouped, the loop targets one branch on
 two separate rounds, and the second round sizes an action against a branch it already upgraded.
 
 Endpoints are available as real columns on the same row, so only the circuit and monitored end
-need to come from the string — which also makes the parse self-checking, since the string's
+need to come from the string. That also makes the parse self-checking, since the string's
 own endpoint tokens must agree with those columns.
 
 ### The per-category column contract
@@ -3601,20 +3867,20 @@ Which identity slots are populated, by category (`1.0` = always, `0.0` = never):
 | `Bus Low Volts` | 1.0 | 1.0 | 0.0 | 1.0 | **0.0** | 1.0 | 0.0 |
 | `Interface MW` | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
 
-Two consequences worth internalising:
+Two consequences:
 
 - **A bus violation carries a populated `AreaNum:1`.** So a two-endpoint OR applied
   unconditionally attributes a bus to an unrelated area. `BusNum:1` is the clean
-  discriminator — populated for branch rows, empty for bus rows.
+  discriminator: populated for branch rows, empty for bus rows.
 - **Interface rows carry no identity at all.** They cannot be attributed to a region; drop
   them deliberately and print the count.
 
 ### Row-count integrity, and why not to deduplicate
 
-`rows_per_label == CTGViol` held exactly on **40/40** labels. Assert it — it catches
+`rows_per_label == CTGViol` held exactly on **40/40** labels. Assert it. It catches
 duplication *and* dropped rows for free.
 
-**But it does NOT hold on every model, and the reason matters.** On a regional
+**But it does NOT hold on every model.** On a regional
 planning model (2026-08-17) a label returned 1 row while its own `CTGViol` read `0`.
 
 The tempting explanation — that `CTGViol` counts only branch violations, so a voltage-only
@@ -3625,13 +3891,13 @@ contingency reads 0 — is **wrong, and was tested**:
   `CTGNBranchViol` / `CTGNVoltViol` / `CTGNInterfaceViol` are the branch / **bus** /
   interface counts.
 - Synth2k confirms it is the sum: `3010 + 1 + 1195 = 4206` exactly, on a label carrying all
-  three kinds (Stage 0b, Q4).
+  three kinds.
 
 So `CTGViol` **does** include voltage violations, and a disagreement is a real signal rather
 than a scope quirk. The live candidates are a **stale or duplicate-labelled `Contingency`
-record** — a label-keyed join silently collapses duplicates to whichever side wins, and
-`Contingency` aggregates persist in the `.pwb` exactly like `ViolationCTG` does (trap 3) —
-or rows genuinely dropped.
+record**, or rows genuinely dropped. A label-keyed join silently collapses duplicates to
+whichever side wins, and `Contingency` aggregates persist in the `.pwb` exactly like
+`ViolationCTG` does (trap 3).
 
 The discriminating probe, from data you have already read:
 
@@ -3641,20 +3907,20 @@ The discriminating probe, from data you have already read:
 | `rows == 0` while `CTGViol > 0` | rows were dropped — and that device will read as causing nothing |
 | `CTGViol != CTGNBranchViol + CTGNVoltViol + CTGNInterfaceViol` | the aggregate is stale for that label |
 
-Note the guard is worth keeping but **not worth aborting on after an expensive solve** —
-report the evidence and mark the run unverified instead, or you destroy the rows you would
-need to tell these three apart.
+Keep the guard, but **do not abort on it after an expensive solve**. Report the evidence and
+mark the run unverified instead, or you destroy the rows you would need to tell these three
+apart.
 
 `LimViolCTGSpecifiedLimit` (*"If YES, Limit was specified during a contingency action. This
 Limit overrides all Limit Monitoring Settings."*) is a separate, real mechanism for a
 violation whose limit differs from the standing `LimitSet`. It read `NO` on those rows
-above, so it did not explain them — but it is not in the default field list and is worth
-reading when limits and violations disagree.
+above, so it did not explain them. It is not in the default field list; read it when limits
+and violations disagree.
 
 Do **not** deduplicate on `(label, category, element)`. Repeated-looking rows are usually
 real: four parallel circuits on one bus pair produce one contingency each, and outaging any
 one overloads the other three. That is 3 rows per label with identical bus numbers and
-*different* `LineCircuit` values — a dedup on the bus pair would silently eat them.
+*different* `LineCircuit` values, and a dedup on the bus pair would silently eat them.
 
 ### `ContingencyElement` has no `LineCircuit`
 
@@ -3673,7 +3939,7 @@ else that was probed against eight outages that provably island a bus:
 
 - `BusMinVoltageContingency == 0` is **not** an islanding signal — 1,466 of 2,000 buses read
   0.0 on an ordinary run. It means "the band was never breached in that direction for that
-  bus". (This is the same `0.0` that `n1_voltage_violations` already treats as
+  bus". (This is the same `0.0` that a per-bus N-1 voltage check treats as
   "not evaluated".)
 - All eight islanding contingencies reported `CTGSolved='YES'` with thousands of ordinary
   violations — indistinguishable from any other contingency.
@@ -3682,20 +3948,20 @@ else that was probed against eight outages that provably island a bus:
 - No `Bus Low Volts` row anywhere read near 0 pu (minimum 0.9312) — **islanded buses emit no
   violation rows at all.**
 
-If you need islanding detection, `ViolationCTG` alone will not give it to you — **and
-[lodf](../concepts/lodf.md) will, for free and without a solve.** When the LODF denominator `1 − ψ_kk → 0`
+`ViolationCTG` alone will not detect islanding, **but [lodf](../concepts/lodf.md) will, for
+free and without a solve.** When the LODF denominator `1 − ψ_kk → 0`
 there is no alternate path, i.e. outaging that branch splits the network; the math flags it
 before any solve is attempted. Measured on Synth8k: **about 3%** of outages (roughly 1 in 30), found in the
 ~6 s it takes to build the PTDF. That page reached the same conclusion from the other
-direction — *"in a PowerWorld CTG sweep, islanded buses read 0 and get skipped, so stranding
-a 138 kV pocket reports CLEAN"* — and this page is the independent confirmation of that hole
-from inside `ViolationCTG`.
+direction (*"in a PowerWorld CTG sweep, islanded buses read 0 and get skipped, so stranding
+a 138 kV pocket reports CLEAN"*); this page confirms the hole independently from inside
+`ViolationCTG`.
 
 **Correction (2026-09-24, completed 2026-09-28): islanding *is* visible after `CTGSolveAll` —
 through three checks that each catch a different set, and no single one catches all.**
 
 - **`Contingency.LoadMW` / `GenMW`** hold the load and generation cut off by each outage and are
-  non-zero only on islanding outages — these are islands PowerWorld **drops**. Checked against a
+  non-zero only on islanding outages. These are islands PowerWorld **drops**. Checked against a
   direct `CTGApply` plus re-solve of every outage on a public 40-bus synthetic case (93 of 93
   agreed). A generation-only pocket reads `LoadMW = 0`; catch it through `GenMW`.
 - **`CTG_Options.Include`** (concise `IslandViolations`) = YES, with `BGLoadMW` and
@@ -3707,7 +3973,7 @@ through three checks that each catch a different set, and no single one catches 
 
 Measured 2026-09-28 on a regional synthetic planning model. Gate an island check on MW only when
 the stranded pocket carries MW. The LODF denominator above remains the solve-free screen.
-`ViolationCTG` alone still ranks every one of these outages harmless — read the island checks
+`ViolationCTG` alone still ranks every one of these outages harmless. Read the island checks
 alongside it.
 
 ### Branch loading: read the worse end
@@ -3733,7 +3999,7 @@ an emergency criterion.
 `Contingency` also carries per-contingency aggregates PowerWorld computes itself:
 `CTGViolMaxLine`, `CTGViolMaxVolt`, `CTGViolMinVolt`, `CTGNBranchViol`, `CTGNInterfaceViol`,
 `AggrMVAOverload`, `AggrPercentOverload`. They are **not** region-filtered, so they cannot
-replace a regional study — but they are a free whole-system cross-check on a ranking.
+replace a regional study. They are still a free whole-system cross-check on a ranking.
 
 ## Provenance
 
@@ -3762,12 +4028,11 @@ tags: [powerworld, contingency, ctg, esapp, simauto, n-1]
 
 `CTGSkip` and `Delete(Contingency, <filter>)` do two different jobs and are
 routinely confused. **`CTGSkip` partitions a set without shrinking it** — every
-contingency stays in the case and the skipped ones are simply not solved this
-pass, which is how the parallel solver gives each worker a slice. **`Delete` with
+contingency stays in the case and the skipped ones are not solved this pass,
+which is how the parallel solver gives each worker a slice. **`Delete` with
 a violation filter is the only thing that actually reduces the set**, and it is
 destructive, so it needs a backup first. This page collects the mechanism, the
-three places it is used, and the three silent failures around it; before this,
-`CTGSkip` was mentioned on five pages and owned by none. **A parallel sweep driver overwrites
+three places it is used, and the three silent failures around it. **A parallel sweep driver overwrites
 `CTGSkip` in every worker**, so for a parallel loop keep every label in the case and scope by the
 active-label list, never by `Delete`.
 
@@ -3787,7 +4052,7 @@ active-label list, never by `Delete`.
 | solve part of the set now, keep all of it | `CTGSkip` = `YES` / `NO` | no |
 | permanently drop contingencies that did nothing | `Delete(Contingency, "<filter>")` | **yes** |
 
-**"Are you reducing the ctg set by setting SKIP to YES?"** — no. Setting
+**"Are you reducing the ctg set by setting SKIP to YES?"** No. Setting
 `CTGSkip="YES"` excludes a contingency from *this* `CTGSolveAll` and leaves it in
 the case. The set is the same size afterwards. That is the right tool for
 partitioning and the wrong tool for reduction.
@@ -3856,8 +4121,8 @@ Step 3 above assumes `Delete` is what makes later rounds cheaper. **For a chunke
 it is not, and `Delete` buys nothing there.** A parallel driver of the kind in
 [parallel-contingency-solve](../concepts/parallel-contingency-solve.md) reads every label off the
 `Contingency` object itself, and each worker **overwrites `CTGSkip`** to scope itself to its own
-chunk. A skip list saved in the `.pwb` speeds up a serial solve and the GUI, and does nothing at
-all here.
+chunk. A skip list saved in the `.pwb` speeds up a serial solve and the GUI, and does nothing
+here.
 
 Scoping the parallel path happens through **its active-label argument or not at all**. Two
 consequences:
@@ -3909,10 +4174,10 @@ there.
 
 - **An unquoted action string in a hand-written `.aux`.** Written bare as
   `BRANCH 1001 1064 1 OPEN` instead of quoted, a 691-contingency file loads as
-  **one** contingency — and the load **reports success**. Always quote the action.
+  **one** contingency, and the load **reports success**. Always quote the action.
 - **`SaveContingencies` is not a script command** ("Unknown script command"). Use
-  `SaveData(<path>,AUX,Contingency,[CTGLabel,CTGSkip],[CTGElement],"",[],[],YES);`
-  — the filter argument is a bare string and the sort lists must be bracketed.
+  `SaveData(<path>,AUX,Contingency,[CTGLabel,CTGSkip],[CTGElement],"",[],[],YES);`.
+  The filter argument is a bare string and the sort lists must be bracketed.
 - **A missing key field on the write-back.** `change_parameters_multiple_element_df`
   needs the object's key field present or the `CTGSkip` change does nothing and
   says nothing.
@@ -3984,7 +4249,7 @@ some forty overloads went to one with rating increases and a handful of parallel
 
 An action costs the number of **devices it adds**, gross, never netted against removals. A
 settings change costs 0 no matter how many units it touches. A rating change costs 0 because no
-equipment is bought. This is why the ladder order below is not a preference: it is the objective.
+equipment is bought. The ladder order below is therefore the objective itself.
 
 | cost | meaning |
 |---|---|
@@ -4020,20 +4285,18 @@ Undervoltage and overvoltage need separate ladders because the corrective sign i
 
 **V0 goes first, ahead of the setpoints.** A tap is a ratio, not a source, so it only works where
 the *other* side has headroom, but where it does it costs zero and is almost perfectly local
-(measured max |dV| of 1e-5 on every untouched bus). It must precede V1 because on a case with
-generator step-ups modelled, the generator terminals are real buses, so raising every setpoint
-raises all of them and blocks V1 outright; fixing the taps first is what makes V1 available at all.
-Measured: it cleared over a dozen GSU terminals of 5–12% overvoltage for zero devices. On a fleet
+(measured max |dV| of 1e-5 on every untouched bus). It must precede V1. On a case with generator
+step-ups modelled, the generator terminals are real buses, so raising every setpoint raises all of
+them and blocks V1 outright; fixing the taps first makes V1 available. Measured: it cleared over a dozen GSU terminals of 5–12% overvoltage for zero devices. On a fleet
 whose LTCs are already live, re-pointing the regulated bus beats writing a fixed tap, and **a
 mis-pointed LTC can cause the violation next to it**: one ran its tap to the limit holding a healthy
 bus and drove the other side to 1.126 pu. See [ltc-regulation-checks](ltc-regulation-checks.md).
 
-**Removal is ordered ahead of adding the opposite sign, and the reason generalises**: *adding a
-reactor to cancel an unneeded capacitor is two devices doing the work of zero.* Any ladder that can
-both add and remove must try removal before it adds the opposite sign. Undervoltage is usually the
-common direction after contingencies (measured 2026-09-02 on one N-1 sweep of a ~9k-bus synthetic planning model: about eight
-undervoltage rows for
-every overvoltage row), so do not build the removal rung for capacitors only.
+**Removal comes before adding the opposite sign.** Adding a reactor to cancel an unneeded
+capacitor is two devices doing the work of zero, so any ladder that can both add and remove must try
+removal first. Undervoltage is usually the common direction after contingencies (measured 2026-09-02
+on one N-1 sweep of a ~9k-bus synthetic planning model: about eight undervoltage rows for every
+overvoltage row), so do not build the removal rung for capacitors only.
 
 Two eligibility rules that look alike and are opposite:
 
@@ -4046,7 +4309,7 @@ Two eligibility rules that look alike and are opposite:
 
 Check `GenVoltSet` before anything else. On the measured case **every closed unit sat at exactly
 1.0400**, identical to the normal high limit, so every bus picking up line charging floated
-*above* it. The system was not randomly high; **it was scheduled high.** Walking 1.04 → 1.02
+*above* it. **The system was scheduled high.** Walking 1.04 → 1.02
 across all five dispatches took the emergency overvoltages from twelve to two, at zero cost.
 
 **Walk it, do not jump it.** One dispatch *failed to converge* at 1.03 and 1.02 as a single write,
@@ -4060,8 +4323,7 @@ buses fell under 0.94 pu and two under 0.90. The usable window on that case was 
 **It runs in both directions.** A case **already** walked down with **zero overvoltages** has
 headroom to walk back **up**, and that is again the free lever. Measured 2026-09-04: the entire N-0
 problem was one undervoltage at 0.8986 pu, and one 0.0025 step up cleared it for zero devices. **It
-was still declined, for two measured reasons**, which is the more useful half of the lesson, because
-"free" is not the same as "best":
+was still declined, for two measured reasons.** Free is not the same as best:
 
 1. **The margin was a rounding.** 0.9006 against a 0.90 limit is +0.0006 pu. One 25 MVAr capacitor
    at the violating bus gave **+0.0188, thirty times more**, for one device.
@@ -4095,8 +4357,8 @@ is mandatory; a zero-width band cannot regulate.
 ### Rung 3: capacitor removal. Sound idea; usually no target
 
 Removing a capacitor at a bus that is overvoltage in several dispatches has **negative device
-count**, the only such lever. Screened it and found **zero candidates**, for an instructive reason:
-in the overvoltage dispatch the controller had already backed them off (at peak almost every
+count**, the only such lever. Screened it and found **zero candidates**, because in the
+overvoltage dispatch the controller had already backed them off (at peak almost every
 capacitor was dispatched; at minimum load almost every one sat at zero). Screen it anyway, because it
 is cheap, but expect nothing where the fleet regulates.
 
@@ -4122,7 +4384,7 @@ unbounded free action. Raising it to make a number look better is the wrong move
 **Evaluate every cap cumulatively, against a write-once baseline the case carries.** If the
 denominator is the rating the *previous* bump wrote, the cap measures its own output: ×1.33 applied
 three times is ×2.36 with every pass reporting compliance. Store the original rating once and judge
-against it. This is not hypothetical: two passes on one case lineage (2026-09-03 and 2026-09-14)
+against it. Two passes on one case lineage (2026-09-03 and 2026-09-14)
 both measured against the current rating, and tracing the lineage showed they had touched disjoint
 branch sets, so nothing compounded. That was luck, not a check.
 
@@ -4211,7 +4473,7 @@ cheap to measure, so measure it.
 **Diagnose a shunt fleet by measurement, not by its settings.** Two wrong diagnoses came before the
 right one: "the reactors are exhausted" (they read 100% dispatched at EHV, but that was a
 consequence of the 1.04 setpoints, not a limit) and "the controller is disabled" (`SSAutoControl`
-read `None`). **Both were wrong. The shunts did regulate**: the same fleet ran tens of GVAr
+read `None`). **The shunts did regulate**: the same fleet ran tens of GVAr
 capacitive at summer peak (over twenty) and over ten GVAr inductive at minimum load, tracking load. Writes of
 `SSAutoControl = YES` read back `None` over raw SimAuto (suspected, not confirmed). Judge the fleet by whether its
 dispatch moves, not by a settings field.
@@ -4284,8 +4546,8 @@ planning model with about eleven thousand contingencies: a few dozen actions and
 cut the violated elements by about a quarter in one pass.
 
 The headline rule: **an element is the unit, a sweep is the round, and every number is measured
-rather than asserted.** This toolchain's characteristic failure is not an error, it is a
-confident smaller answer. **The playbook** section is the eight-step order of play that took the
+rather than asserted.** This toolchain fails by returning a confident, smaller answer, not an
+error. **The playbook** section is the eight-step order of play that took the
 last residue to a clean full N-1 (2026-09-24).
 
 ## Connections
@@ -4373,9 +4635,9 @@ overloads do not**: measured across ~150 thermal elements, the median required m
 by default**. Relaxing the cap by one notch cut the purchased circuit count by roughly **3×**,
 and by three notches by roughly **10×**.
 
-**So the cap is not a tuning knob, it is the answer.** Set it against the regime you are in,
-record it as a decision, and report the sensitivity rather than the single number. The reader
-needs to see what the choice costs.
+**The cap is the answer, not a tuning knob.** Set it against the regime you are in, record it
+as a decision, and report the sensitivity rather than the single number, so the reader sees what
+the choice costs.
 
 ### Fixing the highest voltage first does not relieve the rest
 
@@ -4385,9 +4647,8 @@ sub-transmission ones. **Measured, on this case, it does not.** After clearing e
 percentage points**, and the single best improvement anywhere was under one point, on a branch
 still over its limit.
 
-EHV fixes here were **electrically local**. The sub-transmission problem is its own problem. This
-is a negative result and it is worth keeping: it is cheap to assume the cascade exists and
-expensive to plan around it.
+EHV fixes here were **electrically local**. The sub-transmission problem is its own problem. It
+is cheap to assume the cascade exists and expensive to plan around it.
 
 ### A parallel circuit is counted across the corridor
 
@@ -4416,8 +4677,7 @@ a median of ~37%, with the impedance consistently implying a **larger** conducto
 does. Either the ratings are derate artifacts, in which case most sub-transmission thermal
 violations are reporting artifacts rather than real overloads, or the ratings are correct
 because the limiting element is terminal equipment rather than the conductor, which is ordinary
-in a real utility model. **This has not been settled and must not be assumed either way.** The
-pattern also has a hard boundary: at EHV the impedances matched no catalog conductor at all, so
+in a real utility model. **Do not assume either way.** The pattern also has a hard boundary: at EHV the impedances matched no catalog conductor at all, so
 the ratio handle is sub-transmission-only.
 
 A reconductor still **derives R/X/C by ratio** and never recomputes them absolutely, and a
@@ -4780,8 +5040,8 @@ Whether that is a defect depends on the criterion the design is judged against:
   [finding-and-fixing-radial-by-n1-pockets](finding-and-fixing-radial-by-n1-pockets.md)
   already treats such a load as consequential load loss by convention.
 
-Its outage can show **no thermal violation at all**, because the island carries no flow. So
-this is found by Check 1's connectivity and served-MW test, never by an overload screen. In
+Its outage can show **no thermal violation at all**, because the island carries no flow.
+Check 1's connectivity and served-MW test finds it; an overload screen never does. In
 the report, name the transformer, the load behind it, and the criterion you judged against.
 Under a full-delivery brief, say that duplicating the lines did not duplicate the path; under
 TPL-001 P1 alone, report it as consequential load loss, not a violation.
@@ -4857,8 +5117,7 @@ judgement), the device by its key fields, and the number. For example:
 > outages; the single transformer below them does not.
 
 Then say what was checked and passed, which base-case problems were excluded, and that
-nothing was edited or saved. Leave every fix to the designer. A review that rewrites the
-design has stopped being a review.
+nothing was edited or saved. Leave every fix to the designer.
 
 
 ---
@@ -4878,11 +5137,11 @@ tags: [esapp, powerworld, simauto, savecase, runscriptcommand, pwb]
 ## Abstract
 
 How to write an open PowerWorld case back to disk as a `.pwb` so it can be reopened and inspected in
-the GUI. The headline gotcha: **do NOT use the SimAuto `SaveCase` COM function** (`pw.esa.SaveCase(...)`)
-— on our setup it returns success (`('',)`, no error raised) yet **silently writes no file**. Use the
-PowerWorld aux **script** command `SaveCase` via `RunScriptCommand` instead, which actually writes.
-The second trap: the aux `SaveCase` takes **exactly two parameters** `(FileName, FileType)` — adding a
-third overwrite/`YES` arg raises `Invalid number of parameters`. All behavior below was live-verified
+the GUI. **Do NOT use the SimAuto `SaveCase` COM function** (`pw.esa.SaveCase(...)`). It returns
+success (`('',)`, no error raised) yet **silently writes no file**. Use the PowerWorld aux **script**
+command `SaveCase` via `RunScriptCommand` instead, which actually writes. The second trap: the aux
+`SaveCase` takes **exactly two parameters** `(FileName, FileType)`, and a third overwrite/`YES` arg
+raises `Invalid number of parameters`. All behavior below was live-verified
 against the installed package. **On the Simulator 25 build dated 2026-09-20, `PWB` through `PWB24`
 failed and `PWB21` saved but silently dropped every generator's PFW weather model; the build dated
 2026-09-28 fixed it.** Plain `PWB` writes the newest format, which Simulator 24 cannot open, so save
@@ -4908,17 +5167,17 @@ assert os.path.exists(out), "SaveCase reported success but wrote nothing"
 
 - `FileType` is the bare keyword `PWB` (unquoted also works; `"PWB"` is accepted too). This saves the
   current binary format for the running Simulator version.
-- The command **overwrites** an existing file silently — there is no separate overwrite flag.
-- Use an **absolute** path (`os.path.abspath`). The SimAuto server is a separate process; a relative
-  path resolves against *its* working directory — the PowerWorld **install folder** — not your
-  script's. Symptom when you forget: `RunScriptCommand: Exception: Access is denied` (PowerWorld can't
+- The command **overwrites** an existing file silently. There is no separate overwrite flag.
+- Use an **absolute** path (`os.path.abspath`). The SimAuto server is a separate process, so a
+  relative path resolves against *its* working directory (the PowerWorld **install folder**), not
+  your script's. Symptom when you forget: `RunScriptCommand: Exception: Access is denied` (PowerWorld can't
   write into its own program dir). A relative-path arg from a README example or CLI is the usual cause;
   `abspath` the output path inside any save wrapper so a caller can pass a relative path safely.
 
 ### Why not `pw.esa.SaveCase(...)` (the COM function)
 
 esapp exposes a COM wrapper `SaveCase(FileName, FileType="PWB", Overwrite=True)` in
-`saw/case_actions.py`. It looks right and raises nothing, but on this machine it is a **silent no-op**:
+`saw/case_actions.py`. It looks right and raises nothing, but it is a **silent no-op**:
 
 ```python
 pw.esa.SaveCase(out, "PWB", True)     # returns None, no exception
@@ -4927,9 +5186,9 @@ os.path.exists(out)                    # -> False.  No file. No error.
 ```
 
 Because `_com_call` only raises when SimAuto returns a non-empty error string, a "success" that writes
-nothing sails straight through. **Always `assert os.path.exists(out)` after any save** — a save that
-"worked" but produced no file is the failure mode to guard against, mirroring the silent-no-op
-discipline in [adding-devices-esapp](adding-devices-esapp.md).
+nothing sails straight through. **Always `assert os.path.exists(out)` after any save.** A save that
+"worked" but produced no file is the failure mode to guard against, the same silent no-op as in
+[adding-devices-esapp](adding-devices-esapp.md).
 
 ### The 2-parameter rule (the other silent trap)
 
@@ -4941,9 +5200,8 @@ The aux script command signature is `SaveCase(FileName, FileType);`. Live-probed
 | `SaveCase("out.pwb", "PWB");` | ✅ file written |
 | `SaveCase("out.pwb", PWB, YES);` | ❌ `RunScriptCommand: Error in script action validation: Invalid number of parameters.` |
 
-So the aux command does not take an overwrite argument — it always overwrites. (This differs from the
-COM function's 3-arg `(FileName, FileType, Overwrite)` shape, which is another reason the two are easy
-to confuse.)
+The aux command takes no overwrite argument; it always overwrites. The COM function's 3-arg
+`(FileName, FileType, Overwrite)` shape differs, which makes the two easy to confuse.
 
 ### Simulator 25 builds: which format keyword writes
 
@@ -4995,21 +5253,22 @@ confirmed (build 2026-09-25): a script-form `SaveCase` kept the PFW models but d
 weather hours and the unit selections. Reload the weather after reopening rather than trusting the
 saved file to carry it ([timestep-simulation-setup](timestep-simulation-setup.md)).
 
-A path bug worth knowing: building the path in a shell string with `\\$var` turns into a literal
+A path bug: building the path in a shell string with `\\$var` turns into a literal
 `$var`, and SaveCase then reports *"Windows has prevented us from writing to the file"*. That
 message means a bad path as often as a permission problem; print the path before blaming access.
 
 ### Typical use: save a solved design so a human can open it
 
-Open the base case, apply a design, solve, then save — the pattern for handing a
+Open the base case, apply a design, solve, then save. This is the pattern for handing a
 reviewer a case they can open:
 
 ```python
-pw = tep.open_case(scenario_path)
+# open_case / set_target_loads / apply_design / solve_dcopf stand for your own study helpers
+pw = open_case(scenario_path)
 try:
-    tep.set_target_loads(pw)
-    tep.apply_design(pw, design)     # CreateData buses/branches/loads — see methods/adding-devices-esapp.md
-    tep.solve_dcopf(pw)
+    set_target_loads(pw)
+    apply_design(pw, design)     # CreateData buses/branches/loads — see methods/adding-devices-esapp.md
+    solve_dcopf(pw)
     out = os.path.abspath(r"C:\...\Outputs\Synth2k_scenarioA.pwb")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     pw.esa.RunScriptCommand(f'SaveCase("{out}", PWB);')
@@ -5021,7 +5280,7 @@ finally:
 Saving before `pw.close()` captures the in-memory edits (new devices + solved state); the reopened
 `.pwb` shows exactly what was built.
 
-> House rules honored: drive SimAuto via `esapp` `RunScriptCommand` (not raw `esa`, not the flaky COM
+> Rules this page follows: drive SimAuto via `esapp` `RunScriptCommand` (not raw `esa`, not the flaky COM
 > `SaveCase`); verify the artifact exists before claiming success (see [esapp](../concepts/esapp.md)).
 
 
@@ -5043,10 +5302,9 @@ tags: [weather, pww, era5, hrrr, noaa, python, client, download]
 
 `TeamOverbyeWeather` is a pip-installable Python client for the Team Overbye weather
 portal. One call downloads a weather dataset, crops it to a region, and crops it to a
-time window, returning `.pww` files ready for PowerWorld. This is the kit's front door
-for getting the `.pww` files PowerWorld's TimeStep feature consumes, and the **one part
-that needs no PowerWorld licence** — the client, the PWW reader, and the cropping tools
-are pure Python. Verified against version 0.4.0; the `bbox` order and the `download()`
+time window, returning `.pww` files ready for PowerWorld's TimeStep feature. It is the
+**one part of the kit that needs no PowerWorld licence**: the client, the PWW reader, and
+the cropping tools are pure Python. Verified against version 0.4.0; the `bbox` order and the `download()`
 signature were re-checked against 0.4.2's installed source on 2026-10-19.
 
 ## Connections
@@ -5076,11 +5334,11 @@ print(files)   # [PosixPath('weather/era5_texas_2021-02.pww')]
 ```
 
 `download()` fetches, crops to the region, and crops to the time window server- or
-client-side as appropriate, then writes `.pww`. Everything else on this page is detail.
+client-side as appropriate, then writes `.pww`.
 
 ### What data is available
 
-Do not guess source or type names — ask the server:
+Do not guess source or type names. Ask the server:
 
 ```python
 client.sources()          # ['era5', 'extreme', 'hrrr', 'noaa']
@@ -5124,8 +5382,8 @@ client.region_ids("states")         # ['AL', 'AK', 'AZ', 'AR', 'CA', ...]
 ```
 
 `bbox` is `(lat_max, lon_min, lat_min, lon_max)`: **north, west, south, east**, in client
-0.4.2. West longitudes are negative. This is not the min-then-max order most libraries use,
-and getting it wrong fails two different ways:
+0.4.2. West longitudes are negative. Most libraries use min-then-max order instead, and
+getting it wrong fails two different ways:
 
 - `download()` checks the order and raises `ValueError: bbox (...) is inverted`.
 - `pww_io.crop_to_bbox` and `localcrop.crop_file` take the same order but **do not check
@@ -5239,10 +5497,123 @@ then spend a long time on stations you do not care about.
 
 ### What this client is not
 
-It serves the Team Overbye portal specifically. It is not a general ERA5 or HRRR client
-— for raw upstream access, go to the ERA5, HRRR or NOAA services directly. Its value is that the region crop,
-the time crop, and the PWW conversion are already done, which is normally the tedious
-part.
+It serves the Team Overbye portal only. For raw upstream access, go to the ERA5, HRRR or
+NOAA services directly. What it saves you is the region crop, the time crop, and the PWW
+conversion, which are normally the tedious part.
+
+
+---
+
+# ==== timestep-dispatch-into-design-bands.md ====
+
+---
+type: method
+domain: synthetic-grid
+topic: timestep
+aliases: [timestep-dispatch-into-design-bands, weather-based-dispatch, scaling-timestep-dispatch, renewable-dispatch-from-timestep]
+tags: [timestep, dispatch, pfw, powerworld, synthetic-grid, curtailment, agc]
+---
+
+# Method: Turning time-step output into a scenario dispatch that meets the design bands
+
+## Abstract
+
+How to dispatch wind and solar unit by unit from a PowerWorld time-step run, and how to scale that pattern
+into the scenario's design bands when no real hour fits. Covers the clock trap, the scaling rule, batteries,
+rebalancing, AGC, and what the new dispatch exposes. Read before building any renewable scenario dispatch.
+
+## Connections
+
+- **Up:** [Home](../index.md)
+- **Across:** [timestep-simulation-setup](timestep-simulation-setup.md) (getting the per-unit output) ·
+  [applying-a-dispatch-to-a-case](applying-a-dispatch-to-a-case.md) (writing the result into the case) · [pww-data](../concepts/pww-data.md) ·
+  [opf-preconditions](../concepts/opf-preconditions.md) (AGC fields) · [agc-participation-factors](../concepts/agc-participation-factors.md) (step 7 in full)
+
+## Content
+
+### The symptom this fixes
+
+A fleet-level dispatch ("wind at 45% of fleet") filled **largest unit first, each to 100%** gives the right total
+and an unrealistic split: the online units are exactly the N largest, every one at maximum, the rest off. Test
+for it directly: sort a fuel's units by MWMax and check whether the online set is the top N. On a ~9k-bus synthetic case (measured
+2026-10-16) it was, in three of five scenarios, with one farm on and a farm barely smaller off. Offline units in
+such a case are not outages, weather or curtailment, and a reviewer will ask which they are.
+
+### Steps
+
+1. **Get each unit's output on PowerWorld's own clock.** Run the time-step simulation with a PFW model on every
+   wind and solar unit and save `GenMW` per unit ([timestep-simulation-setup](timestep-simulation-setup.md)). Take times from the raw export's
+   column 0 (Excel serial days, UTC). Check any pipeline's own CSV time labels against column 0 before trusting them: one
+   pipeline's ran 7 h early inside US DST and 6 h outside. Load data from an ISO is usually local hour ending;
+   convert it to UTC before joining. A wrong join pairs the load with weather from another hour; measured
+   2026-10-16, every scenario's renewables on that case came from about 2 h after its load hour, and the "no solar"
+   scenario's load hour still had sun.
+2. **Look for a real hour first.** Over a year of per-unit output, compute fleet wind % and solar % (output over
+   the whole fleet's MWMax) and the load % for the same instant, and keep the in-season hours that sit inside
+   all bands. Prefer the hour whose fleet totals are closest to what the case already carries, so thermal barely
+   moves. Expect few or none for demanding scenarios: on a 2025 search, one scenario had 0 hours, one had 2.
+3. **When no hour fits, scale the pattern.** Scenario designs usually ask for *statistically representative*
+   conditions, not a copy of a historical hour, so a real hour's weather may set the unit-by-unit pattern and
+   the fleet total may be scaled into the band. Per fuel:
+   - target `T` = a fleet MW inside the band (keeping the case's current total, if it is in band, leaves the
+     balance and thermal dispatch untouched);
+   - unit MW = `min(k × w_i, Pmax_i)`, where `w_i` is the unit's weather output (negative clipped to 0) and one
+     factor `k` per fuel is found by bisection so the units sum to `T` (water-filling: a capped unit's excess
+     spreads to the units that still have room);
+   - a unit with zero weather output stays off. If the units with output cannot reach `T` even at their maxima,
+     report the shortfall instead of turning on dark units.
+   - `k < 1` is **curtailment**: report each unit's held-back MW (weather minus dispatched). `k > 1` is allowed but
+     say how large; at roughly 1.5× and above, which farms are windy rests on the weather file more than on the
+     target, so verify the weather first.
+   - The band's headroom is also a reserve lever: when every conventional unit is already online, raising wind
+     inside its band and taking the MW off gas is how thermal reserve gets freed.
+4. **Batteries have no weather.** Run every battery at the same design % of its own MWMax. A design 0% means all
+   open, **including a battery that sits on the slack bus**: PowerWorld splits the slack's swing among that bus's
+   units, so a slack-bus battery discharges whenever the slack moves (on the ~9k-bus case it ran 79–200 MW in scenarios
+   designed for 0%).
+5. **Rebalance the net change on thermal, never on the slack.** Wind and solar scaled to the old total change
+   nothing; the battery change does. Move that MW onto or off the online non-slack thermal units, pro rata to
+   their room (above GenMWMin to reduce, below GenMWMax to raise). A slack unit near its minimum cannot absorb
+   hundreds of MW.
+6. **Write, read back, solve, save** as in [applying-a-dispatch-to-a-case](applying-a-dispatch-to-a-case.md): write `GenStatus` and `GenMW` with
+   the key fields, read them back (a write without keys no-ops silently), warm-solve, save to a temporary file and
+   swap it in, then reopen cold in a fresh process and compare.
+7. **Turn on AGC so contingencies share lost MW.** Set `GenAGCAble = YES` on dispatchable synchronous units (not
+   wind, solar, batteries, or 0 MW condensers); run PowerWorld's `SetParticipationFactors(MAXMWRAT, 0, SYSTEM);`
+   and set `CTG_Options.UseAreaPartsMakeUpPower` to `Gen Part Factors`. `MAXMWRAT` stores MWMax in per unit on the
+   100 MVA base (150 MW becomes 1.5); only ratios matter. With AGC flags on but every factor 0, lost MW still lands
+   on the slack alone. This matches the Synth2k series 24 and ACTIVSg10k convention (surveyed read-only
+   2026-10-18; one other public case shipped all factors at 0). The base case does not move.
+
+### What the new dispatch exposes
+
+Measured 2026-10-18 on the ~9k-bus case, five scenarios, warm AC solve after applying the scaled dispatch:
+
+- **Undersized generator step-ups.** Spreading output over every farm runs small units that the largest-first
+  fill never touched; base-case overloads were almost all their step-up transformers, at roughly 1.2–2× rating.
+  Check each step-up's rating against its unit's MVA before solving.
+- **Renewables with a non-zero minimum** fall below it at low weather output. Wind and solar minimums should be 0.
+- **Light-load voltages rise.** In the low-load, high-renewable scenario, buses above 1.05 pu went from about 20
+  to about 150, mostly at 345 kV, once output was spread across the fleet.
+- **Losses move**, so the slack moves; check it against its limits after the solve.
+
+### Check the weather file before trusting a season
+
+Compare the time-step run's monthly fleet capacity factor with an independent source before using a season.
+Measured 2026-10-18 on an ERA5 PWW for 2024–2025: summer fleet wind was 5–7% against 26–38% in an
+independent forecast set; the file's 100 m wind read 2–4 m/s at the wind sites in summer against 6–11 m/s in
+other seasons, every unit dropped alike (so not the models), and October–December matched the forecast set
+exactly. **Cause found 2026-10-19:** that file's grid is scrambled for nine consecutive months; the low summer
+wind was a symptom, not a wind-model problem. Run the sunrise/sunset geography check in [pww-data](../concepts/pww-data.md) (check 3)
+on every month a scenario draws from. Any scenario whose pattern comes from a failing month is provisional.
+
+### Checks before calling it done
+
+- every fuel's fleet % inside its band, from the saved file, not from the plan;
+- no unit above MWMax, no open unit carrying MW, and every unit below its minimum listed (not clamped);
+- curtailment and shortfall reported per scenario in MW;
+- base-case overloads and voltages compared before and after, and the slack inside its limits;
+- AGC units carry non-zero participation factors, and make-up power reads `Gen Part Factors` on a cold reopen.
 
 
 ---
@@ -5261,24 +5632,24 @@ tags: [powerworld, simauto, timestep, simulation, weather, renewables, pww]
 
 ## Abstract
 
-How to drive PowerWorld's TimeStep simulation — turning `.pww` weather files into hourly solar/wind generation CSVs. Covers the prerequisites a case must satisfy per renewable generator (`GenFuelType` containing WND or SUN, valid Lat/Lon, a `TSPFWModelString` PFW model), one pipeline's optional ISO-labelling step, and the pipeline's worker-function sequence. This is step 2 of this reading sequence; for the PWW weather files see [pww-data](../concepts/pww-data.md).
+How to drive PowerWorld's TimeStep simulation, turning `.pww` weather files into hourly solar/wind generation CSVs. Covers the prerequisites a case must satisfy per renewable generator (`GenFuelType` containing WND or SUN, valid Lat/Lon, a `TSPFWModelString` PFW model), one pipeline's optional ISO-labelling step, and the pipeline's worker-function sequence. This is step 2 of this reading sequence; for the PWW weather files see [pww-data](../concepts/pww-data.md).
 
-> 🔧 **Writing the backend code?** → **[time-step-simulation-backend](../references/time-step-simulation-backend.md)** has the full worker-function call sequence, the required `TIMESTEPSaveSelectedModifyStart/Finish` wrapper, the `_GEN_PARAM` field list, and the key-field rule. That page is the *rebuild-the-code* reference; this page is the *write-it* guide.
+> **Writing the backend code?** [time-step-simulation-backend](../references/time-step-simulation-backend.md) has the full worker-function call sequence, the required `TIMESTEPSaveSelectedModifyStart/Finish` wrapper, the `_GEN_PARAM` field list, and the key-field rule.
 
 ## Connections
 
 - **Up:** [Home](../index.md) · [timestep-simulation](../concepts/timestep-simulation.md)
-- **Deeper (backend code):** [time-step-simulation-backend](../references/time-step-simulation-backend.md) — exact call sequence, field lists, gotchas (read this for the backend, not just running it)
-- **Across:** [timestep-simulation](../concepts/timestep-simulation.md) · [grid-workshop-auto-pfw](../concepts/grid-workshop-auto-pfw.md) (attaching the PFW models) · [esapp](../concepts/esapp.md) · step 2 of this reading sequence — prev: [esapp-overview](esapp-overview.md) · next: [pww-data](../concepts/pww-data.md) · final: [how-to-analyze-results](how-to-analyze-results.md)
+- **Deeper (backend code):** [time-step-simulation-backend](../references/time-step-simulation-backend.md) (exact call sequence, field lists, gotchas)
+- **Across:** [timestep-simulation](../concepts/timestep-simulation.md) · [auto-pfw-scripts](../concepts/auto-pfw-scripts.md) (attaching the PFW models) · [esapp](../concepts/esapp.md) · step 2 of this reading sequence: prev [esapp-overview](esapp-overview.md) · next: [pww-data](../concepts/pww-data.md) · final: [how-to-analyze-results](how-to-analyze-results.md)
 
 ## Content
 
 **Step 2 of this reading sequence.** ← prev: [esapp-overview](esapp-overview.md) · next: [pww-data](../concepts/pww-data.md).
 The concept behind it: [timestep-simulation](../concepts/timestep-simulation.md).
 
-This is the how-to for **writing** a PowerWorld TimeStep simulation — code that drives PowerWorld through SimAuto to turn weather files (`.pww`) into hourly solar/wind generation CSVs. It is *not* a transient-stability study.
+TimeStep simulation is *not* a transient-stability study.
 
-> **Library note — prefer `esapp` over `esa`.** Older repos import the standalone `esa` (Easy SimAuto) package. `esapp` (ESA++) is the updated, better-documented version of the same thing — write esapp. Every `RunScriptCommand` / `TimeStep*` script command is identical via `pw.esa.RunScriptCommand(...)`, and the bracket interface (`pw[Type, fields]`, `pw[Type] = df`) replaces esa's `GetParametersMultipleElement` / `change_parameters_multiple_element_df`. See [esapp-overview](esapp-overview.md). (Library choice only — unrelated to the TimeStep-vs-Transient-Stability distinction.)
+> **Library note: prefer `esapp` over `esa`.** Older repos import the standalone `esa` (Easy SimAuto) package. `esapp` (ESA++) is the updated, better-documented version of the same thing, so write esapp. Every `RunScriptCommand` / `TimeStep*` script command is identical via `pw.esa.RunScriptCommand(...)`, and the bracket interface (`pw[Type, fields]`, `pw[Type] = df`) replaces esa's `GetParametersMultipleElement` / `change_parameters_multiple_element_df`. See [esapp-overview](esapp-overview.md).
 
 ### 0. Prerequisites
 
@@ -5286,7 +5657,7 @@ PowerWorld needs, on each renewable generator: a `GenFuelType` that contains `WN
 or `SUN` (the case labels them `WND (Wind)`, `SUN (Solar)`), valid coordinates, and a
 PFW model string (`TSPFWModelString` longer than 2 characters). A unit with no PFW model
 runs and reads 0 MW for the whole run; attach models with
-[grid-workshop-auto-pfw](../concepts/grid-workshop-auto-pfw.md). Coordinates: on both public
+[auto-pfw-scripts](../concepts/auto-pfw-scripts.md). Coordinates: on both public
 synthetic cases probed 2026-09-30 the unit's own `Gen.Latitude` read blank and the substation's
 `Gen.Latitude:1` / `Longitude:1` (the field export's "Substation Latitude") were set. That
 TimeStep then reads the substation pair is not verified in the kit.
@@ -5299,14 +5670,13 @@ not read it. Skip this section unless your post-processing needs the label.
 
 The pipeline's ISO-assignment step does a geopandas spatial join
 of every generator's lat/long against ISO-region shapefiles (nearest-neighbor for
-units outside any boundary) and writes the ISO assignment back into the case. This
-populates the ISO that later appears as the first metadata header row. Run it once
-per case; skip it if the case already has ISO assignments.
+units outside any boundary) and writes the ISO assignment back into the case, where it
+later appears as the first metadata header row. Run it once per case; skip it if the
+case already has ISO assignments.
 
-> **Resolved:** the ISO-assignment step writes
-> **only `CustomString:2`** (the ISO region via geopandas spatial join). It does
+> The ISO-assignment step writes **only `CustomString:2`**. It does
 > **not** touch `TSPFWModelString`. PFW model strings must already be in the case;
-> [grid-workshop-auto-pfw](../concepts/grid-workshop-auto-pfw.md) attaches them, and the
+> [auto-pfw-scripts](../concepts/auto-pfw-scripts.md) attaches them, and the
 > case-auditor's `timestep` profile counts which units still lack one.
 
 ### 2. What your code does (the worker function)
@@ -5316,7 +5686,7 @@ per case; skip it if the case already has ISO assignments.
 2. Pulls generator metadata (`GetParametersMultipleElement('gen', ...)` / `pw[Gen, fields]`).
 3. Loads weather: `TimeStepLoadPWW("...","Weather Only")` then
    `TimeStepAppendPWW(...)` for any additional files. On Simulator 25 (builds dated 2026-09-20
-   and 2026-09-25) the plain load fails with `Error With Loading PWWFile`; use
+   and 2026-09-25) the plain load fails with `Error With Loading PWWFile` (suspected PowerWorld issue, not yet confirmed: glitch `2026-10-20-timestep-loadpww-plain`); use
    `TimeStepLoadPWWRange` over the file's full span and assert the timepoint count (see
    [pww-data](../concepts/pww-data.md)).
 4. Selects renewables (`GenFuelType` contains `WND|SUN`) and marks them
@@ -5325,8 +5695,8 @@ per case; skip it if the case already has ISO assignments.
    `TimeStepSaveFieldsSet(GEN, [BGGenMWFuelTypeGeneric:10, BGGenMWFuelTypeGeneric:12], SELECTED)`.
 6. Runs `TimeStepDoRun()` and exports via `TimeStepSaveResultsByTypeCSV(gen, ...)`.
 
-> The simulation is **generator-level** by construction — `TimeStepSaveFieldsSet`
-> targets `GEN`. Area/substation-level output is a noted future extension.
+> The simulation is **generator-level** by construction: `TimeStepSaveFieldsSet`
+> targets `GEN`. Area/substation-level output is not covered here.
 
 ### 3. Inputs and outputs
 
@@ -5365,8 +5735,8 @@ Two single-file HTML pages that put a violation **on the map** instead of in a t
 `violation-map` skill's engine (`skills/violation-map/engine/`). The **voltage page** shows the
 substations around a set of out-of-band buses, every line in its own kV colour, a click-to-zoom
 problem list, a one-line of any substation, the **reactive balance** inside the radius (line
-charging against generators absorbing and reactors, with the *room* each has left), and —
-optionally — measured candidate fixes with a Before/After switch and a scenario × outage
+charging against generators absorbing and reactors, with the *room* each has left), and
+optionally measured candidate fixes with a Before/After switch and a scenario × outage
 pass/fail grid. Its **thermal view** colours every line by its loading against the rating in
 use (red at or above 100%, orange from 90%, the rest grey), with nothing out, after any one
 outage, or each line at its worst post-outage loading with the outage behind it. The **radial-ties page** screens the whole grid for **bridges** (lines whose
@@ -5397,7 +5767,7 @@ places; the map makes that grouping visible before any fix is proposed. It is th
 of [violation-remediation](../demos/violation-remediation.md), drawn.
 
 It is **not** a replacement for the N-1 run. The voltage page tests only the outages you list;
-the radial page tests only bridge outages. Neither is a full contingency analysis — the pages
+the radial page tests only bridge outages. Neither is a full contingency analysis. The pages
 say so on every measured result, and so should you.
 
 ### Ask before extracting anything
@@ -5411,7 +5781,7 @@ Four decisions belong to the user, and each changes what gets extracted:
 | Area and depth: seeded from which buses, how many substation-hops | seeds = the out-of-band buses, 5 hops |
 | Look only, or also **measure candidate fixes** | look only |
 
-Very meshed areas explode past a few hops — open those at 2–3 and say so. Step-up, star-point
+Very meshed areas explode past a few hops; open those at 2–3 and say so. Step-up, star-point
 and tertiary buses are out of the count by default (`exclude_bus_prefixes`); list them
 separately if the user wants them.
 
@@ -5463,7 +5833,7 @@ sibling `vmap.py`, and Python finds it because the script's own folder is on the
 - **Voltage-layer filter** (All / 765 / 345 / 138 / ≤69) that hides the other classes' lines and
   substations.
 - **Substation one-line** on click: bus bars by kV with pu, transformers with X and flow,
-  generators and shunts with MVAr and pinned flags, outgoing lines fanned with far-end names —
+  generators and shunts with MVAr and pinned flags, outgoing lines fanned with far-end names,
   and **Isolate neighbourhood** at 1–3 hops.
 - A **scenario switch**, a **state switch** (as delivered / after a fix), and for measured
   designs a **Before/After** switch and a scenario × condition grid of pass/fail cells.
@@ -5503,20 +5873,20 @@ Thermal / Voltage switch):
 - Substations are neutral grey in this view. Voltages are a voltage-view question, and a dot
   coloured by base-case voltage under a post-outage label would be wrong.
 
-Open the built HTML in a browser, or publish it. Take one screenshot before handing it over —
+Open the built HTML in a browser, or publish it. Take one screenshot before handing it over:
 a page that renders blank from a data error looks identical to one still loading.
 
 ### Traps, each of which cost a run
 
-**`esa.exit()` every case you open.** `del pw` leaves one `pwrworld.exe` resident per open —
-roughly a gigabyte each on a 10,000-bus model — and a measurement loop that opens a case per
+**`esa.exit()` every case you open.** `del pw` leaves one `pwrworld.exe` resident per open
+(roughly a gigabyte each on a 10,000-bus model), and a measurement loop that opens a case per
 candidate will starve every other process on the machine. The engine closes in a `finally`.
 
 **A fresh open per candidate; never trust an undo.** Taking a new line back out does not move
 LTC taps or switched shunts back to where they were, so the next candidate is measured on a
 different case. `measure_designs.py` reopens per candidate. `measure_trees.py` reuses one case
-per scenario for speed, and **fingerprints** it after every design — closed-branch count plus a
-fixed 40-bus voltage sample — and reopens the moment either drifts. An undo that did not restore
+per scenario for speed, and **fingerprints** it after every design (closed-branch count plus a
+fixed 40-bus voltage sample), and reopens the moment either drifts. An undo that did not restore
 the case once went unnoticed until the fingerprint caught it.
 
 **Islanding solves with zero violations.** When an outage strands buses, PowerWorld drops them
@@ -5528,7 +5898,7 @@ N-1 side of the same trap.
 **Adding several devices before one solve: freeze the controls.** Live taps and shunts drift
 between writes, and the saved case then disagrees with what you measured. Set `ChkTaps`,
 `ChkShunts` and `ChkPhaseShifters` to `NO`, add everything, restore them, and take one solve.
-The engine adds one device per candidate, so it does not need this — a multi-device candidate
+The engine adds one device per candidate, so it does not need this; a multi-device candidate
 does.
 
 **A tie starts where the MW is, then where it closes the most bridges.** For a chain of substations,
@@ -5539,7 +5909,7 @@ pocket when its exit opened.
 
 **Rating does not scale with length; impedance does.** A new line cloned from a template gets R,
 X, C and G scaled by the length ratio and the template's whole `LineAMVA` set unchanged. Choose
-the template by **rating first** (it must clear the stranded MW) and length second — a template
+the template by **rating first** (it must clear the stranded MW) and length second. A template
 chosen by length alone once put a line at 250% into a delivered case. The create is read back:
 branch count +1, X as asked, status Closed, device type Line. See
 [adding-devices-esapp](adding-devices-esapp.md) for why every create must be read back.
@@ -5636,7 +6006,7 @@ How to write matplotlib code that visualizes the solar/wind CSVs produced by the
 
 **Step 5 (final) of this reading sequence.** ← prev: [how-to-analyze-results](how-to-analyze-results.md).
 
-This page teaches you to write visualization code for the CSVs that come out of the timestep simulation. The data format is described fully in [how-to-analyze-results](how-to-analyze-results.md); this page focuses on the plotting patterns.
+The CSV format is described fully in [how-to-analyze-results](how-to-analyze-results.md); this page covers the plotting patterns.
 
 ## 1. Load the CSV
 

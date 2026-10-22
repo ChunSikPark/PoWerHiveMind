@@ -14,10 +14,10 @@ tags: [demo, esapp, createdata, branch, n-1, worked-example]
 
 ## Abstract
 
-A complete worked run on the public synthetic Synth40 case (37 buses). **Everything below actually happened**,
-including three failed attempts that raised no error at all. This is the single most
-important demo in the kit: `CreateData` accepts a malformed call, reports success, and
-creates nothing. If you read only one demo, read this one.
+A complete worked run on the public synthetic Synth40 case (37 buses). Everything below
+happened, including three failed attempts that raised no error at all. `CreateData`
+accepts a malformed call, reports success, and creates nothing. If you read only one
+demo, read this one.
 
 ## Connections
 
@@ -29,8 +29,6 @@ creates nothing. If you read only one demo, read this one.
 ### The user's prompt
 
 > *"Add a line between bus 27 and bus 31 and tell me if it helps with N-1."*
-
-That is all a user should have to say.
 
 ### Step 1 — establish the baseline
 
@@ -65,7 +63,7 @@ base violations: 12
 
 ### Step 2 — three attempts that all "succeeded" and did nothing
 
-These are the natural things to try. Each ran without raising:
+Each of these natural attempts ran without raising:
 
 ```python
 # attempt A
@@ -95,18 +93,17 @@ The observed result of all three:
      -> branches now 89
 ```
 
-**No exception. No warning. No device.** The buses both exist, no branch 27–31 was
-already there, and the call reported success three different ways.
+None raised an exception or a warning, and none created a device. Both buses exist, no
+branch 27–31 was already there, and the call reported success three different ways.
 
-An agent that trusts the absence of an error will now happily run N-1, get the same 12
-violations, and report "adding this line does not help" — a conclusion drawn from a line
-that was never added. That is the failure mode this whole knowledge base exists to
-prevent.
+An agent that trusts the absence of an error will now run N-1, get the same 12
+violations, and report "adding this line does not help", a conclusion drawn from a line
+that was never added. This knowledge base exists to prevent that failure.
 
 ### Step 3 — stop guessing, read the page
 
-The fix is in [adding-devices-esapp](../methods/adding-devices-esapp.md), and it is not something you would arrive at by
-trying variations:
+The fix is in [adding-devices-esapp](../methods/adding-devices-esapp.md). Trying
+variations would not have found it:
 
 1. Use the **`pw.esa.CreateData(...)` method**, not a `RunScriptCommand` string.
 2. Supply **every** primary, secondary, and required field. For a `Branch` that means
@@ -147,9 +144,9 @@ expected = 1
 assert n1 - n0 == expected, "CreateData silently skipped the device"
 ```
 
-**Never skip this line.** It is the only thing standing between a silent no-op and a
-confident wrong answer. Count before, count after, assert the difference. Do it for
-every `CreateData` call, every time.
+Never skip this line. It is the only thing standing between a silent no-op and a
+confident wrong answer. Count before, count after, and assert the difference for every
+`CreateData` call.
 
 ### Step 5 — answer the actual question
 
@@ -175,13 +172,13 @@ N-1 violations WITH the new line: 10  (base case was 12)
 >
 > Pages used: `methods/adding-devices-esapp.md`, `methods/reading-violationctg.md`.
 
-Note the last two points. Say plainly that nothing was written to disk, and cite the
-pages so a wrong answer is traceable.
+Say plainly that nothing was written to disk, and cite the pages so a wrong answer is
+traceable.
 
 ### The lesson
 
-The correct call is not guessable. Three reasonable attempts failed identically and
-silently.
+Three reasonable attempts failed identically and silently. The correct call has to be
+looked up.
 
 
 ---
@@ -224,8 +221,7 @@ Two windows, side by side: Simulator with your case open, and Claude. They never
 each other directly. They pass files through one folder you nominate.
 
 Claude writes a script. You copy it into the folder. Simulator notices it, runs it, deletes
-it, and writes back a log plus whatever CSVs the script asked for. Claude reads those. That
-is the whole loop.
+it, and writes back a log plus whatever CSVs the script asked for. Claude reads those.
 
 This page assumes you are the one moving the file, which is the case when Claude is somewhere
 it cannot reach that folder. If Claude is running on the same machine and can write there, it
@@ -233,10 +229,10 @@ copies its own scripts in and reads its own results, and your job shrinks to the
 recipe 1. Simulator behaves the same either way: it polls the folder and picks up whatever it
 finds.
 
-You choose the folder. Any empty one will do, on any drive you can write to — and if
-Simulator already has a transfer folder configured from an earlier session, use that one
-rather than making a second. Decide now and tell Claude the full path; it should ask rather
-than assume, and it has no way to see your filesystem layout.
+You choose the folder. Any empty one on a drive you can write to will do. If Simulator
+already has a transfer folder configured from an earlier session, use that one rather than
+making a second. Tell Claude the full path. It cannot see your filesystem, so it should ask
+rather than assume.
 
 Everything below writes `<your transfer folder>` where that path goes.
 
@@ -252,7 +248,7 @@ Do this in Simulator. Claude cannot do any of it, and will ask you to.
 sample, so yours will differ. Follow the shape of each step rather than the values.
 
 **3. Switch to Run Mode, then open the Tools tab.** The source deck specifies Run Mode here.
-Do not skip it and assume a script can switch modes for you later.
+Do not skip it on the assumption that a script can switch modes later.
 
 ![The Tools tab in the ribbon](../assets/aux-step-tools.png)
 
@@ -268,9 +264,8 @@ authoritative answer to "which folder is Simulator actually watching".
 
 Everything you need is on that one panel. Two things on it before you move on:
 
-- The heading says **"Only Active when Dialog is Open; Fields Saved in Registry"**. That is
-  the whole story on persistence: the folder and the tick survive a restart, the open dialog
-  does not.
+- The heading says **"Only Active when Dialog is Open; Fields Saved in Registry"**. The
+  folder and the tick survive a restart; the open dialog does not.
 - **"Always Delete an Invalid Input Aux File"** makes Simulator throw away a script it cannot
   parse instead of leaving it in the folder. Leave it ticked. It does not cover everything
   (see [When it goes wrong](#when-it-goes-wrong)), but it removes the most common way a run
@@ -289,9 +284,8 @@ progress there as it runs.
 
 ![The Show Log button](../assets/aux-step-showlog.png)
 
-Watch that log. The output file appears only once a run finishes, so while something is wrong
-the folder tells you nothing. The log separates two failures that otherwise look identical to
-waiting:
+The output file appears only once a run finishes, so while something is wrong the folder
+tells you nothing. The log separates two failures that otherwise look identical to waiting:
 
 - A looping run repeats the same block of lines every poll interval.
 - A failed run prints its error in full, including the cases where no output file is ever
@@ -308,9 +302,9 @@ Steps 5 and 6 are once per machine; the registry keeps them across restarts. Ste
 
 ### Recipe 2 — Prove it is alive before you trust it
 
-**Skip this if you have used the channel before and know it works.** It is here for your
-first run on a machine, where a broken script and a channel that was never running look
-exactly the same from the folder: nothing happens either way.
+**Skip this if you have used the channel before and know it works.** It is for your first
+run on a machine, where a broken script and a channel that was never running look the same
+from the folder. Nothing happens either way.
 
 Do not debug a real script against an unproven channel. Ask for the smallest possible one:
 
@@ -340,7 +334,7 @@ Within a second, two things happen:
 | `SimulatorScriptInput.aux` disappears | Simulator consumed it. The deletion is the acknowledgement |
 | `SimulatorScriptOutput.Txt` appears | The log from that run |
 
-Open it. The last line is what you are looking for:
+Open it and look at the last line:
 
 ```
 Automatic loading of file ...\SimulatorScriptInput.Aux started at 2026-09-21T14:43:01.314Z
@@ -360,13 +354,13 @@ Script dialog got closed, the checkbox is not ticked, or the folder in the dialo
 folder you copied into. Delete `SimulatorScriptInput.aux` before you retry, or it will run
 the moment you fix the setting.
 
-**Read the folder back to each other.** Nothing on the file side can tell you whether
-Simulator is watching the folder you are writing to: there is no heartbeat file and no echo
-of the setting. So when a drop goes unanswered, the first move is for whoever is at the GUI
-to read the **ScriptTransferFileDirectory** box out loud, character for character, and
-compare it to the path the script is being copied into. A trailing space, a different drive
-letter or a near-identical folder name all produce exactly the silence you are looking at,
-and the file side cannot distinguish any of them from a closed dialog.
+**Read the folder back to each other.** Nothing on the file side tells you whether
+Simulator is watching the folder you are writing to. There is no heartbeat file and no echo
+of the setting. When a drop goes unanswered, whoever is at the GUI reads the
+**ScriptTransferFileDirectory** box out loud, character for character, and compares it to
+the path the script is being copied into. A trailing space, a different drive letter or a
+near-identical folder name all produce the same silence, and the file side cannot tell any
+of them from a closed dialog.
 
 ---
 
@@ -379,8 +373,8 @@ to answer:**
 > list what devices are in it? It is read-only, it writes CSVs and changes nothing."*
 
 It should not drop anything until you reply. Your Simulator is live and your case is loaded,
-so the first file that lands runs against your session — that decision is yours, even for a
-read-only scan. If an agent scans without asking, it is not following this page.
+so the first file that lands runs against your session. That decision is yours, even for a
+read-only scan. An agent that scans without asking is not following this page.
 
 It should also not raise this **until you have said the setup is done**. Recipe 1's steps and
 this proposal belong in two separate messages: activation first, ending there, and the scan
@@ -388,9 +382,8 @@ offered only after you confirm the dialog is up. An agent that hands you the set
 script to approve in the same breath is asking you to consent to a drop on a channel that does
 not exist yet.
 
-Say yes. Until it runs, the agent knows nothing about your case: not the bus numbers, not
-whether there are transformers, not whether a contingency set already exists. One drop
-replaces all of that guessing.
+Say yes. Until it runs, the agent does not know the bus numbers, whether there are
+transformers, or whether a contingency set already exists. One drop replaces that guessing.
 
 The script it hands you writes the case summary plus one CSV per device class: buses,
 branches, substations, generators, loads, shunts, contingencies, areas, zones. The pattern
@@ -473,9 +466,8 @@ take them from the *Auxiliary File Format* manual, which has no per-object field
            [], "", [], NO, NO);
 ```
 
-The Area and Zone lines are worth a second look, because guessing here is exactly what the
-warning trap catches. Their MW totals are **`BGLoadMW` / `BGGenMW` / `BGLossMW`**, on a
-balancing-group prefix. The names you would reach for by analogy, `AreaLoadMW` and
+Guessing on the Area and Zone lines is what the warning trap catches. Their MW totals are
+**`BGLoadMW` / `BGGenMW` / `BGLossMW`**, on a balancing-group prefix. The names you would reach for by analogy, `AreaLoadMW` and
 `ZoneLoadMW`, do not exist. Asking for them produces a `Warning:`, not an error, and a CSV
 holding the key column and nothing else while the run reports success.
 
@@ -492,15 +484,8 @@ Three things to know when you read the results:
   describes the `.pwb` on disk; the CSVs describe what is loaded right now. If you changed
   something without saving, the CSVs are the truthful half.
 - **Search the log for `Warning:`.** A scan asks for many field names at once, and a wrong
-  one is only a warning:
-
-  ```
-  Warning: unknown fields will not be written to the file
-  Warning: Variable name 'AREALOADMW' is not defined for Area objects.
-  ```
-
-  That run wrote a 75-byte `SCAN_area.csv` containing the key column and nothing else, and
-  reported success. Nothing else tells you the numbers you asked for are missing.
+  one is only a warning. Nothing else tells you the numbers you asked for are missing. The
+  log lines are under [When it goes wrong](#when-it-goes-wrong).
 
 With those CSVs the agent answers follow-ups without another drop: what the voltage range is,
 how many transformers there are, which branches are most loaded, whether a contingency set
@@ -525,9 +510,8 @@ CSVs:
 | slack output | 200.63 MW | 215.83 MW |
 | worst branch loading | 68.7 % | 91.9 % |
 
-Only bus 3 moves, because it was the one leaning on bus 4's local generation. Line 1–3 goes
-from comfortable to nearly loaded. All of that came out of the CSVs; the log never contained
-it.
+Only bus 3 moves, because it was leaning on bus 4's local generation. Line 1–3 goes from
+comfortable to nearly loaded. All of that came out of the CSVs; the log never contained it.
 
 **Why the script opens branches instead of the bus.** You cannot switch a bus off by setting
 its status. That field reports whether the bus is energised; it does not control it, and
@@ -543,21 +527,19 @@ Three failure shapes, all of which look similar from your side of the folder.
 **The file sits there and nothing happens.** A setup problem: dialog closed, checkbox
 unticked, or wrong folder. Delete the file, fix the setting, drop again.
 
-How long to wait before calling it dead: **30 seconds on a small case, a couple of minutes on
-a large one.** Successful round trips here run 0.08-0.5 s on a seven-bus case, so anything
-past a few seconds is already abnormal; the extra margin is only for a case big enough that
-the solve itself is slow. If the input file has not been touched in 30 seconds, stop waiting.
-It is not slow, it is not running.
+Wait **30 seconds on a small case, a couple of minutes on a large one** before calling it
+dead. Successful round trips here run 0.08-0.5 s on a seven-bus case, so anything past a few
+seconds is already abnormal; the extra margin is only for a case big enough that the solve
+itself is slow. If the input file has not been touched in 30 seconds, it is not running.
 
 **The file sits there but files keep being written.** The script failed partway and Simulator
 is re-running it every poll interval, forever. Output timestamps advance while the input file
 stays put. Delete `SimulatorScriptInput.aux` yourself.
 
-`Always Delete an Invalid Input Aux File` in the setup panel is aimed at exactly this, and
-you should have it ticked. It is not a complete guard, though: a run was observed looping on
-2026-09-21 with a script that parsed fine and then crashed Simulator partway through, which
-is not the same thing as an invalid file. Keep a timeout on anything that drops files
-automatically.
+`Always Delete an Invalid Input Aux File` in the setup panel is aimed at this, and you should
+have it ticked. It is not a complete guard. A run was observed looping on 2026-09-21 with a
+script that parsed fine and then crashed Simulator partway through, which is not an invalid
+file. Keep a timeout on anything that drops files automatically.
 
 **Everything completed, but a column is missing from a CSV.** A bad field name is a
 `Warning:`, not an error. The column is dropped and the run still reports success. Search the
@@ -568,18 +550,18 @@ Warning: unknown fields will not be written to the file
 Warning: Variable name 'AREALOADMW' is not defined for Area objects.
 ```
 
-That run produced a 75-byte CSV with the key column and nothing else, and reported success.
+That run produced a 75-byte `SCAN_area.csv` with the key column and nothing else, and
+reported success.
 
 ### What this mode costs you
 
 - **It is not headless.** A dialog has to stay open, so nothing batches or runs in parallel.
 - **Something has to move the file.** Whoever can write to the watched folder triggers the
-  run. If Claude is running on the same machine and can write there, it drops its own scripts
-  and reads its own results, and you only supply the GUI setup. If it cannot reach the folder,
-  which is the hand-off case this mode exists for, every run waits on you.
-- **Claude never makes Simulator do anything.** It writes a file. Simulator decides, on its
-  own poll interval, to pick it up. That is the whole extent of the control it has, and it is
-  why a dropped script cannot leave your case somewhere you did not ask for.
+  run. If Claude can write there, you only supply the GUI setup. If it cannot reach the
+  folder, which is the hand-off case this mode exists for, every run waits on you.
+- **Claude never makes Simulator do anything.** It writes a file, and Simulator picks it up
+  on its own poll interval. That is all the control Claude has, so a dropped script cannot
+  leave your case somewhere you did not ask for.
 
 In exchange, every script is reviewable before it touches your case, every artifact is a file
 you can read and keep, and you end up with a script you own rather than a session that
@@ -602,10 +584,10 @@ tags: [demo, planning, case-diff, contingency, aux, esapp, worked-example]
 
 ## Abstract
 
-Two vintages of the same system — a 2016 summer peak and a 2024 summer peak — diffed to
-find what the plan actually builds, then a contingency set generated for **only the new
-devices** and solved. Real numbers throughout: 691 new branches, 199 new generators, and
-a scoping trap that would have made the headline answer **87% wrong**.
+Two vintages of the same system, a 2016 summer peak and a 2024 summer peak, diffed to
+find what the plan builds, then a contingency set generated for **only the new devices**
+and solved. Real numbers throughout: 691 new branches, 199 new generators, and a scoping
+trap that would have made the headline answer **87% wrong**.
 
 ## Connections
 
@@ -638,17 +620,17 @@ for name, s in (("2016", a.summary()), ("2024", b.summary())):
 2024 summerpeak: 2000 buses / 3911 branches / 743 gens / load 87578 MW
 ```
 
-Load grows 67.1 GW → 87.6 GW, **+30.5%** over eight years. That framing matters: the
-build is a response to that growth, and it is the first thing to report.
+Load grows 67.1 GW → 87.6 GW, **+30.5%** over eight years. The build responds to that
+growth, so report it first.
 
 ### Step 2 — diff, but guard against false construction
 
 **A naive diff is wrong in the direction that looks right.** A renumbered bus, a
 relabelled circuit, or a swapped from/to each produce a RETIRED row *and* a matching NEW
 row. An unguarded comparison reports construction that never happened, and the output
-looks entirely plausible.
+looks plausible.
 
-So run the naive diff and the guarded one, and compare them:
+Run the naive diff and the guarded one, and compare them:
 
 ```python
 # --- buses: naive by number, then paired by (name, kV) ---
@@ -684,18 +666,17 @@ BRANCHES naive             : retired-looking 0, new-looking 691
 GENERATORS: retired 0, NEW 199
 ```
 
-**This pair is clean** — no renumbering, no swaps, nothing retired. Pure expansion: 691
-branches and 199 generators added.
+**This pair is clean.** No renumbering, no swaps, nothing retired: 691 branches and 199
+generators added.
 
-That is a finding, not a formality. Run the guarded diff *anyway*, every time. When the
-two counts agree you have earned the right to trust the number; when they disagree, the
-naive answer was fiction and you would never have known.
+Run the guarded diff every time anyway. When the two counts agree you can trust the
+number. When they disagree, the naive answer was fiction and you would never have known.
 
-Devices present in both but with changed parameters are a third category — **UPGRADED**
-— found by comparing ratings and impedances on the common keys, not by set difference.
+Devices present in both but with changed parameters are a third category, **UPGRADED**,
+found by comparing ratings and impedances on the common keys rather than by set difference.
 
 **When the two counts disagree, pair a removal with an addition on a second identity.** A key is a
-label, and labels get rewritten for reasons that have nothing to do with the device. Find an
+label, and labels get rewritten for reasons unrelated to the device. Find an
 attribute that names the *thing* rather than the *record* and that the relabelling does not touch:
 for a bus, `(BusName, BusNomVolt)`, because a renumbered substation keeps its name and its voltage.
 Pair a retired-looking record with a new-looking one only when the rest of its identity matches
@@ -708,8 +689,8 @@ Three rules keep the pairing from hiding real findings:
 2. **One addition can excuse only one removal.** Otherwise two devices that genuinely went away
    both point at one new record and both vanish from the count.
 3. **Mark both halves, or neither.** Excusing the retirement while leaving its partner in the added
-   list is worse than doing nothing: the totals now disagree with each other, and the clean-looking
-   one is the wrong one.
+   list is worse than doing nothing. The totals then disagree with each other, and the clean-looking
+   one is wrong.
 
 **Name what stayed behind.** Reserve "removed" for the strongest claim: the record is gone **and**
 so is the thing it named (neither number nor name survives). Everything weaker gets a verdict that
@@ -774,8 +755,8 @@ new branches: 691
 of which >=345 kV: 31
 ```
 
-Scope before you solve. 691 contingencies on a 2000-bus case is a long wait; the 31
-highest-voltage additions answer the question that matters first.
+Scope before you solve. 691 contingencies on a 2000-bus case is a long wait, and the 31
+highest-voltage additions answer the main question first.
 
 ```python
 sel = hv[:25]
@@ -800,8 +781,7 @@ contingencies in case before LoadAux: 3875
 after LoadAux: 3900  (added 25)
 ```
 
-**Note that first number.** The 2024 case already carried **3,875 contingencies** of its
-own. Which sets up the trap.
+The 2024 case already carried **3,875 contingencies** of its own. That sets up the trap.
 
 ### Step 4 — the trap that makes the answer 87% wrong
 
@@ -832,22 +812,21 @@ from OTHER contingencies already in the case: 208
 
 **`LoadAux` adds contingencies. It does not scope the solve.** `CTGSolveAll` solved all
 3,900, and 208 of the 240 violations belong to contingencies that were already in the
-case and have nothing to do with the plan. The honest number is **32**, not 240 — the
-naive answer overstates by 87%.
+case and have nothing to do with the plan. The honest number is **32**. The naive answer
+overstates by 87%.
 
-Two ways to get this right, and you should do both:
+Do both of these:
 
 1. **Filter results by your label prefix**, as above. Cheap, and it also documents intent.
 2. **Restrict what solves.** Set `Skip` to `YES` on the pre-existing contingencies, or
    build a case that carries only your set. This is the autoinsert-then-restrict pattern
    in [new-device-contingency-aux](../methods/new-device-contingency-aux.md).
 
-Filtering alone still *solves* 3,900 contingencies, so on a large case do the restriction
-too — for the runtime, not just the arithmetic.
+Filtering alone still *solves* 3,900 contingencies, so on a large case restrict as well,
+for the runtime.
 
-And remember PowerWorld **trims whitespace from `CTGLabel` on load**, so strip before
-matching on a prefix. A label that fails to match looks exactly like a contingency with
-no violations.
+PowerWorld **trims whitespace from `CTGLabel` on load**, so strip before matching on a
+prefix. A label that fails to match looks exactly like a contingency with no violations.
 
 ### Step 5 — rank the new devices
 
@@ -863,7 +842,7 @@ agg = (v.groupby(labs[mine])
 
 Rank on **rows and worst severity together**. A device causing one 130% violation is a
 different problem from one causing eight at 101%, and which is worse is a planning call.
-Full scoring method, including why voltage must not rank on `LimViolPct`, is in
+The full scoring method, including why voltage must not rank on `LimViolPct`, is in
 [ranking-new-devices-by-severity](../methods/ranking-new-devices-by-severity.md).
 
 ### What to report back
@@ -913,8 +892,8 @@ tags: [demo, contingency, n-1, aux, filter, esapp, worked-example]
 
 Running N-1 from nothing on the public synthetic Synth40 case (37 buses), then **writing a filter and contingency
 `.aux` automatically** from the analysis result and loading it back. All numbers are from
-an actual run: 89 auto-inserted contingencies, 12 violations, then 5 targeted
-contingencies generated and merged.
+a real run: 89 auto-inserted contingencies, 12 violations, then 5 targeted contingencies
+generated and merged.
 
 ## Connections
 
@@ -981,16 +960,15 @@ Three things to know before you interpret this:
 - **A bare read returns 2 of 15 columns.** Ask for the fields you need by name, or you
   get `CTGLabel` and an id and nothing useful.
 - **`pw[ViolationCTG, :]` returns 394 columns** on this case. Never do that casually.
-- **Repeated labels are usually parallel circuits**, not duplicates — the same
-  PEARLCITY–WAIPAHU corridor appearing several times. Check before reporting a data
-  problem.
+- **Repeated labels are usually parallel circuits**, such as the same PEARLCITY–WAIPAHU
+  corridor appearing several times. Check before reporting a data problem.
 
-Here the worst violation is a 69 kV line at **100.22%** of its 100.3 MVA rating: real,
+Here the worst violation is a 69 kV line at **100.22%** of its 100.3 MVA rating, real
 but marginal. Say "marginally over" rather than "overloaded", because those mean
 different things to a planner.
 
-More traps — polarity, tie-line `AreaNum` reading 0, `LimViolLimit` being the branch's
-MVA rating rather than 100 — are in [reading-violationctg](../methods/reading-violationctg.md).
+More traps (polarity, tie-line `AreaNum` reading 0, `LimViolLimit` being the branch's
+MVA rating rather than 100) are in [reading-violationctg](../methods/reading-violationctg.md).
 
 ### Part 2 — generate an aux file automatically
 
@@ -1066,15 +1044,14 @@ after: 94  (added 5)
 
 1. **Absolute paths.** A relative path resolves against PowerWorld's working directory,
    not your script's.
-2. **`LoadAux` merges.** It does not replace. Loading twice duplicates everything —
-   which is exactly why the count check above matters.
+2. **`LoadAux` merges.** It does not replace. Loading twice duplicates everything, which
+   is why the count check above matters.
 3. **Quote the action string.** An unquoted `CTGElement` action loads only the first
    contingency and silently drops the rest.
-4. **`ElementType=GEN` is silently ignored.** The keyword is `GENERATOR`.
+4. **`ElementType=GEN` is silently ignored** (suspected, possibly by design: glitch `2026-10-20-ctgautoinsert-gen-ignored`). The keyword is `GENERATOR`.
 
-And a fifth that will confuse you later: **PowerWorld trims whitespace from `CTGLabel`
-on load**, so the label you wrote is not always the label you read back. Do not match on
-labels you have not round-tripped.
+A fifth: **PowerWorld trims whitespace from `CTGLabel` on load**, so the label you wrote
+is not always the label you read back. Do not match on labels you have not round-tripped.
 
 ### Verify, do not assume
 
@@ -1087,8 +1064,8 @@ An aux that fails to parse can leave the case unchanged without raising. Count.
 ### What to report back
 
 > Auto-inserted **89** N-1 contingencies and solved them all. **12 violations**, the worst
-> a 69 kV PEARLCITY–WAIPAHU circuit at **100.22%** of its 100.3 MVA rating — marginally
-> over, not severe.
+> a 69 kV PEARLCITY–WAIPAHU circuit at **100.22%** of its 100.3 MVA rating, marginally
+> over.
 >
 > Also generated `demo_ctg.aux` with a `HighLoad` branch filter and 5 targeted
 > contingencies for the most loaded lines, and confirmed it loaded: 89 → 94.
@@ -1117,7 +1094,7 @@ tags: [demo, powerflow, dcpf, ptdf, lodf, esapp, worked-example]
 
 Solving a case and asking the three standard sensitivity questions, on the public synthetic
 Synth40 case (37 buses). Includes the `1e8` sentinel that makes LODF results look insane, and a PTDF
-failure whose obvious recovery **also fails** — both encountered in an actual run, both
+failure whose obvious recovery **also fails**. Both came up in a real run, and both were
 recovered without asking the user.
 
 ## Connections
@@ -1151,7 +1128,7 @@ V 0.9749-1.0034 pu, overloads 0
 ```
 
 `overloads()`, `violations()`, `mismatch()`, `flows()`, `ptdf()`, `lodf()`, `ybus()` are
-**all methods** — call them. Referencing one without parentheses hands you a bound method
+**all methods**, so call them. Referencing one without parentheses hands you a bound method
 that fails confusingly further down.
 
 Ranking by loading:
@@ -1189,9 +1166,9 @@ To confirm a solve really ran DC, check that every bus sits at exactly 1.0 pu
 the same trap: call `pw.flatstart()` instead. See
 [handling-errors](../methods/handling-errors.md).
 
-**A DC solve always reports zero mismatch.** It cannot tell you generation is short — the
-slack bus absorbs the shortfall silently. Check the schedule against load directly, and
-say plainly when a result is DC.
+**A DC solve always reports zero mismatch.** It cannot tell you generation is short,
+because the slack bus absorbs the shortfall silently. Check the schedule against load
+directly, and say plainly when a result is DC.
 
 ### LODF — and the sentinel that ruins it
 
@@ -1221,9 +1198,8 @@ rows total 89, sentinel rows 88, real 1
 ```
 
 Only the outaged branch itself has a defined factor: it loses 100% of its own flow. On
-this small system that outage does not redistribute onto anything with a defined LODF,
-which is a finding about the topology — report it as such, not as "the calculation
-failed."
+this small system that outage does not redistribute onto anything with a defined LODF.
+Report that as a finding about the topology, not as "the calculation failed."
 
 **A result that looks absurd is your bug until proven otherwise.** Never report a
 100,000,000 anything.
@@ -1274,9 +1250,9 @@ OK  89 branches, 89 with real PTDF
    25 ->  26 ckt 2   PTDF +12.0331
 ```
 
-Two lessons. First, **an error's obvious fix can reproduce the same error** — check that
-the recovery actually satisfies the constraint. Second, do not ask the user about any of
-this. They wanted sensitivities, not a report on area counts.
+Two lessons. First, **an error's obvious fix can reproduce the same error**, so check that
+the recovery satisfies the constraint. Second, do not ask the user about any of this. They
+wanted sensitivities, not a report on area counts.
 
 Signatures, verified:
 
@@ -1292,7 +1268,7 @@ pw.ybus(dense: bool = False)                          # csr_matrix (37, 37)
 > branch is 27→29 at **80.96%** of its 67.5 MVA rating; the four parallel 19→23 circuits
 > each sit at 77.9%.
 >
-> Outaging 27→29 produces no defined LODF onto other branches — on this system that
+> Outaging 27→29 produces no defined LODF onto other branches. On this system that
 > outage does not redistribute measurably.
 >
 > The case has one area, so I computed PTDFs for a bus-to-bus transfer, bus 23 → bus 26.
@@ -1318,9 +1294,9 @@ tags: [demo, index, examples, prompts, getting-started]
 ## Abstract
 
 Worked runs on the public synthetic Synth40 case (37 buses, 89 branches, 45 generators).
-Every number on these pages came from an actual run — including the failures, which were
-left in on purpose. Start with the one-line prompts below: you should not have to know
-which page covers what.
+Every number on these pages came from a real run, including the failures, which were left
+in on purpose. Start with the one-line prompts below. You should not have to know which
+page covers what.
 
 ## Connections
 
@@ -1351,7 +1327,7 @@ You do not need to name a function, a field, or a file. Say the thing you want:
 | *"Compare my 2016 and 2024 cases and tell me what the plan builds."* | Diff both, guard against renumbering artifacts, classify NEW / RETIRED / UPGRADED |
 | *"Do the new devices in this plan cause violations?"* | Build a contingency set for just those devices, solve, and attribute correctly |
 | *"Can this case run a weather study?"* | Check whether its renewable units carry PFW models |
-| *"Save the case."* | Write it out — after asking where, since that is destructive |
+| *"Save the case."* | Write it out, after asking where, since that is destructive |
 
 If a prompt fails, that is a defect worth reporting. The routing is
 [AGENTS.md](../AGENTS.md)'s job, not yours.
@@ -1363,36 +1339,34 @@ If a prompt fails, that is a defect worth reporting. The routing is
 | [comparing-planning-cases](comparing-planning-cases.md) | **Multi-case.** 2016 vs 2024: 691 new branches, 199 new generators, and a scoping trap that makes the naive answer 87% wrong |
 | [violation-remediation](violation-remediation.md) | **The full study.** 12 violations diagnosed to one cause, five reinforcements tested and ranked, two of which make things worse |
 | [adding-a-device](adding-a-device.md) | **Read this one.** Three attempts that succeeded and did nothing, then the fix. The silent-failure problem in full |
-| [power-flow-and-sensitivities](power-flow-and-sensitivities.md) | AC, DC, LODF, PTDF — with the `1e8` sentinel and a two-step error recovery |
+| [power-flow-and-sensitivities](power-flow-and-sensitivities.md) | AC, DC, LODF, PTDF, with the `1e8` sentinel and a two-step error recovery |
 | [contingency-and-aux](contingency-and-aux.md) | N-1 from scratch, and generating a filter + contingency `.aux` automatically |
 | [timestep-and-pfw](timestep-and-pfw.md) | Weather to megawatts: PFW models, TimeStep, and reading the output |
 | [aux-file-cookbook](aux-file-cookbook.md) | Claude in one window, Simulator in the other. Four recipes in order: turn the channel on, prove it with a four-line script, inventory a case, then take a bus out and measure it. Start here if you are working through files rather than Python. |
 
 ### Queries versus studies
 
-The first few prompts above are queries — one number, one answer. The interesting ones
-are studies: *diagnose the cause, propose a fix, apply it, re-verify, and report what you
-rejected.*
+The first few prompts above are queries: one number, one answer. The rest are studies:
+*diagnose the cause, propose a fix, apply it, re-verify, and report what you rejected.*
 
-That second kind is what this kit is really for. A voltage readout needs no knowledge
-base. Knowing that reinforcing the most loaded branch can make N-1 **worse** — and having
-measured it rather than argued it — does.
+Studies are what this kit is for. A voltage readout needs no knowledge base. Knowing that
+reinforcing the most loaded branch can make N-1 **worse**, and having measured it, does.
 
 ### Measuring whether this actually works — in progress
 
 The traversal protocol claims a fresh agent needs three to five pages for a typical task.
-**That is a design target, not yet a measured result.** The check:
+**That is a design target, not yet a measured result.** To check it:
 
 1. Start a fresh session with no prior PowerWorld context, in a clean clone.
 2. Give it one prompt from the table above.
 3. Count the pages it opens before it writes code.
 
 **Pass is fewer than 8 of 41.** Reading 25 means the router's traversal instructions are
-too weak and belong in the next revision — a defect in this knowledge base, not in the
-agent.
+too weak and belong in the next revision. That is a defect in this knowledge base, not in
+the agent.
 
-If you run it, the page count and the prompt you used are worth an issue on the
-repository either way. A failure here is more useful than a pass.
+If you run it, open an issue on the repository with the page count and the prompt you
+used, pass or fail. A failure here is more useful than a pass.
 
 ### What every demo assumes
 
@@ -1409,8 +1383,8 @@ Synth40.pwb
   N-1: 12 violations across 89 auto-inserted contingencies
 ```
 
-It is small enough that a wrong answer is visibly wrong, which is exactly why it was
-chosen. A synthetic case, so nothing here is sensitive.
+It was chosen because it is small enough that a wrong answer is visibly wrong. It is
+synthetic, so nothing here is sensitive.
 
 ### Two habits these demos are trying to teach
 
@@ -1438,9 +1412,9 @@ tags: [demo, timestep, pfw, pww, weather, renewables, esapp, worked-example]
 ## Abstract
 
 Turning a weather file into hourly wind and solar output. Covers the check that decides
-whether the case can do this at all — **do its renewable units carry PFW model
-strings?** — verified on a real case where 9 of 45 generators do. Getting that check
-wrong is why TimeStep runs "successfully" and produces nothing.
+whether the case can do this at all, **do its renewable units carry PFW model strings?**,
+verified on the public Synth40 case, where 9 of 45 generators do. Getting that check wrong
+is why TimeStep runs "successfully" and produces nothing.
 
 ## Connections
 
@@ -1456,8 +1430,8 @@ wrong is why TimeStep runs "successfully" and produces nothing.
 
 ### Step 1 — can this case do it at all?
 
-Ask before setting anything up. TimeStep does not convert weather to power — **each
-generator's embedded PFW model does**. A unit without one produces nothing, and nothing
+Ask before setting anything up. TimeStep does not convert weather to power. **Each
+generator's embedded PFW model does.** A unit without one produces nothing, and nothing
 warns you.
 
 ```python
@@ -1482,27 +1456,26 @@ renewable units: 9
 with a PFW model: 9
 ```
 
-9 renewables — 6 solar, 3 wind — and all 9 carry a PFW model. This case is ready.
+9 renewables (6 solar, 3 wind), and all 9 carry a PFW model. This case is ready.
 
 **If that second number were 0**, stop and say so. Do not run TimeStep and report zero
-output as a finding; report that the case has no weather models. Those are completely
-different answers, and only one of them is true.
+output as a finding; report that the case has no weather models. Only one of those answers
+is true.
 
-Note the two case files here. The base `Synth40.pwb` and
-`Synth40_with_PFW.pwb` differ precisely in this: the `_with_PFW` variant has the
-models. Check which one you were handed.
+There are two case files here. The base `Synth40.pwb` and `Synth40_with_PFW.pwb` differ
+in exactly this: the `_with_PFW` variant has the models. Check which one you were handed.
 
 ### PWW is not PFW
 
-The single most expensive confusion in this workflow:
+The most expensive confusion in this workflow:
 
 | | What it is | Where it lives |
 |---|---|---|
 | **PWW** | PowerWorld **Weather** data — measurements at stations over time | A `.pww` file you load |
 | **PFW** | Power **Flow Weather** — the model converting weather to MW for one unit | A string inside each generator |
 
-One letter apart. You load a PWW; a PFW is already in the case. If output is zero, the
-question is which of the two is missing — and the answer is usually PFW.
+One letter apart. You load a PWW; a PFW is already in the case. If output is zero, ask
+which of the two is missing. It is usually PFW.
 
 ### Step 2 — get the weather
 
@@ -1517,7 +1490,7 @@ Crop at download time, not after. See [teamoverbyeweather-client](../methods/tea
 footprints, bounding boxes, and the `RegionTooLargeError` recovery.
 
 Match the weather footprint to the case. Loading Texas weather against the Synth40 case
-produces a run with no matching stations — and it will not tell you.
+produces a run with no matching stations, and it will not tell you.
 
 ### Step 3 — run TimeStep
 
@@ -1529,7 +1502,7 @@ pw.esa.RunScriptCommand('TimeStepDoRun')
 pw.esa.RunScriptCommand(rf'TimeStepSaveResultsByTypeCSV("{out}", GEN)')
 ```
 
-Four things worth internalising:
+Four rules:
 
 1. **`TimeStepDoSinglePoint` before `TimeStepDoRun`.** One timestamp fails in seconds; a
    full run fails after a long wait, with the same error.
@@ -1550,23 +1523,23 @@ solar from wind. See [how-to-analyze-results](../methods/how-to-analyze-results.
 
 ### When output is zero
 
-Walk this in order — it is almost never the weather file:
+Walk this in order. It is almost never the weather file:
 
 | Check | If it fails |
 |---|---|
 | Do the units have PFW models? | The case cannot do this. Say so |
 | Are the renewables actually selected? | Only selected units produce output |
-| Does the weather footprint cover the case? | Texas weather, the Synth40 case — no matching stations |
+| Does the weather footprint cover the case? | Texas weather, the Synth40 case: no matching stations |
 | Was `GenMW` in `TimeStepSaveFieldsSet`? | The column is absent, not zero |
 | Did `TimeStepDoSinglePoint` work? | Fix that before running the whole series |
 
 Zero output is a setup failure until proven otherwise. Reporting "these units generate
-nothing" when the real answer is "this case has no weather models" is exactly the
-confident wrong answer this kit exists to prevent.
+nothing" when the real answer is "this case has no weather models" is the confident wrong
+answer this kit exists to prevent.
 
 ### What to report back
 
-> The `_with_PFW` case has 9 renewable units — 6 solar, 3 wind — and **all 9 carry PFW
+> The `_with_PFW` case has 9 renewable units (6 solar, 3 wind), and **all 9 carry PFW
 > model strings**, so it is set up for a weather simulation. The base case is not; make
 > sure you are pointing me at the `_with_PFW` variant.
 >
@@ -1593,10 +1566,10 @@ tags: [demo, remediation, contingency, n-1, reinforcement, esapp, worked-example
 
 ## Abstract
 
-The full study, not a readout: find the N-1 violations, work out *why* they happen,
-propose candidate reinforcements, test each one independently, and rank them by measured
-effect. Real numbers from the public synthetic Synth40 case (37 buses). The headline result is one you cannot reach
-by intuition — **two of five plausible reinforcements made the system worse**, and a
+The full study: find the N-1 violations, work out *why* they happen, propose candidate
+reinforcements, test each one independently, and rank them by measured effect. Real
+numbers from the public synthetic Synth40 case (37 buses). Intuition would miss the
+headline result: **two of five plausible reinforcements made the system worse**, and a
 third reduced the violation count while making the worst violation more severe.
 
 ## Connections
@@ -1609,8 +1582,6 @@ third reduced the violation count while making the worst violation more severe.
 ### The user's prompt
 
 > *"Run N-1, work out what's wrong, and tell me what to build to fix it."*
-
-That is a study, not a query. Everything below is what answering it properly looks like.
 
 ### Step 1 — measure the baseline
 
@@ -1640,12 +1611,12 @@ print(f"BASE: {base_n} violation rows, worst {base_w:.2f}% of limit")
 BASE: 12 violation rows, worst 100.22% of limit
 ```
 
-**Track two numbers, not one.** Count and severity move independently, and a change that
-improves one can degrade the other — as Step 4 shows.
+**Track two numbers.** Count and severity move independently, and a change that improves
+one can degrade the other, as Step 4 shows.
 
 ### Step 2 — diagnose before proposing anything
 
-Do not jump to a fix. Ask which contingencies are producing the violations:
+Before proposing a fix, ask which contingencies produce the violations:
 
 ```python
 v = pw[ViolationCTG, ["CTGLabel", "LimViolValue", "LimViolLimit"]]
@@ -1660,11 +1631,10 @@ L_000019PEARLCITY69-000023WAIPAHU69C4
 ```
 
 All twelve violations come from **one corridor**: the four parallel 69 kV circuits
-between PEARLCITY (bus 19) and WAIPAHU (bus 23). Circuits C1 through C4.
+(C1 through C4) between PEARLCITY (bus 19) and WAIPAHU (bus 23).
 
-That is the whole diagnosis. Losing any one of the four pushes the surviving three over
-their limit. This is not twelve problems; it is **one problem seen four times**, and it
-tells you exactly where reinforcement belongs.
+Losing any one of the four pushes the surviving three over their limit. That is **one
+problem seen four times**, and it tells you where reinforcement belongs.
 
 Reporting "12 violations" without this step is a readout. Reporting "the 19–23 corridor
 is N-1 insecure against loss of any of its four parallel circuits" is an answer.
@@ -1707,8 +1677,8 @@ for frm, to in CANDIDATES:
     p.close()
 ```
 
-**The `!= 1` guard is not optional.** Without it, a silently skipped `CreateData` yields
-"this reinforcement changes nothing" — a confident, completely wrong recommendation. See
+**The `!= 1` guard is required.** Without it, a silently skipped `CreateData` yields
+"this reinforcement changes nothing", a confident and wrong recommendation. See
 [adding-a-device](adding-a-device.md).
 
 ### Step 4 — the results, and the surprise
@@ -1732,22 +1702,21 @@ Ranked:
 | 4 | 2→26 | 13 | 100.23% | **+1** |
 | 5 | 27→29 | 15 | 100.23% | **+3** |
 
-Three findings worth more than the ranking itself:
+Three findings:
 
 **Two candidates made it worse.** Adding a line to 2→26 or 27→29 *increased* violations,
 by 1 and 3. Reinforcing a network can redistribute flow onto elements that were
-previously fine — the same intuition failure Braess's paradox describes. **This is why
-you test rather than reason.** An agent that proposed 27→29 because it was the most
-loaded branch would have recommended making the system worse.
+previously fine, the same intuition failure Braess's paradox describes. Test rather than
+reason. An agent that proposed 27→29 because it was the most loaded branch would have
+recommended making the system worse.
 
 **Count and severity can disagree.** 19→25 removes 5 violations but pushes the worst one
 from 100.22% to **105.76%**. Fewer problems, each one worse. Which is preferable is a
-planning judgement, not an arithmetic one — so present both numbers and let the user
-decide.
+planning judgement, so present both numbers and let the user decide.
 
 **The diagnosis predicted the winner.** Step 2 said the 19–23 corridor was the problem;
-reinforcing 19–23 directly was best by a wide margin. Diagnosing first is not ceremony,
-it is what makes the candidate list intelligent instead of a sweep.
+reinforcing 19–23 directly was best by a wide margin. Diagnosing first turns the
+candidate list from a sweep into a short, targeted set.
 
 ### What to report back
 
@@ -1758,8 +1727,8 @@ it is what makes the candidate list intelligent instead of a sweep.
 > **Recommendation.** A new 150 MVA circuit on **19→23** takes violations from 12 to
 > **2** and drops the worst from 100.22% to 100.19%. Best of the five tested.
 >
-> **Alternative.** 23→26 gets to 4 violations — worth considering if a fifth parallel
-> circuit on an existing corridor is undesirable for right-of-way or common-mode reasons.
+> **Alternative.** 23→26 gets to 4 violations. Consider it if a fifth parallel circuit on
+> an existing corridor is undesirable for right-of-way or common-mode reasons.
 >
 > **Do not build 27→29 or 2→26.** Both make N-1 *worse* (+3 and +1). 27→29 is the most
 > loaded branch in the base case, so it is the intuitive choice and it is wrong.
@@ -1776,21 +1745,21 @@ it is what makes the candidate list intelligent instead of a sweep.
 ### What makes this a study and not a query
 
 - The **diagnosis** turned 12 symptoms into 1 cause
-- Candidates were **tested, not argued** — and 2 of 5 refuted the intuition
+- Candidates were **tested, not argued**, and 2 of 5 refuted the intuition
 - **Two metrics** were tracked, because they disagreed
 - Every device creation was **verified**, so no result rests on a silent no-op
 - The recommendation includes what **not** to build, which is often the more valuable half
 
 ### Going further
 
-This loop generalises. The same shape covers redispatch instead of reinforcement
+The same loop covers redispatch instead of reinforcement
 ([applying-a-dispatch-to-a-case](../methods/applying-a-dispatch-to-a-case.md)), adjusting limit monitoring
 ([powerworld-limitset-setdata](../methods/powerworld-limitset-setdata.md)), scoring a large candidate set by severity rather than
 count ([ranking-new-devices-by-severity](../methods/ranking-new-devices-by-severity.md)), and restricting contingencies to a chosen
 device list ([new-device-contingency-aux](../methods/new-device-contingency-aux.md)).
 
-For a weather-driven study — where the violations depend on the hour rather than a single
-snapshot — the same diagnose-propose-test-rank loop runs on top of
+For a weather-driven study, where the violations depend on the hour rather than a single
+snapshot, the same diagnose-propose-test-rank loop runs on top of
 [timestep-workflow](../concepts/timestep-workflow.md).
 
 

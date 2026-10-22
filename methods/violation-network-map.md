@@ -17,8 +17,8 @@ Two single-file HTML pages that put a violation **on the map** instead of in a t
 `violation-map` skill's engine (`skills/violation-map/engine/`). The **voltage page** shows the
 substations around a set of out-of-band buses, every line in its own kV colour, a click-to-zoom
 problem list, a one-line of any substation, the **reactive balance** inside the radius (line
-charging against generators absorbing and reactors, with the *room* each has left), and —
-optionally — measured candidate fixes with a Before/After switch and a scenario × outage
+charging against generators absorbing and reactors, with the *room* each has left), and
+optionally measured candidate fixes with a Before/After switch and a scenario × outage
 pass/fail grid. Its **thermal view** colours every line by its loading against the rating in
 use (red at or above 100%, orange from 90%, the rest grey), with nothing out, after any one
 outage, or each line at its worst post-outage loading with the outage behind it. The **radial-ties page** screens the whole grid for **bridges** (lines whose
@@ -49,7 +49,7 @@ places; the map makes that grouping visible before any fix is proposed. It is th
 of [violation-remediation](../demos/violation-remediation.md), drawn.
 
 It is **not** a replacement for the N-1 run. The voltage page tests only the outages you list;
-the radial page tests only bridge outages. Neither is a full contingency analysis — the pages
+the radial page tests only bridge outages. Neither is a full contingency analysis. The pages
 say so on every measured result, and so should you.
 
 ### Ask before extracting anything
@@ -63,7 +63,7 @@ Four decisions belong to the user, and each changes what gets extracted:
 | Area and depth: seeded from which buses, how many substation-hops | seeds = the out-of-band buses, 5 hops |
 | Look only, or also **measure candidate fixes** | look only |
 
-Very meshed areas explode past a few hops — open those at 2–3 and say so. Step-up, star-point
+Very meshed areas explode past a few hops; open those at 2–3 and say so. Step-up, star-point
 and tertiary buses are out of the count by default (`exclude_bus_prefixes`); list them
 separately if the user wants them.
 
@@ -115,7 +115,7 @@ sibling `vmap.py`, and Python finds it because the script's own folder is on the
 - **Voltage-layer filter** (All / 765 / 345 / 138 / ≤69) that hides the other classes' lines and
   substations.
 - **Substation one-line** on click: bus bars by kV with pu, transformers with X and flow,
-  generators and shunts with MVAr and pinned flags, outgoing lines fanned with far-end names —
+  generators and shunts with MVAr and pinned flags, outgoing lines fanned with far-end names,
   and **Isolate neighbourhood** at 1–3 hops.
 - A **scenario switch**, a **state switch** (as delivered / after a fix), and for measured
   designs a **Before/After** switch and a scenario × condition grid of pass/fail cells.
@@ -155,20 +155,20 @@ Thermal / Voltage switch):
 - Substations are neutral grey in this view. Voltages are a voltage-view question, and a dot
   coloured by base-case voltage under a post-outage label would be wrong.
 
-Open the built HTML in a browser, or publish it. Take one screenshot before handing it over —
+Open the built HTML in a browser, or publish it. Take one screenshot before handing it over:
 a page that renders blank from a data error looks identical to one still loading.
 
 ### Traps, each of which cost a run
 
-**`esa.exit()` every case you open.** `del pw` leaves one `pwrworld.exe` resident per open —
-roughly a gigabyte each on a 10,000-bus model — and a measurement loop that opens a case per
+**`esa.exit()` every case you open.** `del pw` leaves one `pwrworld.exe` resident per open
+(roughly a gigabyte each on a 10,000-bus model), and a measurement loop that opens a case per
 candidate will starve every other process on the machine. The engine closes in a `finally`.
 
 **A fresh open per candidate; never trust an undo.** Taking a new line back out does not move
 LTC taps or switched shunts back to where they were, so the next candidate is measured on a
 different case. `measure_designs.py` reopens per candidate. `measure_trees.py` reuses one case
-per scenario for speed, and **fingerprints** it after every design — closed-branch count plus a
-fixed 40-bus voltage sample — and reopens the moment either drifts. An undo that did not restore
+per scenario for speed, and **fingerprints** it after every design (closed-branch count plus a
+fixed 40-bus voltage sample), and reopens the moment either drifts. An undo that did not restore
 the case once went unnoticed until the fingerprint caught it.
 
 **Islanding solves with zero violations.** When an outage strands buses, PowerWorld drops them
@@ -180,7 +180,7 @@ N-1 side of the same trap.
 **Adding several devices before one solve: freeze the controls.** Live taps and shunts drift
 between writes, and the saved case then disagrees with what you measured. Set `ChkTaps`,
 `ChkShunts` and `ChkPhaseShifters` to `NO`, add everything, restore them, and take one solve.
-The engine adds one device per candidate, so it does not need this — a multi-device candidate
+The engine adds one device per candidate, so it does not need this; a multi-device candidate
 does.
 
 **A tie starts where the MW is, then where it closes the most bridges.** For a chain of substations,
@@ -191,7 +191,7 @@ pocket when its exit opened.
 
 **Rating does not scale with length; impedance does.** A new line cloned from a template gets R,
 X, C and G scaled by the length ratio and the template's whole `LineAMVA` set unchanged. Choose
-the template by **rating first** (it must clear the stranded MW) and length second — a template
+the template by **rating first** (it must clear the stranded MW) and length second. A template
 chosen by length alone once put a line at 250% into a delivered case. The create is read back:
 branch count +1, X as asked, status Closed, device type Line. See
 [adding-devices-esapp](adding-devices-esapp.md) for why every create must be read back.

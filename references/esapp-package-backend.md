@@ -10,7 +10,7 @@ tags: [esapp, powerworld, simauto, internals, backend, reference]
 
 ## Abstract
 
-Internals reference for the esapp package project, covering bracket-interface mechanics (`Indexable.__getitem__`/`__setitem__`), SAW mixin composition, the component-generation pipeline, GObject schema model, embedded utility apps (`Network`, `GIC`, `BusCat`), descriptors, and the exception hierarchy. This is the heavy/deep layer — read it in full only when writing or regenerating code for esapp package; for the gist, use [esapp](../concepts/esapp.md).
+Internals reference for the esapp package, covering bracket-interface mechanics (`Indexable.__getitem__`/`__setitem__`), SAW mixin composition, the component-generation pipeline, the GObject schema model, embedded utility apps (`Network`, `GIC`, `BusCat`), descriptors, and the exception hierarchy. Read it in full only when writing or regenerating esapp code; for the gist, use [esapp](../concepts/esapp.md).
 
 ## Connections
 
@@ -19,14 +19,11 @@ Internals reference for the esapp package project, covering bracket-interface me
 
 ## Content
 
-**Scope:** how `esapp` works *inside* and how to *extend* it — bracket-interface
-mechanics, the SAW mixin assembly, the component-generation pipeline, the GObject
-schema model, embedded utility apps, descriptors, and the exception hierarchy. This
-is the INTERNALS companion to the API-usage map in [esapp](../concepts/esapp.md); it does not re-document
-user-facing call recipes. Hub is
-[Home](../index.md).
+**Scope:** how `esapp` works inside and how to extend it. This is the internals companion
+to the API-usage map in [esapp](../concepts/esapp.md) and does not repeat user-facing call
+recipes.
 
-All file:line citations are against the real source under `C:\path\to\esapp`.
+All file:line citations are against the source under `C:\path\to\esapp`.
 
 ---
 
@@ -43,15 +40,15 @@ PowerWorld(Indexable)            workbench.py:22   — user entry point
 
 `PowerWorld` **subclasses** `Indexable` (so `pw[...]` works directly), and **holds**
 a `SAW` instance as `self.esa`. The embedded apps each keep a back-reference to the
-`PowerWorld` instance (`self._pw`) and delegate all data access through it — they
-never open their own COM connection.
+`PowerWorld` instance (`self._pw`) and delegate all data access through it. They never
+open their own COM connection.
 
 `PowerWorld.__init__` (workbench.py:26–45) instantiates the three apps *first*, then
 either opens the case (`self.open()`, inherited from `Indexable`) or leaves
 `self.esa = None`. `Indexable.open()` (indexable.py:25–50) absolutizes/validates the
-path and constructs `SAW(self.fname, CreateIfNotFound=True, early_bind=True)` — note
-**`CreateIfNotFound=True` is hard-wired here**, which is what makes the bracket-write
-create path possible (see §3).
+path and constructs `SAW(self.fname, CreateIfNotFound=True, early_bind=True)`.
+**`CreateIfNotFound=True` is hard-wired here**, which makes the bracket-write create path
+possible (see §3).
 
 ---
 
@@ -101,8 +98,8 @@ Two dispatch cases:
 
 ### 2.3 `_bulk_update_from_df` — indexable.py:148–197 (the create path)
 
-This is the load-bearing method. Flow **as of 0.2.1** (line numbers against the 0.2.1
-`indexable.py`; the 0.1.x layout this section used to describe is noted inline):
+Flow **as of 0.2.1** (line numbers against the 0.2.1 `indexable.py`; the 0.1.x layout
+this section used to describe is noted inline):
 
 1. Reject non-DataFrame `value` with `TypeError`.
 2. **The write funnel:** `df = self._prepare_write(gtype, df)` (`:212`) — normalizes
@@ -138,8 +135,7 @@ This is the load-bearing method. Flow **as of 0.2.1** (line numbers against the 
      (expected for freshly created rows); any other message re-raises.
    - Any non-`"not found"` `PowerWorldPrerequisiteError` re-raises immediately.
 
-This is the concrete answer to "where bracket-write keys off `PowerWorldPrerequisiteError`":
-indexable.py:233–253. The classification "not found" → `PowerWorldPrerequisiteError`
+Bracket-write keys off `PowerWorldPrerequisiteError` at indexable.py:233–253. The classification "not found" → `PowerWorldPrerequisiteError`
 is decided in `PowerWorldError.from_message` (see §6); the bracket layer then string-matches
 `"not found"` again to distinguish the create case from other prerequisite failures.
 
@@ -161,12 +157,12 @@ For `pw[GObject, fields] = value`. Same settable gate first. Then two sub-paths:
   aligns a list/array). Single field uses the bare name to avoid pandas multi-column
   treatment.
 
-Always finishes with `ChangeParametersMultipleElementRect`. So broadcast writes are
+Always finishes with `ChangeParametersMultipleElementRect`. Broadcast writes are
 update-only; only the Case-1 DataFrame path can create.
 
 `fexcept` (indexable.py:11) is a small lambda turning `'Three…'` type names into
-`'3…'` (e.g. `ThreeWindingTransformer` → `3WindingTransformer`) — Python-identifier
-vs PowerWorld-string reconciliation, mirrored in the generator (§4).
+`'3…'` (e.g. `ThreeWindingTransformer` → `3WindingTransformer`). It reconciles Python
+identifiers with PowerWorld strings, and the generator mirrors it (§4).
 
 ---
 
@@ -191,8 +187,7 @@ class SAW(
 
 ### How a mixin works (the shared contract)
 
-Mixins do **not** declare `__init__` or hold state — they rely on `SAWBase`
-providing:
+Mixins do **not** declare `__init__` or hold state. They rely on `SAWBase` providing:
 - `self._com_call(func, *args)` — the single COM gateway (base.py:331–401). Wraps
   every SimAuto call, unwraps the `(Error, Result)` tuple, maps RPC failures to
   `COMError`, and raises `PowerWorldError.from_message(...)` when SimAuto returns an
@@ -225,8 +220,8 @@ Two concrete patterns to copy when extending:
 3. If the feature needs new type-safe constants, add them to `saw/_enums.py` and
    export via `saw/__init__.py`'s `__all__`.
 
-No registry/metaclass — composition is purely the explicit base-class tuple, so the
-only "wiring" is the import + the line in the tuple.
+There is no registry or metaclass. Composition is the explicit base-class tuple, so the
+only wiring is the import and the line in the tuple.
 
 ---
 
@@ -311,7 +306,7 @@ Re-exports: `GObject` from `gobject`, `from .grid import *` (all object classes)
   per-class lists `_FIELDS`, plus `_KEYS`/`_SECONDARY`/`_EDITABLE` depending on its
   `FieldPriority` flags (95–104).
 
-This is why `__getitem__` can read `field.value[1]` for a member (indexable.py:102) —
+That is why `__getitem__` can read `field.value[1]` for a member (indexable.py:102):
 index 1 of the tuple is the PowerWorld field-name string.
 
 `FieldPriority(Flag)` (gobject.py:16–28): `PRIMARY`, `SECONDARY`, `REQUIRED`,
@@ -340,11 +335,11 @@ enterable while Simulator is in EDIT mode and drives the hint in `_raise_with_ed
 `ALT_KEY_SETS` table at gobject.py:61) drives the create-path key check in §2.3.
 
 > ⚠️ **`is_settable` is advisory, not a gate, and it is frequently wrong.** Through 0.1.x
-> it *was* the gate — both bracket-write paths refused a read-only column. In 0.2.1 it only
-> selects the text of a `UserWarning`. Worse, it disagrees with PowerWorld: the generator
+> it *was* the gate: both bracket-write paths refused a read-only column. In 0.2.1 it only
+> selects the text of a `UserWarning`. It also disagrees with PowerWorld: the generator
 > keeps a field as `EDITABLE` only when Simulator reports `enterable` as an unconditional
 > `Yes`, and silently drops every **conditional** one. `Branch.LineStatus` is the canonical
-> case — PowerWorld says *"Depends: Normally enterable except when field Lockout is YES"*,
+> case. PowerWorld says *"Depends: Normally enterable except when field Lockout is YES"*,
 > esapp says read-only, and the write succeeds.
 >
 > Counted against Simulator build 2026-07-22 / esapp 0.2.1 — fields PowerWorld reports as
@@ -358,8 +353,8 @@ enterable while Simulator is in EDIT mode and drives the hint in `_raise_with_ed
 > | `Load` | 277 | 119 | **1** |
 >
 > The authority is PowerWorld: `pw.esa.GetFieldList(<type>)` returns an `enterable` column
-> (and a `key_field` column marking keys `*1*`, `*2*`, …). Genuine read-onlys have it blank —
-> `Shunt.SSMinMVR` for instance, where the write really does vanish. Never promote this
+> (and a `key_field` column marking keys `*1*`, `*2*`, …). Genuine read-onlys have it blank,
+> for instance `Shunt.SSMinMVR`, where the write does vanish. Never promote this
 > warning to an error with `-W error::UserWarning`.
 
 `__str__` returns the PW field string for field members (so a member stringifies to
@@ -397,12 +392,12 @@ lower-cases the message and returns a **subclass**:
 - `"not registered"` → `PowerWorldAddonError`.
 - else → base `PowerWorldError`.
 
-This is the linchpin for bracket-write: a SimAuto "object not found" comes back as
+Bracket-write depends on this. A SimAuto "object not found" comes back as
 `PowerWorldPrerequisiteError`, which `_bulk_update_from_df` catches and re-string-matches
-on `"not found"` to trigger the create fallback (§2.3). So the create path depends on
+on `"not found"` to trigger the create fallback (§2.3). The create path therefore depends on
 **both** the factory's substring list *and* the bracket layer's own `"not found"` check.
 
-`COMError` is different in kind — it wraps a thrown COM exception (RPC server crash /
+`COMError` is different in kind. It wraps a thrown COM exception (RPC server crash /
 invalid function), raised in `_com_call`'s `except` (base.py:368–376), not via the
 factory.
 
@@ -434,9 +429,9 @@ the bracket interface:
   [key, value])` … `EnterMode("RUN")`. The `pf_include`, `calc_mode`, `efield_mag`, …
   attributes in gic.py:69–96 are instances.
 
-To add a new solver/GIC flag: just declare one more class attribute
-`my_opt = SolverOption('PWFieldName')` on `PowerWorld` (or `GICOption(...)` on `GIC`) —
-no method needed.
+To add a new solver/GIC flag, declare one more class attribute
+`my_opt = SolverOption('PWFieldName')` on `PowerWorld` (or `GICOption(...)` on `GIC`).
+No method is needed.
 
 ---
 

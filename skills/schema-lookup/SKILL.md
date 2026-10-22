@@ -35,7 +35,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/schema-lookup/engine/lookup.py" search "<wo
 
 `field` prints the rows of `references/powerworld-study-options.md` that name the field, verbatim:
 
-- `[exact]` rows name `Object.Field` — they are about this field.
+- `[exact]` rows name `Object.Field` and are about this field.
 - `[name]` rows only mention the bare name and **may concern another object**. Read the row before
   using it.
 - The row's words decide the answer. A row that says **decoy** or **trap** overrides everything else;
@@ -62,8 +62,8 @@ how to set it: SetData(<Object>, [<Field>], [<value>]);   — then read it back
 the kit says: <the hub row, quoted, with its tag> | field export only
 ```
 
-The `how to set it` line depends on `writable`: yes — as above; aux-only — only from an aux file;
-edit-mode — only in EDIT mode; depends — say so and quote the export's condition;
+The `how to set it` line depends on `writable`: yes: as above; aux-only: only from an aux file;
+edit-mode: only in EDIT mode; depends: say so and quote the export's condition;
 read-only: say it cannot be written, and give no SetData line.
 
 For "what do I need to create an X": the keys in order and the required fields.

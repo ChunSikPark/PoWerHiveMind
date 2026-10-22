@@ -61,7 +61,7 @@ N-1 will check: areas 1 (of 1), all kV, 89 branches / 37 buses (the case's own s
 | weather file not given, so I didn't check it covers these units | — | send the .pww if you want its coverage checked | FYI | Your call | ts.pww_footprint | concepts/pww-data.md |
 
 ## What you need to get
-1. time step will run: 6 of 9 renewables follow the weather; 3 read 0 MW for the whole run (81 of 294 MW installed, 27.4%) → the Grid-Workshop Auto_PFW scripts (concepts/grid-workshop-auto-pfw.md); 0 of the 0 missing wind units carry a class it can use, and it skips the rest without a warning; send back the _PFW copy it writes → then send the returned case to be checked again
+1. time step will run: 6 of 9 renewables follow the weather; 3 read 0 MW for the whole run (81 of 294 MW installed, 27.4%) → the Auto_PFW scripts (concepts/auto-pfw-scripts.md); 0 of the 0 missing wind units carry a class it can use, and it skips the rest without a warning; send back the _PFW copy it writes → then send the returned case to be checked again
 
 ## Every object, per finding
 

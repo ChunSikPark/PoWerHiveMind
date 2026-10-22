@@ -11,9 +11,9 @@ tags: [demo, index, examples, prompts, getting-started]
 ## Abstract
 
 Worked runs on the public synthetic Synth40 case (37 buses, 89 branches, 45 generators).
-Every number on these pages came from an actual run — including the failures, which were
-left in on purpose. Start with the one-line prompts below: you should not have to know
-which page covers what.
+Every number on these pages came from a real run, including the failures, which were left
+in on purpose. Start with the one-line prompts below. You should not have to know which
+page covers what.
 
 ## Connections
 
@@ -44,7 +44,7 @@ You do not need to name a function, a field, or a file. Say the thing you want:
 | *"Compare my 2016 and 2024 cases and tell me what the plan builds."* | Diff both, guard against renumbering artifacts, classify NEW / RETIRED / UPGRADED |
 | *"Do the new devices in this plan cause violations?"* | Build a contingency set for just those devices, solve, and attribute correctly |
 | *"Can this case run a weather study?"* | Check whether its renewable units carry PFW models |
-| *"Save the case."* | Write it out — after asking where, since that is destructive |
+| *"Save the case."* | Write it out, after asking where, since that is destructive |
 
 If a prompt fails, that is a defect worth reporting. The routing is
 [AGENTS.md](../AGENTS.md)'s job, not yours.
@@ -56,36 +56,34 @@ If a prompt fails, that is a defect worth reporting. The routing is
 | [comparing-planning-cases](comparing-planning-cases.md) | **Multi-case.** 2016 vs 2024: 691 new branches, 199 new generators, and a scoping trap that makes the naive answer 87% wrong |
 | [violation-remediation](violation-remediation.md) | **The full study.** 12 violations diagnosed to one cause, five reinforcements tested and ranked, two of which make things worse |
 | [adding-a-device](adding-a-device.md) | **Read this one.** Three attempts that succeeded and did nothing, then the fix. The silent-failure problem in full |
-| [power-flow-and-sensitivities](power-flow-and-sensitivities.md) | AC, DC, LODF, PTDF — with the `1e8` sentinel and a two-step error recovery |
+| [power-flow-and-sensitivities](power-flow-and-sensitivities.md) | AC, DC, LODF, PTDF, with the `1e8` sentinel and a two-step error recovery |
 | [contingency-and-aux](contingency-and-aux.md) | N-1 from scratch, and generating a filter + contingency `.aux` automatically |
 | [timestep-and-pfw](timestep-and-pfw.md) | Weather to megawatts: PFW models, TimeStep, and reading the output |
 | [aux-file-cookbook](aux-file-cookbook.md) | Claude in one window, Simulator in the other. Four recipes in order: turn the channel on, prove it with a four-line script, inventory a case, then take a bus out and measure it. Start here if you are working through files rather than Python. |
 
 ### Queries versus studies
 
-The first few prompts above are queries — one number, one answer. The interesting ones
-are studies: *diagnose the cause, propose a fix, apply it, re-verify, and report what you
-rejected.*
+The first few prompts above are queries: one number, one answer. The rest are studies:
+*diagnose the cause, propose a fix, apply it, re-verify, and report what you rejected.*
 
-That second kind is what this kit is really for. A voltage readout needs no knowledge
-base. Knowing that reinforcing the most loaded branch can make N-1 **worse** — and having
-measured it rather than argued it — does.
+Studies are what this kit is for. A voltage readout needs no knowledge base. Knowing that
+reinforcing the most loaded branch can make N-1 **worse**, and having measured it, does.
 
 ### Measuring whether this actually works — in progress
 
 The traversal protocol claims a fresh agent needs three to five pages for a typical task.
-**That is a design target, not yet a measured result.** The check:
+**That is a design target, not yet a measured result.** To check it:
 
 1. Start a fresh session with no prior PowerWorld context, in a clean clone.
 2. Give it one prompt from the table above.
 3. Count the pages it opens before it writes code.
 
 **Pass is fewer than 8 of 41.** Reading 25 means the router's traversal instructions are
-too weak and belong in the next revision — a defect in this knowledge base, not in the
-agent.
+too weak and belong in the next revision. That is a defect in this knowledge base, not in
+the agent.
 
-If you run it, the page count and the prompt you used are worth an issue on the
-repository either way. A failure here is more useful than a pass.
+If you run it, open an issue on the repository with the page count and the prompt you
+used, pass or fail. A failure here is more useful than a pass.
 
 ### What every demo assumes
 
@@ -102,8 +100,8 @@ Synth40.pwb
   N-1: 12 violations across 89 auto-inserted contingencies
 ```
 
-It is small enough that a wrong answer is visibly wrong, which is exactly why it was
-chosen. A synthetic case, so nothing here is sensitive.
+It was chosen because it is small enough that a wrong answer is visibly wrong. It is
+synthetic, so nothing here is sensitive.
 
 ### Two habits these demos are trying to teach
 

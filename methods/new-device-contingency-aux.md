@@ -12,14 +12,13 @@ tags: [esapp, powerworld, simauto, contingency, aux, n-1, limit-monitoring, area
 
 How to turn **a list of devices** (e.g. the branches and generators that are new in a
 planning case) into a PowerWorld contingency set, restrict violation reporting to **the
-areas you care about**, and ship both as one `.aux` file that loads into the case — without
+areas you care about**, and ship both as one `.aux` file that loads into the case, without
 ever saving the case. The mechanism is **autoinsert-then-restrict**: run the case's own
 `CTGAutoInsert`, match your devices to the labels it produced, and write only those out.
 Hand-writing `Contingency` records from scratch invents labels PowerWorld would not use.
 
-Five things here are silent failures, all live-measured on
-`Synth2k_case` on 2026-08-17 — each produces a plausible wrong
-answer, not an error:
+Five things here are silent failures, each live-measured on `Synth2k_case` on 2026-08-17.
+Each produces a plausible wrong answer instead of an error:
 
 > **`ElementType`, `DeleteExisting` and `Handle3WXF` are *concise* names.** PowerWorld's
 > object-field export lists two names per field, and these three appear only in the Concise
@@ -29,14 +28,14 @@ answer, not an error:
 > search the export on either column before concluding a field is missing.
 
 1. **`CTG_AutoInsert_Options` rejects `ElementType=GEN` without complaining** and leaves it
-   at `BRANCH`. You ask for 743 generator outages and get 3,911 branch ones.
+   at `BRANCH` (suspected, possibly by design: glitch `2026-10-20-ctgautoinsert-gen-ignored`). You ask for 743 generator outages and get 3,911 branch ones.
 2. **The `CTGElement` SUBDATA action string must be quoted.** Unquoted, PowerWorld parses
    the *first* contingency and drops the other 690 with no error.
-3. **`LoadAux` needs an ABSOLUTE path** — a relative one resolves against `pwrworld.exe`'s
+3. **`LoadAux` needs an ABSOLUTE path.** A relative one resolves against `pwrworld.exe`'s
    working directory, not yours.
-4. **`LoadAux` merges, it does not replace.** Loading a 220-contingency list into a case
-   that already has a set gives you both.
-5. **`Ctg_Options.CTG_ReportMonitoredAreas` is a decoy** — it only affects text-file report
+4. **`LoadAux` merges, it does not replace.** Loading a contingency list into a case that
+   already has a set gives you both.
+5. **`Ctg_Options.CTG_ReportMonitoredAreas` is a decoy.** It only affects text-file report
    writing. The real area switch is `Area.BGReportLimits`.
 
 ## Connections
@@ -66,9 +65,8 @@ pw.esa.RunScriptCommand("EnterMode(RUN);")
 > reported success.** Suspected PowerWorld issue, not yet confirmed: the cause may still turn
 > out to be a setting. The workaround below holds either way. The condition is
 > `CTGAutoInsert` run straight after `Delete(Contingency)`. Measured 2026-10-19 on a public
-> synthetic grid. The same block gave
-> the full branch set on 2026-08-17 (the counts below), so the page's recipe changed under a
-> newer build. It was not misused.
+> synthetic grid. The same block gave the full branch set on 2026-08-17 (the counts below),
+> so the behaviour changed with the newer build, not through misuse.
 > [powerworld-study-options](../references/powerworld-study-options.md) saw zero inserts on a
 > Simulator 25 build on 2026-09-28 as well.
 >
@@ -81,7 +79,8 @@ pw.esa.RunScriptCommand("EnterMode(RUN);")
 > autoinsert's, so match devices by unordered bus pair plus circuit (Step 2), never by label.
 
 `ElementType` is `BRANCH` or **`GENERATOR`** — **never `GEN`**. `GEN` is accepted by the
-parser, silently ignored, and leaves the previous value in place:
+parser, silently ignored, and leaves the previous value in place (suspected, possibly by design:
+glitch `2026-10-20-ctgautoinsert-gen-ignored`). Use `GENERATOR` either way:
 
 ```python
 pw.esa.RunScriptCommand("SetData(CTG_AutoInsert_Options,[ElementType],[GEN]);")
@@ -91,7 +90,7 @@ pw.esa.GetParametersSingleElement("CTG_AutoInsert_Options", ["ElementType"], [""
 ```
 
 **Always read the option back and assert it** before `CTGAutoInsert`. `Handle3WXF` applies
-to branches only. On case 3 this yields **3,911 branch** contingencies (= its branch count)
+to branches only. On Synth2k case 3 this yields **3,911 branch** contingencies (= its branch count)
 and **743 generator** ones (= its generator count).
 
 ### Step 2 — match your devices to the labels autoinsert chose
@@ -105,7 +104,7 @@ Read `ContingencyElement` with an explicit field list
 | 3W xfmr | `BRANCH …` | both ends | circuit | `T_…` prefix |
 | generator | `GEN 1004 1` | bus / **`0`** | **the `GenID`** | `G_001004ODONNELL11U1` |
 
-Two matching rules that are easy to get wrong, both inherited from [reading-violationctg](reading-violationctg.md):
+Two matching rules, both inherited from [reading-violationctg](reading-violationctg.md):
 
 - **`ContingencyElement` has no `LineCircuit`.** The circuit ID is `ElementID` (verified on
   a 3-circuit bank: `'1'`, `'10'`, `'20'`). For generators `ElementID` is the `GenID`.
@@ -114,8 +113,7 @@ Two matching rules that are easy to get wrong, both inherited from [reading-viol
 
 ### Step 3 — write the AUX, in PowerWorld's own shape
 
-Get the ground truth from PowerWorld rather than guessing — it will export the set it is
-holding:
+Do not guess the format. PowerWorld will export the set it is holding:
 
 ```python
 # Write ONLY through RunScriptCommand -- the COM SaveCase method silently no-ops,
@@ -158,8 +156,8 @@ Area (AreaNum,BGReportLimits)
 }
 ```
 
-Measured on case 3 (8 areas, 2,000 buses, 3,911 branches), reading the **effective** flags
-`Bus.BusMonEle:1` / `Branch.LineMonEle:1` — not the requested ones:
+Measured on Synth2k case 3 (8 areas, 2,000 buses, 3,911 branches), reading the **effective**
+flags `Bus.BusMonEle:1` / `Branch.LineMonEle:1`, not the requested ones:
 
 | monitored areas | buses monitored | branches monitored |
 |---|---|---|
@@ -167,8 +165,8 @@ Measured on case 3 (8 areas, 2,000 buses, 3,911 branches), reading the **effecti
 | `5` (North Central) | 483 = area 5 exactly | 866 = its own 822 **+ 44 ties** |
 | `3, 5` | 630 | 1341 |
 
-**A bus is monitored when its area is; a branch when EITHER end is** — so tie lines into the
-region are included automatically, which is the opposite of the `ViolationCTG.AreaNum` trap
+**A bus is monitored when its area is; a branch when EITHER end is.** Tie lines into the
+region are included automatically. That is the opposite of the `ViolationCTG.AreaNum` trap
 in [reading-violationctg](reading-violationctg.md), where a naive filter *drops* them. Related knobs found in the
 same field-list dig: `Area.BGReportLimMinKV` / `BGReportLimMaxKV` (monitor only a kV band)
 and `Branch.LineMonEle` / `Bus.BusMonEle` (switch off one device).
@@ -203,7 +201,7 @@ shipped one.
 
 ### Verify it worked
 
-Load the file back into the open case and assert — never trust the write:
+Load the file back into the open case and assert. Never trust the write:
 
 ```python
 pw.esa.RunScriptCommand("EnterMode(EDIT);")
@@ -214,24 +212,24 @@ pw.esa.RunScriptCommand("EnterMode(RUN);")
 
 Assert **three** things, because each failure looks like success:
 
-1. the loaded `CTGLabel` set equals what you wrote — a parse failure loads a prefix;
-2. the `ContingencyElement` **count** equals what you wrote — a contingency with no element
-   loads fine and outages nothing, which reads as "the grid survives everything";
+1. the loaded `CTGLabel` set equals what you wrote (a parse failure loads a prefix);
+2. the `ContingencyElement` **count** equals what you wrote (a contingency with no element
+   loads fine and outages nothing, which reads as "the grid survives everything");
 3. every area's `BGReportLimits` came back as intended.
 
 ### Gotchas beyond the five in the Abstract
 
 - **A device that gets no contingency is normal, not a bug.** Autoinsert requires both ends
   ≥ 69 kV **and** `LineStatus == 'Closed'`, and `Handle3WXF=INSERT3WXF` collapses a
-  3-winding transformer's three branch rows into **one** contingency — so three device rows
+  3-winding transformer's three branch rows into **one** contingency, so three device rows
   legitimately map to one label. Report the bucket with a per-device reason; do not abort.
 - **The dominant unmatched cause on a real planning model is the 3-winding transformer's
   star bus, and it presents as a kV failure, not as a 3WXF one.** A 3W transformer is
   modelled as three branches meeting at a **fictitious star/tertiary bus carried at ~1 kV
   nominal**, so the winding branches touching it fail the 69 kV floor and autoinsert never
-  builds a branch contingency for them. (measured 2026-08-17, on regional planning cases: 111
-  of 273 new branches.) Do not read that bucket as missing coverage — the transformer
-  itself is covered by the single collapsed `T_…` contingency; what is absent is a separate
+  builds a branch contingency for them (measured 2026-08-17 on regional planning cases:
+  roughly two in five new branches). Do not read that bucket as missing coverage. The single
+  collapsed `T_…` contingency covers the transformer itself. What is absent is a separate
   outage of an internal winding, which is not a real N-1 event.
 - **`GetFieldList` on an object name that does not exist can fault `pwrworld.exe`** with an
   access violation rather than returning an error. Do not fuzz object names.

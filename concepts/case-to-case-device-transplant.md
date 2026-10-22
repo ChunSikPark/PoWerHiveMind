@@ -11,8 +11,8 @@ tags: [powerworld, esapp, aux, technique, case-diff]
 ## Abstract
 
 How to copy a set of devices from one PowerWorld case into another without rebuilding the chain
-that produced them — useful whenever a feature was developed on one scenario and the others are
-stranded behind unscripted stages. Carve a **filtered AUX out of the source case's own
+that produced them. It is useful whenever a feature was developed on one scenario and the others
+are stranded behind unscripted stages. Carve a **filtered AUX out of the source case's own
 `SaveCase(AUX)` dump** so the field lists are PowerWorld's rather than hand-written, and load it
 with `LoadAux(create_if_not_found=True)`. To *move* a device between buses, carve its record out
 of the **target** case and re-point the bus number, so the whole schema transfers by construction.
@@ -22,8 +22,8 @@ thousand branches, hundreds of gen moves, over a hundred load moves, criterion-1
 ## Connections
 
 - Used in a study spanning several scenarios, to answer an accepted migration risk.
-- Complements [comparing-planning-cases](../demos/comparing-planning-cases.md) — that is about *reading* a diff across two model
-  vintages, this one is about *applying* one.
+- Complements [comparing-planning-cases](../demos/comparing-planning-cases.md), which is about
+  *reading* a diff across two model vintages; this page is about *applying* one.
 - Depends on the same key-field constraint as renaming a branch's circuit ID: some fields can only be changed
   through an AUX text round-trip, never by a write.
 - 💡 **Could transfer to:** any study where one scenario got a
@@ -34,7 +34,7 @@ thousand branches, hundreds of gen moves, over a hundred load moves, criterion-1
 ### The method
 
 1. `SaveCase(AUX)` the **source** case. Its per-object blocks (`Bus (…) { … }`) carry PowerWorld's
-   own complete field lists — never hand-write one, and never assume a field name.
+   own complete field lists. Never hand-write one, and never assume a field name.
 2. Keep only the records you want, by key. Watch for **duplicate blocks**: a full dump writes
    `Bus`, `Gen`, `Load` and `Branch` more than once (the extras carry cost / OPF fields). Filter
    every occurrence, not the first.
@@ -46,19 +46,18 @@ thousand branches, hundreds of gen moves, over a hundred load moves, criterion-1
 **`ProcessAuxFile` on a data aux creates nothing and reports success.** No error, no warning, and
 the device counts are simply unchanged. `LoadAux(..., create_if_not_found=True)` is the working
 call; the create flag is the entire difference. Assert on device counts after the load, never on
-the absence of an exception — a discipline guards that report evidence they did not gather
-argues for generally.
+the absence of an exception.
 
 ### Moving a device between buses
 
-There is no move operation. Delete-and-recreate risks dropping fields silently — the
+There is no move operation. Delete-and-recreate risks dropping fields silently. The
 `LoadGrounded` bug hit every moved load in the original migration and was invisible to a diff over
 the write set, because a dropped field is by definition absent from it.
 
 **Carve the record out of the TARGET case's own aux and re-point only the leading bus-number
 token, then delete the original.** The whole schema then transfers by construction: there is no
-field list to get wrong, and no value from the source case can leak in. This is what makes the
-technique safe across scenarios — a moved generator keeps *its own* scenario's dispatch, not the
+field list to get wrong, and no value from the source case can leak in. This makes the
+technique safe across scenarios: a moved generator keeps *its own* scenario's dispatch, not the
 donor's.
 
 ### Always undo the text rounding

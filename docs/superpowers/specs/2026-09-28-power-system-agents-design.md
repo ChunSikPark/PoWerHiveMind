@@ -108,7 +108,7 @@ it does not converse, so it cannot ask for the file mid-run.
 Deferred: `n1` profile (with the runner's coverage guard), `transient` (out of scope).
 
 **Handoffs for data the kit does not own.** The auditor detects; it never fabricates. Missing PFW
-models link to the Grid-Workshop repository's `Auto_PFW` scripts (EIA-860 data the kit does not
+models link to the `Auto_PFW` scripts (EIA-860 data the kit does not
 carry), and the user re-audits the returned case — which catches units the insertion silently
 skipped. Missing cost curves are reported as data to be sourced, never set to a default.
 

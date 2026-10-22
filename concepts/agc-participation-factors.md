@@ -87,7 +87,7 @@ Surveyed read-only on 2026-10-18:
 | a public 10k-bus synthetic case | thermal and hydro | = MWMax | Gen Part Factors |
 | Synth40 | every unit | all 0 | Area Part Factors |
 
-The common convention: AGC on for dispatchable synchronous units only (not wind, solar,
+The common convention is AGC on for dispatchable synchronous units only (not wind, solar,
 batteries, or condensers with no MW range), factors from `MAXMWRAT`, make-up `Gen Part Factors`.
 
 ### Checking it

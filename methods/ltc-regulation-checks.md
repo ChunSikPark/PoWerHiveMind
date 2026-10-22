@@ -13,9 +13,9 @@ tags: [powerworld, esapp, transformer, ltc, tap, switched-shunt, voltage, case-q
 
 ## Abstract
 
-A case can carry a full fleet of live load tap changers (LTCs) and still control voltage badly,
-because what decides the outcome is not whether the LTCs are switched on but **which bus each
-one holds and how it drives toward its band**. Three defects are common, and each one leaves
+A case can carry a full fleet of live load tap changers (LTCs) and still control voltage badly.
+Switching the LTCs on decides little. The outcome turns on **which bus each one holds and how
+it drives toward its band**. Three defects are common, and each one leaves
 the power flow converging with no warning. (1) **A regulator pointed at nothing.** The regulated
 bus (`Branch.XFRegBus` for an LTC, `Shunt.SSRegNum` for a switched shunt) does not exist or is
 disconnected. (2) **`XFRegTargetType = Middle`**, the shipped value. When the regulated bus
@@ -161,7 +161,7 @@ EHV bus hanging off the first by one line cleared with it.
 
 **Standing check.** At any bus that violates with no local reactive source, list the
 transformers touching it and read their `XFRegBus`. An LTC at `LineTap = XFTapMax` (or
-`XFTapMin`) with a non-zero `XFRegError` is not failing to help. It is actively pushing.
+`XFTapMin`) with a non-zero `XFRegError` is actively pushing the bus out of band.
 
 Holding the LV side is right for a distribution tap feeding load and wrong for a bulk
 transformer between two transmission voltages. The case alone cannot say which one was
@@ -179,8 +179,8 @@ limits (`BusVoltLim = NO` everywhere) they read the limit group's 0.9 / 1.1 on e
 Set `XFRegBus`, the band and the target type, and let the LTC find its own position. Do not
 compute a tap yourself. Hand arithmetic brings its own direction trap:
 `new_tap = old_tap × (v_measured / v_target)` is the natural guess, and it is backwards. The
-correct form is `new_tap = old_tap × (v_target / v_measured)`, and whether the tap sits at the
-`XFNominalKV` end or the `:1` end is worth re-measuring on each new case family.
+correct form is `new_tap = old_tap × (v_target / v_measured)`. Re-measure on each new case
+family whether the tap sits at the `XFNominalKV` end or the `:1` end.
 
 ```python
 pw.edit_mode()
@@ -205,8 +205,8 @@ Three exclusions, each measured:
    the machines there were already pinned at `GenMVRMin` with nothing left to give.
 2. **Do not "repair" `XFTapMin = 1.00`.** A range that cannot go below nominal looks like a data
    defect. Widening it to 0.90 on two undervoltage units let each LTC hold its source bus by
-   pulling down the load bus behind it, from about 0.94 to about 0.89, in every dispatch, including one that had
-   been clean. Both sides were already low, so there was nothing to borrow. That floor was a
+   pulling down the load bus behind it, from about 0.94 to about 0.89, in every dispatch,
+   including one that had been clean. Both sides were already low, so there was nothing to borrow. That floor was a
    guard.
 3. **Never lower `XFTapMin`. Raise `XFTapMax` only where it sits below the unit's own tap
    position.** Widening ranges wholesale to 0.90–1.10 let one 345 kV bus swing 0.11 pu on travel

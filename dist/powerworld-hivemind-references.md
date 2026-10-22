@@ -360,7 +360,7 @@ tags: [esapp, powerworld, simauto, internals, backend, reference]
 
 ## Abstract
 
-Internals reference for the esapp package project, covering bracket-interface mechanics (`Indexable.__getitem__`/`__setitem__`), SAW mixin composition, the component-generation pipeline, GObject schema model, embedded utility apps (`Network`, `GIC`, `BusCat`), descriptors, and the exception hierarchy. This is the heavy/deep layer — read it in full only when writing or regenerating code for esapp package; for the gist, use [esapp](../concepts/esapp.md).
+Internals reference for the esapp package, covering bracket-interface mechanics (`Indexable.__getitem__`/`__setitem__`), SAW mixin composition, the component-generation pipeline, the GObject schema model, embedded utility apps (`Network`, `GIC`, `BusCat`), descriptors, and the exception hierarchy. Read it in full only when writing or regenerating esapp code; for the gist, use [esapp](../concepts/esapp.md).
 
 ## Connections
 
@@ -369,14 +369,11 @@ Internals reference for the esapp package project, covering bracket-interface me
 
 ## Content
 
-**Scope:** how `esapp` works *inside* and how to *extend* it — bracket-interface
-mechanics, the SAW mixin assembly, the component-generation pipeline, the GObject
-schema model, embedded utility apps, descriptors, and the exception hierarchy. This
-is the INTERNALS companion to the API-usage map in [esapp](../concepts/esapp.md); it does not re-document
-user-facing call recipes. Hub is
-[Home](../index.md).
+**Scope:** how `esapp` works inside and how to extend it. This is the internals companion
+to the API-usage map in [esapp](../concepts/esapp.md) and does not repeat user-facing call
+recipes.
 
-All file:line citations are against the real source under `C:\path\to\esapp`.
+All file:line citations are against the source under `C:\path\to\esapp`.
 
 ---
 
@@ -393,15 +390,15 @@ PowerWorld(Indexable)            workbench.py:22   — user entry point
 
 `PowerWorld` **subclasses** `Indexable` (so `pw[...]` works directly), and **holds**
 a `SAW` instance as `self.esa`. The embedded apps each keep a back-reference to the
-`PowerWorld` instance (`self._pw`) and delegate all data access through it — they
-never open their own COM connection.
+`PowerWorld` instance (`self._pw`) and delegate all data access through it. They never
+open their own COM connection.
 
 `PowerWorld.__init__` (workbench.py:26–45) instantiates the three apps *first*, then
 either opens the case (`self.open()`, inherited from `Indexable`) or leaves
 `self.esa = None`. `Indexable.open()` (indexable.py:25–50) absolutizes/validates the
-path and constructs `SAW(self.fname, CreateIfNotFound=True, early_bind=True)` — note
-**`CreateIfNotFound=True` is hard-wired here**, which is what makes the bracket-write
-create path possible (see §3).
+path and constructs `SAW(self.fname, CreateIfNotFound=True, early_bind=True)`.
+**`CreateIfNotFound=True` is hard-wired here**, which makes the bracket-write create path
+possible (see §3).
 
 ---
 
@@ -451,8 +448,8 @@ Two dispatch cases:
 
 ### 2.3 `_bulk_update_from_df` — indexable.py:148–197 (the create path)
 
-This is the load-bearing method. Flow **as of 0.2.1** (line numbers against the 0.2.1
-`indexable.py`; the 0.1.x layout this section used to describe is noted inline):
+Flow **as of 0.2.1** (line numbers against the 0.2.1 `indexable.py`; the 0.1.x layout
+this section used to describe is noted inline):
 
 1. Reject non-DataFrame `value` with `TypeError`.
 2. **The write funnel:** `df = self._prepare_write(gtype, df)` (`:212`) — normalizes
@@ -488,8 +485,7 @@ This is the load-bearing method. Flow **as of 0.2.1** (line numbers against the 
      (expected for freshly created rows); any other message re-raises.
    - Any non-`"not found"` `PowerWorldPrerequisiteError` re-raises immediately.
 
-This is the concrete answer to "where bracket-write keys off `PowerWorldPrerequisiteError`":
-indexable.py:233–253. The classification "not found" → `PowerWorldPrerequisiteError`
+Bracket-write keys off `PowerWorldPrerequisiteError` at indexable.py:233–253. The classification "not found" → `PowerWorldPrerequisiteError`
 is decided in `PowerWorldError.from_message` (see §6); the bracket layer then string-matches
 `"not found"` again to distinguish the create case from other prerequisite failures.
 
@@ -511,12 +507,12 @@ For `pw[GObject, fields] = value`. Same settable gate first. Then two sub-paths:
   aligns a list/array). Single field uses the bare name to avoid pandas multi-column
   treatment.
 
-Always finishes with `ChangeParametersMultipleElementRect`. So broadcast writes are
+Always finishes with `ChangeParametersMultipleElementRect`. Broadcast writes are
 update-only; only the Case-1 DataFrame path can create.
 
 `fexcept` (indexable.py:11) is a small lambda turning `'Three…'` type names into
-`'3…'` (e.g. `ThreeWindingTransformer` → `3WindingTransformer`) — Python-identifier
-vs PowerWorld-string reconciliation, mirrored in the generator (§4).
+`'3…'` (e.g. `ThreeWindingTransformer` → `3WindingTransformer`). It reconciles Python
+identifiers with PowerWorld strings, and the generator mirrors it (§4).
 
 ---
 
@@ -541,8 +537,7 @@ class SAW(
 
 ### How a mixin works (the shared contract)
 
-Mixins do **not** declare `__init__` or hold state — they rely on `SAWBase`
-providing:
+Mixins do **not** declare `__init__` or hold state. They rely on `SAWBase` providing:
 - `self._com_call(func, *args)` — the single COM gateway (base.py:331–401). Wraps
   every SimAuto call, unwraps the `(Error, Result)` tuple, maps RPC failures to
   `COMError`, and raises `PowerWorldError.from_message(...)` when SimAuto returns an
@@ -575,8 +570,8 @@ Two concrete patterns to copy when extending:
 3. If the feature needs new type-safe constants, add them to `saw/_enums.py` and
    export via `saw/__init__.py`'s `__all__`.
 
-No registry/metaclass — composition is purely the explicit base-class tuple, so the
-only "wiring" is the import + the line in the tuple.
+There is no registry or metaclass. Composition is the explicit base-class tuple, so the
+only wiring is the import and the line in the tuple.
 
 ---
 
@@ -661,7 +656,7 @@ Re-exports: `GObject` from `gobject`, `from .grid import *` (all object classes)
   per-class lists `_FIELDS`, plus `_KEYS`/`_SECONDARY`/`_EDITABLE` depending on its
   `FieldPriority` flags (95–104).
 
-This is why `__getitem__` can read `field.value[1]` for a member (indexable.py:102) —
+That is why `__getitem__` can read `field.value[1]` for a member (indexable.py:102):
 index 1 of the tuple is the PowerWorld field-name string.
 
 `FieldPriority(Flag)` (gobject.py:16–28): `PRIMARY`, `SECONDARY`, `REQUIRED`,
@@ -690,11 +685,11 @@ enterable while Simulator is in EDIT mode and drives the hint in `_raise_with_ed
 `ALT_KEY_SETS` table at gobject.py:61) drives the create-path key check in §2.3.
 
 > ⚠️ **`is_settable` is advisory, not a gate, and it is frequently wrong.** Through 0.1.x
-> it *was* the gate — both bracket-write paths refused a read-only column. In 0.2.1 it only
-> selects the text of a `UserWarning`. Worse, it disagrees with PowerWorld: the generator
+> it *was* the gate: both bracket-write paths refused a read-only column. In 0.2.1 it only
+> selects the text of a `UserWarning`. It also disagrees with PowerWorld: the generator
 > keeps a field as `EDITABLE` only when Simulator reports `enterable` as an unconditional
 > `Yes`, and silently drops every **conditional** one. `Branch.LineStatus` is the canonical
-> case — PowerWorld says *"Depends: Normally enterable except when field Lockout is YES"*,
+> case. PowerWorld says *"Depends: Normally enterable except when field Lockout is YES"*,
 > esapp says read-only, and the write succeeds.
 >
 > Counted against Simulator build 2026-07-22 / esapp 0.2.1 — fields PowerWorld reports as
@@ -708,8 +703,8 @@ enterable while Simulator is in EDIT mode and drives the hint in `_raise_with_ed
 > | `Load` | 277 | 119 | **1** |
 >
 > The authority is PowerWorld: `pw.esa.GetFieldList(<type>)` returns an `enterable` column
-> (and a `key_field` column marking keys `*1*`, `*2*`, …). Genuine read-onlys have it blank —
-> `Shunt.SSMinMVR` for instance, where the write really does vanish. Never promote this
+> (and a `key_field` column marking keys `*1*`, `*2*`, …). Genuine read-onlys have it blank,
+> for instance `Shunt.SSMinMVR`, where the write does vanish. Never promote this
 > warning to an error with `-W error::UserWarning`.
 
 `__str__` returns the PW field string for field members (so a member stringifies to
@@ -747,12 +742,12 @@ lower-cases the message and returns a **subclass**:
 - `"not registered"` → `PowerWorldAddonError`.
 - else → base `PowerWorldError`.
 
-This is the linchpin for bracket-write: a SimAuto "object not found" comes back as
+Bracket-write depends on this. A SimAuto "object not found" comes back as
 `PowerWorldPrerequisiteError`, which `_bulk_update_from_df` catches and re-string-matches
-on `"not found"` to trigger the create fallback (§2.3). So the create path depends on
+on `"not found"` to trigger the create fallback (§2.3). The create path therefore depends on
 **both** the factory's substring list *and* the bracket layer's own `"not found"` check.
 
-`COMError` is different in kind — it wraps a thrown COM exception (RPC server crash /
+`COMError` is different in kind. It wraps a thrown COM exception (RPC server crash /
 invalid function), raised in `_com_call`'s `except` (base.py:368–376), not via the
 factory.
 
@@ -784,9 +779,9 @@ the bracket interface:
   [key, value])` … `EnterMode("RUN")`. The `pf_include`, `calc_mode`, `efield_mag`, …
   attributes in gic.py:69–96 are instances.
 
-To add a new solver/GIC flag: just declare one more class attribute
-`my_opt = SolverOption('PWFieldName')` on `PowerWorld` (or `GICOption(...)` on `GIC`) —
-no method needed.
+To add a new solver/GIC flag, declare one more class attribute
+`my_opt = SolverOption('PWFieldName')` on `PowerWorld` (or `GICOption(...)` on `GIC`).
+No method is needed.
 
 ---
 
@@ -985,7 +980,7 @@ Notes / gotchas read from source:
   (duplicate enum members). Under Python ≥3.13's stricter `Enum` this raises on import
   (the package targets 3.11, where the dup is treated as an alias). Effective key is
   `SubNum`, secondary `SubName`.
-- **` contingencies / interfaces / injection groups / nomograms`** are **string-keyed**
+- **Contingencies, interfaces, injection groups and nomograms** are **string-keyed**
   (`CTGLabel`, `FGName`, `InjGrpName`) — no numeric key.
 - Keyless objects exist too (e.g. `Sim_Solution_Options`): `Type.keys()` is empty and
   the bracket setter takes a positional value list instead (`indexable.py:282-296`).
@@ -1091,7 +1086,7 @@ Task-organized SCRIPT-command index → [aux-script-commands](aux-script-command
 The named methods above (§B.2) remain the preferred Python entry points; the catalog
 is the raw script-command reference for anything unwrapped.
 
-> Preference (per wiki house rules): for **data**, use the bracket interface
+> Preference (house rule): for **data**, use the bracket interface
 > (`pw[Gen, fields]`, `pw[Gen] = df`) over raw `GetParametersMultipleElement` /
 > `ChangeParametersMultipleElementRect`; for **script commands**, use the named SAW
 > methods (`pw.esa.SolvePowerFlow()`) or `pw.esa.RunScriptCommand("...")` for anything
@@ -3069,8 +3064,9 @@ only when the pocket carries MW. `Contingency.LoadMW:2` is load lost to the `Min
 not to islanding — read it separately.
 
 **Building the set** — `CTG_AutoInsert_Options`: `ElementType` is `BRANCH` or `GENERATOR`, never
-`GEN` (silently ignored, V). On the Simulator 25 beta build used 2026-09-28, `CTGAutoInsert`
-inserted **zero** contingencies with no error: always count the result against lines plus
+`GEN` (silently ignored; suspected, possibly by design: glitch `2026-10-20-ctgautoinsert-gen-ignored`). On the
+Simulator 25 beta build used 2026-09-28, `CTGAutoInsert` inserted **zero** contingencies with no error (suspected,
+glitch `2026-10-20-ctgautoinsert-zero-insert`): always count the result against lines plus
 two-winding transformers.
 
 ### C. OPF
@@ -3079,7 +3075,7 @@ two-winding transformers.
 |---|---|---|
 | area under OPF | `Area.BGAGC = "OPF"` (values: Off AGC, Part. AGC, ED, Area Slack, IG Slack, OPF) | V 2026-09-11 |
 | super area under OPF | `SuperArea.BGAGC` — value vocabulary not in the export | S |
-| movable gens | `Gen.GenAGCAble = "YES"`; writing `GenMW` turns it off, so set it after MW writes | V |
+| movable gens | `Gen.GenAGCAble = "YES"`; writing a changed `GenMW` has been seen to turn it off (suspected, glitch `2026-10-20-genmw-write-clears-agc`), so set it after MW writes | V |
 | cost data | `Gen.GenCostModel` ≠ None with `GenCostCurvePoints > 0` or `GenMCost > 0` (a cost above 0 at today's output; see the 2026-10-01 note in `concepts/opf-preconditions.md`) — **data, never fabricated** | V |
 | run LP OPF | `InitializePrimalLP("", STOP); SolvePrimalLP("", STOP);` | V 2026-09-24 (AC, public 40-bus) |
 | DC OPF | DC mode first (`SolvePowerFlow(DC)`), then `SolvePrimalLP` | D |
@@ -3150,7 +3146,7 @@ tags: [timestep, powerworld, esapp, simauto, backend, reference]
 
 ## Abstract
 
-Code-reconstruction reference for a timestep simulation pipeline — the worker function's PowerWorld call sequence (weather load → generator selection → field-save wrapper → run → export), `_GEN_PARAM` field list, `process_results` CSV post-processing with 8 header rows skipped, and both series and parallel orchestration variants. Covers every SimAuto command, required wrapper (`TIMESTEPSaveSelectedModifyStart`/`Finish`), and gotcha in enough detail to regenerate working simulation code from scratch. Read this in full only when writing or regenerating code for a timestep simulation; for the gist, use [timestep-simulation](../concepts/timestep-simulation.md).
+Code-reconstruction reference for a timestep simulation pipeline: the worker function's PowerWorld call sequence (weather load → generator selection → field-save wrapper → run → export), `_GEN_PARAM` field list, `process_results` CSV post-processing with 8 header rows skipped, and both series and parallel orchestration variants. Covers every SimAuto command, required wrapper (`TIMESTEPSaveSelectedModifyStart`/`Finish`), and gotcha in enough detail to regenerate working simulation code from scratch. Read this in full only when writing or regenerating code for a timestep simulation; for the gist, use [timestep-simulation](../concepts/timestep-simulation.md).
 
 ## Connections
 
@@ -3159,36 +3155,32 @@ Code-reconstruction reference for a timestep simulation pipeline — the worker 
 
 ## Content
 
-> **Library note — prefer `esapp` over `esa`.** This repo imports the standalone `esa` (Easy SimAuto) package. For new or regenerated code, prefer **`esapp` (ESA++)**: it wraps the **same** PowerWorld SimAuto server, and esapp exposes each of those SCRIPT commands as a typed named method (`pw.esa.TimeStepDoRun()`), which is what you should call — see [esapp-script-command-wrappers](../concepts/esapp-script-command-wrappers.md) — an agent reasons about it more reliably. Swap esa's data helpers (`GetParametersMultipleElement`, `change_parameters_multiple_element_df`, `get_key_field_list`) for esapp's bracket interface (`pw[Type, fields]`, `pw[Type] = df`, `Type.keys()`). See [esapp-overview](../methods/esapp-overview.md). (Library choice only — unrelated to the TimeStep-vs-Transient-Stability distinction.)
+> **Library note — prefer `esapp` over `esa`.** The original pipeline imports the standalone `esa` (Easy SimAuto) package. For new or regenerated code, prefer **`esapp` (ESA++)**. It wraps the **same** PowerWorld SimAuto server and exposes each of those SCRIPT commands as a typed named method (`pw.esa.TimeStepDoRun()`), which is what you should call (see [esapp-script-command-wrappers](../concepts/esapp-script-command-wrappers.md)). Swap esa's data helpers (`GetParametersMultipleElement`, `change_parameters_multiple_element_df`, `get_key_field_list`) for esapp's bracket interface (`pw[Type, fields]`, `pw[Type] = df`, `Type.keys()`). See [esapp-overview](../methods/esapp-overview.md). (Library choice only — unrelated to the TimeStep-vs-Transient-Stability distinction.)
 
-Code-reconstruction knowledge for the timestep simulation pipeline. Given a plain prompt
-("run the renewable sim on the Synth2k case"), an agent reads this page and
-writes WORKING code. Everything here is verified against the real source on disk
-(the pipeline's source tree). Hub: [Home](../index.md).
+Given a plain prompt ("run the renewable sim on the Synth2k case"), an agent reads this
+page and writes working code. Everything here is verified against the pipeline's source.
 
-The whole engine is two functions in one engine module: `timestep_worker(...)` (drives
-PowerWorld) and `process_results(...)` (post-processes the CSV). The pipeline's CLI entry script and
-the parallel variant's entry script are just CLI + grouping + I/O around them. The time math lives in
-`time_utils.py`. **The parallel variant's engine module is byte-identical to the series one** — the
-engine is shared; only the entry-script orchestration differs.
+The engine is two functions in one module: `timestep_worker(...)` (drives PowerWorld) and
+`process_results(...)` (post-processes the CSV). The CLI entry script and the parallel
+variant's entry script are CLI, grouping and I/O around them. The time math lives in
+`time_utils.py`. **The parallel variant's engine module is byte-identical to the series
+one**; only the entry-script orchestration differs.
 
 ---
 
 ## 0. Imports & environment (get these wrong and nothing runs)
 
-- **`from esapp import PowerWorld`** — esapp (ESA++) wraps the same PowerWorld SimAuto
-  server as the older standalone `esa` package, and is the one to write. `pw.esa` is
-  esapp's own raw SimAuto handle, and each SCRIPT command below is exposed as a typed named
-  method (`pw.esa.TimeStepDoRun()`) — call those, not a hand-written script string. Only the
-  data helpers differ beyond that: the bracket interface replaces esa's
+- **`from esapp import PowerWorld`**, not the standalone `esa` (see the library note
+  above). `pw.esa` is esapp's raw SimAuto handle; call each SCRIPT command below through its
+  typed named method, not a hand-written script string. The bracket interface replaces esa's
   `GetParametersMultipleElement` / `change_parameters_multiple_element_df`.
-- The import is **lazy** — done *inside* the worker function, not at module top —
+- The import is **lazy**, done *inside* the worker function rather than at module top,
   so importing the engine module never requires PowerWorld to be installed. Keep it lazy
   if you regenerate this.
 - **Windows-only.** esapp drives PowerWorld Simulator through SimAuto (COM). No
   PowerWorld → no run.
-- `numpy` is imported at module top with `# noqa: F401` purely "for parity with
-  downstream tooling" — it's not used directly in the engine module. `pandas` is used.
+- `numpy` is imported at module top with `# noqa: F401` "for parity with downstream
+  tooling"; the engine module does not use it. `pandas` is used.
 - `sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))` is done so
   `from time_utils import convert_to_utc` resolves regardless of CWD.
 
@@ -3237,9 +3229,9 @@ Key fields come from `Gen.keys()` (typically `BusNum`, `GenID`)
 and are **prepended**, so the resulting `gen` DataFrame has columns
 `[<key fields>] + _GEN_PARAM`.
 
-> ⚠️ **This prepend is not optional.** Later the code pushes `gen` back with
-> `pw[Gen] = gen` (twice — to set `Selected` and
-> `TimeDomainSelected`). PowerWorld matches each row to a generator by its key fields, so
+> ⚠️ **This prepend is required.** Later the code pushes `gen` back with
+> `pw[Gen] = gen` twice, to set `Selected` and
+> `TimeDomainSelected`. PowerWorld matches each row to a generator by its key fields, so
 > if `BusNum`/`GenID` weren't in the DataFrame the write would **silently do nothing** and
 > no generators would be selected. Always keep the key columns in any DataFrame you write
 > back. (Same rule on the esapp bracket path — see [esapp](../concepts/esapp.md).)
@@ -3272,7 +3264,7 @@ def timestep_worker(case_path, pww_list, result_csv):
 
         # (d) load weather file(s): first = Load, rest = Append. The project calls plain
         # TimeStepLoadPWW here, which fails on every file on Simulator 25 (builds dated
-        # 2026-09-20 and 2026-09-25). Load the file's full span with the Range form instead.
+        # 2026-09-20 and 2026-09-25; suspected glitch 2026-10-20-timestep-loadpww-plain). Load the file's full span with the Range form instead.
         d0, d1 = struct.unpack_from("<dd", open(pww_list[0], "rb").read(22), 6)  # OLE days, UTC
         t0, t1 = [(pd.Timestamp("1899-12-30") + pd.Timedelta(days=d)).round("h") for d in (d0, d1)]
         pw.esa.TimeStepLoadPWWRange(pww_list[0], f"{t0:%Y-%m-%dT%H:%M:%SZ}",
@@ -3320,7 +3312,7 @@ Step-by-step, every SimAuto call / SAW method in execution order:
 4. `gen = pw[Gen, gen_param]` — DataFrame of all gens.
 5. `pw.esa.TimeStepLoadPWWRange(pww0, t0, t1, "Weather Only")` — load the first weather file over
    its full span, read from the file header. Plain `TimeStepLoadPWW` fails on Simulator 25 builds
-   dated 2026-09-20 and 2026-09-25; assert the case now has timepoints.
+   dated 2026-09-20 and 2026-09-25 (suspected PowerWorld issue, not yet confirmed: glitch `2026-10-20-timestep-loadpww-plain`); assert the case now has timepoints.
 6. for each remaining pww: `pw.esa.TimeStepAppendPWW(pww, "Weather Only")` — append.
 7. `pw.esa.EnterMode("EDIT")`
 8. set `gen['Selected'] = 'YES'` where `GenFuelType` contains `WND|SUN`.
@@ -3346,14 +3338,13 @@ TIMESTEPSaveSelectedModifyFinish;
 
 The `TimeStepSaveFieldsSet` + `TimeDomainSelected` changes **MUST** be bracketed by
 `TIMESTEPSaveSelectedModifyStart;` … `TIMESTEPSaveSelectedModifyFinish;`. Without this
-wrapper the field-save selection **silently fails** — the sim runs, the CSV is
-written, but the per-generator MW columns you wanted are missing/empty. There is no
-error; you just get a useless file. If you regenerate this code, keep the Start/Finish
-pair around steps 11–15 exactly.
+wrapper the field-save selection **silently fails**: the sim runs and the CSV is
+written, but the per-generator MW columns you wanted are missing or empty. There is no
+error. If you regenerate this code, keep the Start/Finish pair around steps 11–15 exactly.
 
 ### Field codes `BGGenMWFuelTypeGeneric:10` / `:12`
 
-These are the two PowerWorld TimeStep result fields saved per selected generator —
+These are the two PowerWorld TimeStep result fields saved per selected generator:
 "generator MW by generic fuel type", indices `10` and `12`. Downstream
 `process_results` splits output columns by the literal substrings `'solar'` and
 `'wind'` in the exported CSV column names, so the two indices correspond to the solar
@@ -3365,8 +3356,8 @@ and wind MW outputs.
 
 `pww_list[0]` → `TimeStepLoadPWWRange` over its full span; every subsequent entry → `TimeStepAppendPWW`. Both
 use the `"Weather Only"` mode argument. In practice the callers pass **one PWW per
-worker call** (`[pww]`) and concatenate the resulting CSVs in pandas afterward — the
-Append branch exists but the production paths feed single-file lists and stitch
+worker call** (`[pww]`) and concatenate the resulting CSVs in pandas afterward. The
+Append branch exists, but the production paths feed single-file lists and stitch
 quarters at the DataFrame level (see §4).
 
 ---
@@ -3476,12 +3467,11 @@ Both returned frames carry the 8 header rows on top.
 
 ## 5. The parallel variant's entry script
 
-Same engine (the parallel variant's copy of the engine module); only orchestration differs. What can produce a wrong
-or failed run:
+Same engine; only orchestration differs. What can produce a wrong or failed run:
 
 - **Cap `--workers` at what the PowerWorld licence and RAM allow.** Each worker drives its
-  own SimAuto instance against its own temp copy of the case — the temp-copy in
-  the worker function is what makes concurrency safe.
+  own SimAuto instance against its own temp copy of the case. The temp copy in the worker
+  function is what makes concurrency safe.
 - **Workers must stay top-level and import the engine inside the child.** Windows spawn
   needs them picklable, and the parent must never load PowerWorld.
 - **Incomplete years are skipped silently** — only years with all four quarters become
@@ -3506,9 +3496,10 @@ Two facts that change an answer:
   therefore 7 h earlier than the true UTC hour, and a winter label 6 h earlier.
 - **`interpolate_to_hourly` exists but is NOT called** in the current run path. It fills
   3-hour forecast gaps; assuming it ran is how a gapped forecast series gets read as hourly.
+
 ## 7. Gotchas checklist (regenerate-safe)
 
-- ✅ `from esapp import PowerWorld` — **esapp, not the standalone `esa`**. Same SimAuto
+- ✅ `from esapp import PowerWorld`: **esapp, not the standalone `esa`**. Same SimAuto
   underneath; do not mix the two in one script.
 - ✅ **Windows + PowerWorld only** (SimAuto/COM).
 - ✅ **Temp-copy the case** (`mkstemp('.PWB')` + `shutil.copy2`) and run against the

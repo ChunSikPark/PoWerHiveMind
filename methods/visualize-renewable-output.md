@@ -21,7 +21,7 @@ How to write matplotlib code that visualizes the solar/wind CSVs produced by the
 
 **Step 5 (final) of this reading sequence.** ← prev: [how-to-analyze-results](how-to-analyze-results.md).
 
-This page teaches you to write visualization code for the CSVs that come out of the timestep simulation. The data format is described fully in [how-to-analyze-results](how-to-analyze-results.md); this page focuses on the plotting patterns.
+The CSV format is described fully in [how-to-analyze-results](how-to-analyze-results.md); this page covers the plotting patterns.
 
 ## 1. Load the CSV
 

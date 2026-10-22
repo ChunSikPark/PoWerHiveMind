@@ -42,7 +42,7 @@ some forty overloads went to one with rating increases and a handful of parallel
 
 An action costs the number of **devices it adds**, gross, never netted against removals. A
 settings change costs 0 no matter how many units it touches. A rating change costs 0 because no
-equipment is bought. This is why the ladder order below is not a preference: it is the objective.
+equipment is bought. The ladder order below is therefore the objective itself.
 
 | cost | meaning |
 |---|---|
@@ -78,20 +78,18 @@ Undervoltage and overvoltage need separate ladders because the corrective sign i
 
 **V0 goes first, ahead of the setpoints.** A tap is a ratio, not a source, so it only works where
 the *other* side has headroom, but where it does it costs zero and is almost perfectly local
-(measured max |dV| of 1e-5 on every untouched bus). It must precede V1 because on a case with
-generator step-ups modelled, the generator terminals are real buses, so raising every setpoint
-raises all of them and blocks V1 outright; fixing the taps first is what makes V1 available at all.
-Measured: it cleared over a dozen GSU terminals of 5–12% overvoltage for zero devices. On a fleet
+(measured max |dV| of 1e-5 on every untouched bus). It must precede V1. On a case with generator
+step-ups modelled, the generator terminals are real buses, so raising every setpoint raises all of
+them and blocks V1 outright; fixing the taps first makes V1 available. Measured: it cleared over a dozen GSU terminals of 5–12% overvoltage for zero devices. On a fleet
 whose LTCs are already live, re-pointing the regulated bus beats writing a fixed tap, and **a
 mis-pointed LTC can cause the violation next to it**: one ran its tap to the limit holding a healthy
 bus and drove the other side to 1.126 pu. See [ltc-regulation-checks](ltc-regulation-checks.md).
 
-**Removal is ordered ahead of adding the opposite sign, and the reason generalises**: *adding a
-reactor to cancel an unneeded capacitor is two devices doing the work of zero.* Any ladder that can
-both add and remove must try removal before it adds the opposite sign. Undervoltage is usually the
-common direction after contingencies (measured 2026-09-02 on one N-1 sweep of a ~9k-bus synthetic planning model: about eight
-undervoltage rows for
-every overvoltage row), so do not build the removal rung for capacitors only.
+**Removal comes before adding the opposite sign.** Adding a reactor to cancel an unneeded
+capacitor is two devices doing the work of zero, so any ladder that can both add and remove must try
+removal first. Undervoltage is usually the common direction after contingencies (measured 2026-09-02
+on one N-1 sweep of a ~9k-bus synthetic planning model: about eight undervoltage rows for every
+overvoltage row), so do not build the removal rung for capacitors only.
 
 Two eligibility rules that look alike and are opposite:
 
@@ -104,7 +102,7 @@ Two eligibility rules that look alike and are opposite:
 
 Check `GenVoltSet` before anything else. On the measured case **every closed unit sat at exactly
 1.0400**, identical to the normal high limit, so every bus picking up line charging floated
-*above* it. The system was not randomly high; **it was scheduled high.** Walking 1.04 → 1.02
+*above* it. **The system was scheduled high.** Walking 1.04 → 1.02
 across all five dispatches took the emergency overvoltages from twelve to two, at zero cost.
 
 **Walk it, do not jump it.** One dispatch *failed to converge* at 1.03 and 1.02 as a single write,
@@ -118,8 +116,7 @@ buses fell under 0.94 pu and two under 0.90. The usable window on that case was 
 **It runs in both directions.** A case **already** walked down with **zero overvoltages** has
 headroom to walk back **up**, and that is again the free lever. Measured 2026-09-04: the entire N-0
 problem was one undervoltage at 0.8986 pu, and one 0.0025 step up cleared it for zero devices. **It
-was still declined, for two measured reasons**, which is the more useful half of the lesson, because
-"free" is not the same as "best":
+was still declined, for two measured reasons.** Free is not the same as best:
 
 1. **The margin was a rounding.** 0.9006 against a 0.90 limit is +0.0006 pu. One 25 MVAr capacitor
    at the violating bus gave **+0.0188, thirty times more**, for one device.
@@ -153,8 +150,8 @@ is mandatory; a zero-width band cannot regulate.
 ### Rung 3: capacitor removal. Sound idea; usually no target
 
 Removing a capacitor at a bus that is overvoltage in several dispatches has **negative device
-count**, the only such lever. Screened it and found **zero candidates**, for an instructive reason:
-in the overvoltage dispatch the controller had already backed them off (at peak almost every
+count**, the only such lever. Screened it and found **zero candidates**, because in the
+overvoltage dispatch the controller had already backed them off (at peak almost every
 capacitor was dispatched; at minimum load almost every one sat at zero). Screen it anyway, because it
 is cheap, but expect nothing where the fleet regulates.
 
@@ -180,7 +177,7 @@ unbounded free action. Raising it to make a number look better is the wrong move
 **Evaluate every cap cumulatively, against a write-once baseline the case carries.** If the
 denominator is the rating the *previous* bump wrote, the cap measures its own output: ×1.33 applied
 three times is ×2.36 with every pass reporting compliance. Store the original rating once and judge
-against it. This is not hypothetical: two passes on one case lineage (2026-09-03 and 2026-09-14)
+against it. Two passes on one case lineage (2026-09-03 and 2026-09-14)
 both measured against the current rating, and tracing the lineage showed they had touched disjoint
 branch sets, so nothing compounded. That was luck, not a check.
 
@@ -269,7 +266,7 @@ cheap to measure, so measure it.
 **Diagnose a shunt fleet by measurement, not by its settings.** Two wrong diagnoses came before the
 right one: "the reactors are exhausted" (they read 100% dispatched at EHV, but that was a
 consequence of the 1.04 setpoints, not a limit) and "the controller is disabled" (`SSAutoControl`
-read `None`). **Both were wrong. The shunts did regulate**: the same fleet ran tens of GVAr
+read `None`). **The shunts did regulate**: the same fleet ran tens of GVAr
 capacitive at summer peak (over twenty) and over ten GVAr inductive at minimum load, tracking load. Writes of
 `SSAutoControl = YES` read back `None` over raw SimAuto (suspected, not confirmed). Judge the fleet by whether its
 dispatch moves, not by a settings field.

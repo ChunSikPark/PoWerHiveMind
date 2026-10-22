@@ -10,18 +10,18 @@ tags: [powerworld, aux, script, simauto, esapp, provenance, house-rule]
 
 ## Abstract
 
-A PowerWorld `.aux` file is a complete program, not a fragment: one loaded file can open a
-case, edit it, solve it, export results to CSV, write the message log to a text file and
-exit, with **no Python and no SimAuto call of your own**. Live-verified 2026-09-11 on a
-regional synthetic planning model. This page records what the aux language can do
-unaided, the capabilities it structurally lacks (no return values, almost no control flow,
-no assertions) and the read-back discipline that substitutes for them, the two conditional
-constructs it *does* have — the solve-failure `STOP` slots and, since the September 2026
-patch, `SetElseCreateData`'s exists-check — the syntax traps
-measured the same day, and — most importantly — **the field-name provenance rule**: the
-*Auxiliary File Format* manual is a syntax manual with no per-object field catalog, so
-field names must come from esapp's generated schema or PowerWorld's own field export,
-never from the manual and never from memory. Read before writing any `.aux` by hand.
+A PowerWorld `.aux` file is a complete program. One loaded file can open a case, edit it,
+solve it, export results to CSV, write the message log to a text file and exit, with **no
+Python and no SimAuto call of your own**. Live-verified 2026-09-11 on a regional synthetic
+planning model. This page covers what the aux language can do unaided, what it structurally
+lacks (no return values, almost no control flow, no assertions), and the read-back
+discipline that substitutes for them. It covers the two conditional constructs it *does*
+have: the solve-failure `STOP` slots and, since the September 2026 patch,
+`SetElseCreateData`'s exists-check. It lists the syntax traps measured the same day. Most
+important is **the field-name provenance rule**: the *Auxiliary File Format* manual is a
+syntax manual with no per-object field catalog, so field names must come from esapp's
+generated schema or PowerWorld's own field export, never from the manual and never from
+memory. Read before writing any `.aux` by hand.
 
 ## Connections
 
@@ -46,7 +46,7 @@ OpenCase -> EnterMode(RUN) -> SolvePowerFlow(RECTNEWT) -> SaveData x2 -> LogSave
 
 The log recorded `Simulation: Successful Power Flow Solution` and both CSVs landed on
 disk. Nothing in the chain went through `pw.esa`, `RunScriptCommand`, `LoadAux` or
-`ProcessAuxFile` from the caller's side — the file was simply opened.
+`ProcessAuxFile` from the caller's side; the file was only opened.
 
 The self-contained shape is:
 
@@ -63,7 +63,7 @@ SCRIPT
 }
 ```
 
-`LogSave` is the cheapest and only general feedback channel — everything PowerWorld says
+`LogSave` is the cheapest and only general feedback channel. Everything PowerWorld says
 during the run, including warnings you would otherwise never see, lands in that text file.
 
 **Unnamed `SCRIPT { }` blocks auto-execute on load.** The manual never says so in a
@@ -89,29 +89,29 @@ happen conditionally on whether a solution was found. `InitializePrimalLP`,
 
 **Use them on every solve whose failure would invalidate what follows.** The bare form has
 no failure handler, so a solve that does not converge lets every later stage run against
-an unsolved case and write plausible-looking numbers to correctly-named files — the exact
-silent failure this page's read-back rule exists to catch, arriving through the one door a
-read-back does not cover.
+an unsolved case and write plausible-looking numbers to correctly-named files. That is the
+silent failure the read-back rule exists to catch, arriving through the one door a read-back
+does not cover.
 
 ### What the aux language cannot do, and what to do instead
 
 Beyond those slots and `SetElseCreateData` below: no return values, no general branching,
 no arithmetic over a table, no assertions. Consequently:
 
-- **A failed edit is indistinguishable from a successful one at runtime.** The same family
-  as [case-to-case-device-transplant](case-to-case-device-transplant.md)'s `ProcessAuxFile` trap — reports success, changes
-  nothing.
+- **A failed edit is indistinguishable from a successful one at runtime.** Same family as
+  [case-to-case-device-transplant](case-to-case-device-transplant.md)'s `ProcessAuxFile` trap:
+  it reports success and changes nothing.
 - **Substitute a read-back CSV for every assertion.** After a write, `SaveData` the fields
   you just wrote, *before* any solve, to a file named for the check. Then read it. A run
   whose edit silently no-opped otherwise produces the unchanged case under new filenames,
-  with plausible numbers throughout — the failure mode that ruins a study quietly.
+  with plausible numbers throughout.
 - **Per-object arithmetic is impossible.** `SetData` writes one literal to every object
   matching a filter, so "set each unit to 80% of its own maximum" cannot be expressed.
-  That is the honest boundary at which to go back to Python.
+  That is the point to go back to Python.
 
 ### The one exists-check: `SetElseCreateData`
 
-Added in the **September 2026 patch of Simulator 24** — older builds do not have it, and
+Added in the **September 2026 patch of Simulator 24**. Older builds do not have it, and
 the aux will fail on a machine running one. PowerWorld's own justification names the gap
 this page describes: *"Because AUX scripts provide no process control to determine if a
 power flow case contains a particular object, this command provides a way to do that."*
@@ -121,7 +121,7 @@ SetElseCreateData(objecttype, [fieldlist], [SetValueList], [DefaultValueList]);
 ```
 
 If the object exists it is updated; if it does not, it is created, and **Simulator switches
-itself to EDIT mode to do so**. It affects exactly one object — there is no filter form, so
+itself to EDIT mode to do so**. It affects exactly one object. There is no filter form, so
 this is not a way to conditionally update a set.
 
 The two value lists are where it goes wrong quietly:
@@ -129,7 +129,7 @@ The two value lists are where it goes wrong quietly:
 - `[fieldlist]` must carry the key fields, and `[SetValueList]` must give them non-blank
   values. Same rule as everywhere else in this kit.
 - **A blank entry (nothing between the commas) means "fall through to the default".** An
-  empty pair of double-quotes `""` does *not* — it is a real value and suppresses the
+  empty pair of double-quotes `""` does *not*; it is a real value and suppresses the
   default. PowerWorld's own worked example turns on exactly this distinction: with
   `Status` written as `""` the command errors when the generator is absent, and with
   `Status` left blank it creates the generator using the default `"Closed"`.
@@ -154,11 +154,11 @@ the Area or generator field names needed for an OPF setup. Re-confirmed 2026-09-
 the **September 1, 2026** edition — same result. **Check the `Last Updated` line on page 1
 before trusting a claim sourced from it**: the manual gains actions between editions, and
 the November 6, 2025 edition is missing four that exist by September 2026,
-`SetElseCreateData` among them. The manual says so itself — it directs
-you to *Window → Export Case Object Fields* in the GUI instead. It therefore cannot confirm
-or refute a field name, ever.
+`SetElseCreateData` among them. The manual says so itself and directs you to
+*Window → Export Case Object Fields* in the GUI instead. It therefore cannot confirm or
+refute a field name, ever.
 
-So do not guess field names, and do not take them from prose pages in this knowledge base either —
+Do not guess field names, and do not take them from prose pages in this knowledge base either —
 one such page in PowerWorldHiveMind carried an Area field name that does not exist in the schema.
 
 **Verify against esapp's generated schema first, then emit the aux.** This costs seconds,
@@ -181,12 +181,12 @@ variable name, field, column header and description — straight from the runnin
 
 | Trap | Correct form |
 |---|---|
-| `SetData`'s "all objects" token is the **bare keyword** `ALL`. `""` is not legal — the quotes make it parse as a filter *named* empty string | `SetData(Area, [Field], ["Value"], ALL);` |
+| `SetData`'s "all objects" token is the **bare keyword** `ALL`. `""` is not legal; the quotes make it parse as a filter *named* empty string | `SetData(Area, [Field], ["Value"], ALL);` |
 | With **no** filter, `SetData` requires the object's full key row in the field list | see `Type.keys()` |
 | `SaveObjectFields` takes **three required** arguments; the field list is not optional | `SaveObjectFields("f.csv", Area, [FieldA, FieldB]);` |
-| `SaveData`'s `Transpose` and `Append` are **scalars**, not lists — a `[]` there is wrong even when it appears to work | `..., filter, [SortFieldList], NO, NO);` |
+| `SaveData`'s `Transpose` and `Append` are **scalars**, not lists; a `[]` there is wrong even when it appears to work | `..., filter, [SortFieldList], NO, NO);` |
 | `SaveData`'s filter *may* be blank (unlike `SetData`'s) — blank means all objects | `..., [], "", [], NO, NO);` |
-| The `ALL` keyword is documented as usable "instead of a list of fields" on the Save commands, but the manual gives **no worked example anywhere** — bare `ALL` vs `[ALL]` is undocumented | use an explicit field list |
+| The `ALL` keyword is documented as usable "instead of a list of fields" on the Save commands, but the manual gives **no worked example anywhere**; bare `ALL` vs `[ALL]` is undocumented | use an explicit field list |
 | Every file path must be **absolute**; a relative path resolves against `pwrworld.exe`'s working directory, not yours | — |
 | **Smart quotes silently break a script.** Straight quotes only | never paste from Word or a PDF |
 | Solver token is `POLARNEWTON`, not the commonly written `POLARNEWT`. esapp's `pflow(method=)` takes `"POLARNEWT"` ([handling-errors](../methods/handling-errors.md)), not `POLARNEWTON` | `RECTNEWT`, `POLARNEWTON`, `GAUSSSEIDEL`, `FASTDEC`, `ROBUST`, `DC` |

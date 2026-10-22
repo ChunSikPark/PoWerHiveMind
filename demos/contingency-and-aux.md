@@ -12,8 +12,8 @@ tags: [demo, contingency, n-1, aux, filter, esapp, worked-example]
 
 Running N-1 from nothing on the public synthetic Synth40 case (37 buses), then **writing a filter and contingency
 `.aux` automatically** from the analysis result and loading it back. All numbers are from
-an actual run: 89 auto-inserted contingencies, 12 violations, then 5 targeted
-contingencies generated and merged.
+a real run: 89 auto-inserted contingencies, 12 violations, then 5 targeted contingencies
+generated and merged.
 
 ## Connections
 
@@ -80,16 +80,15 @@ Three things to know before you interpret this:
 - **A bare read returns 2 of 15 columns.** Ask for the fields you need by name, or you
   get `CTGLabel` and an id and nothing useful.
 - **`pw[ViolationCTG, :]` returns 394 columns** on this case. Never do that casually.
-- **Repeated labels are usually parallel circuits**, not duplicates — the same
-  PEARLCITY–WAIPAHU corridor appearing several times. Check before reporting a data
-  problem.
+- **Repeated labels are usually parallel circuits**, such as the same PEARLCITY–WAIPAHU
+  corridor appearing several times. Check before reporting a data problem.
 
-Here the worst violation is a 69 kV line at **100.22%** of its 100.3 MVA rating: real,
+Here the worst violation is a 69 kV line at **100.22%** of its 100.3 MVA rating, real
 but marginal. Say "marginally over" rather than "overloaded", because those mean
 different things to a planner.
 
-More traps — polarity, tie-line `AreaNum` reading 0, `LimViolLimit` being the branch's
-MVA rating rather than 100 — are in [reading-violationctg](../methods/reading-violationctg.md).
+More traps (polarity, tie-line `AreaNum` reading 0, `LimViolLimit` being the branch's
+MVA rating rather than 100) are in [reading-violationctg](../methods/reading-violationctg.md).
 
 ### Part 2 — generate an aux file automatically
 
@@ -165,15 +164,14 @@ after: 94  (added 5)
 
 1. **Absolute paths.** A relative path resolves against PowerWorld's working directory,
    not your script's.
-2. **`LoadAux` merges.** It does not replace. Loading twice duplicates everything —
-   which is exactly why the count check above matters.
+2. **`LoadAux` merges.** It does not replace. Loading twice duplicates everything, which
+   is why the count check above matters.
 3. **Quote the action string.** An unquoted `CTGElement` action loads only the first
    contingency and silently drops the rest.
-4. **`ElementType=GEN` is silently ignored.** The keyword is `GENERATOR`.
+4. **`ElementType=GEN` is silently ignored** (suspected, possibly by design: glitch `2026-10-20-ctgautoinsert-gen-ignored`). The keyword is `GENERATOR`.
 
-And a fifth that will confuse you later: **PowerWorld trims whitespace from `CTGLabel`
-on load**, so the label you wrote is not always the label you read back. Do not match on
-labels you have not round-tripped.
+A fifth: **PowerWorld trims whitespace from `CTGLabel` on load**, so the label you wrote
+is not always the label you read back. Do not match on labels you have not round-tripped.
 
 ### Verify, do not assume
 
@@ -186,8 +184,8 @@ An aux that fails to parse can leave the case unchanged without raising. Count.
 ### What to report back
 
 > Auto-inserted **89** N-1 contingencies and solved them all. **12 violations**, the worst
-> a 69 kV PEARLCITY–WAIPAHU circuit at **100.22%** of its 100.3 MVA rating — marginally
-> over, not severe.
+> a 69 kV PEARLCITY–WAIPAHU circuit at **100.22%** of its 100.3 MVA rating, marginally
+> over.
 >
 > Also generated `demo_ctg.aux` with a `HighLoad` branch filter and 5 targeted
 > contingencies for the most loaded lines, and confirmed it loaded: 89 → 94.

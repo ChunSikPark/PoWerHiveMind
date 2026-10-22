@@ -33,8 +33,7 @@ your own work. This page is the setup handshake, the rules, and a working templa
 
 ### What this mode is for
 
-This is **PowerWorld and LLM interaction programming**: the unit of exchange between the
-agent and Simulator is a file, not a function call. The agent writes a script, you drop it
+This is **PowerWorld and LLM interaction programming**. The agent writes a script, you drop it
 in, Simulator runs it and writes back. Both sides read the same artifacts.
 
 That shape has its own advantages, independent of tooling:
@@ -43,19 +42,16 @@ That shape has its own advantages, independent of tooling:
   that you can read, diff, archive and send to someone. There is no opaque call whose
   behaviour you have to take on trust.
 - **The human is in the loop by construction.** You see every script before it runs. For work
-  that edits a case, that is a feature rather than friction.
-- **The deliverable is the script.** What the agent produces is a `.aux` you keep and re-run
+  that edits a case, that is a feature.
+- **The deliverable is the script.** The agent produces a `.aux` you keep and re-run
   yourself, not a transcript of an API session that only existed once.
 - **No code of yours touches PowerWorld.** Nothing imports a COM library, nothing holds a
   handle on Simulator, nothing can leave it in a state you did not ask for.
 
-That last point draws a boundary around PowerWorld, not around code in general.
-
 ### You still write code, it just runs on your side
 
-This mode is not "no scripting". The log is English prose and the answers are in CSVs, so
-the caller does real work to find out what happened, and an agent working this way writes and
-runs that code constantly. Four jobs:
+The log is English prose and the answers are in CSVs, so the caller does real work to find out
+what happened, and an agent working this way writes and runs that code constantly. Four jobs:
 
 - **Delivery.** Copy the file in, poll for the input file to disappear, and pull your own
   file on a timeout. A run that fails the wrong way is never cleaned up, so without a timeout
@@ -68,9 +64,6 @@ runs that code constantly. Four jobs:
 - **Validating before you drop.** Check the object types and field names against PowerWorld's
   field export, and check that every `DATA` block carries its full key, before the file goes
   in. A bad name costs a re-execution loop and a manual recovery; catching it costs a lookup.
-
-Code on your side, files across the boundary. What you give up is an automation surface into
-Simulator, not automation.
 
 Use [esapp](../concepts/esapp.md) when you want speed and automation: it returns real values,
 branches on them, runs headless and in parallel, and needs nobody to move a file between
@@ -104,21 +97,21 @@ filled in, before you write a single line of aux:
 After that, any file copied into the folder as `SimulatorScriptInput.aux` runs automatically,
 one poll interval later.
 
-Step 5 earns its place. The output file appears only once a run finishes, so for every
-failure that never finishes (an abort, a loop, a poller that is not running) the folder stays
-silent and the log is the only thing that says which one you have. A looping run shows the
-same block of lines once per poll interval.
+Step 5 matters because the output file appears only once a run finishes. For every failure that
+never finishes (an abort, a loop, a poller that is not running) the folder stays silent and the
+log is the only thing that says which one you have. A looping run shows the same block of lines
+once per poll interval.
 
-Two things here cost time when you do not know them:
+Three things here cost time when you do not know them:
 
 - **The settings persist in the registry, the dialog does not.** The panel says so itself:
   its heading reads *External Script Control (Only Active when Dialog is Open; Fields Saved
   in Registry)*. `ScriptTransferFileEnabled`, `ScriptTransferFileDirectory` and
   `ScriptInputOutputPollSec` survive a restart, so the browsing step is once per machine.
 - **Tick `Always Delete an Invalid Input Aux File` while you are in there.** It makes
-  Simulator discard a script it cannot parse rather than leaving it in the folder to be
-  retried. It is not a complete guard against the re-execution loop, since a script can parse
-  cleanly and still fail mid-run, but it removes the most common cause.
+  Simulator discard a script it cannot parse instead of leaving it in the folder to be
+  retried. A script can still parse cleanly and fail mid-run, so this does not fully guard
+  against the re-execution loop, but it removes the most common cause.
 - **Closing the dialog stops the poller while the flag still reads enabled.** The dropped
   file sits there, which looks exactly like a crash, a failed run, and a run still in
   progress. If a drop is not picked up, check the dialog before you debug the aux.
@@ -129,11 +122,11 @@ asked, **then stop and wait for an answer:**
 > *"Channel is live. I cannot see your case from here. Do you want me to scan it first and
 > list what devices are in it? It is read-only, it writes CSVs and changes nothing."*
 
-**Ask which folder. Do not pick one.** The transfer folder is the user's choice — they may
+**Ask which folder. Do not pick one.** The transfer folder is the user's choice. They may
 already have one configured from a previous session, they may want it on a particular drive,
 and on a shared or managed machine the obvious location may not be writable. Ask, and use the
-answer verbatim. `<your transfer folder>` below stands for whatever they tell you; it is a
-placeholder, not a suggestion.
+answer verbatim. `<your transfer folder>` below is a placeholder for whatever they tell you,
+not a suggestion.
 
 **Two turns, never one.**
 
@@ -149,10 +142,9 @@ writes and that it is read-only, and wait again.
 Collapsing these into one message is the most common way this goes wrong, and it reads as
 pressure to skip the setup.
 
-**Propose, then wait. Do not drop the file until they answer.** Volunteering the idea is the
-helpful part; running it unasked is not. The user is sitting in front of a live Simulator
-with their own case loaded, and a dropped script executes against it the moment it lands —
-so the first drop of a session is theirs to approve, even when it only reads.
+**Propose, then wait. Do not drop the file until they answer.** The user is sitting in front
+of a live Simulator with their own case loaded, and a dropped script executes against it the
+moment it lands, so the first drop of a session is theirs to approve, even when it only reads.
 
 Until that runs the agent knows nothing about the case: not the bus numbers, not whether
 there are transformers, not whether a contingency set already exists. Anything it proposes
@@ -245,10 +237,10 @@ its own input file on a timeout rather than wait for a signal that is not coming
 ### CaseSummaryGet describes the file, not your edits
 
 `CaseSummaryGet` with a blank first argument describes the `.pwb` file behind the current
-case rather than the case as you have edited it. The spec says "the pwb file for the current
+case, not the case as you have edited it. The spec says "the pwb file for the current
 case" and means it literally. Unsaved in-memory changes are invisible to it, so diffing two
-summaries across an unsaved edit shows no difference at all, which reads exactly like a
-change that never happened. Read the CSVs.
+summaries across an unsaved edit shows no difference, which looks exactly like a change that
+never happened. Read the CSVs.
 
 ### Template
 
@@ -414,6 +406,6 @@ Only one surviving bus moves, because it was the one leaning on the outaged bus'
 generation. The five voltage-controlled buses hold their setpoints exactly.
 
 The restore returns every bus to `Connected` with voltage magnitudes identical to six decimals.
-Angles differ in the fifth decimal and the slack by about a kilowatt: Newton–Raphson
-converging from the outaged solution rather than the loaded state. **That is solver tolerance,
-not a failed restore**, and expecting an exact match will make a correct run look broken.
+Angles differ in the fifth decimal and the slack by about a kilowatt, because Newton–Raphson
+converges from the outaged solution instead of the loaded state. **That is solver tolerance,
+not a failed restore.** Expecting an exact match will make a correct run look broken.

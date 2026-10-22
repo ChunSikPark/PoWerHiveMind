@@ -19,24 +19,23 @@ SimAuto is PowerWorld Simulator's COM Automation Server — the Windows-only lay
 
 ## Content
 
-**SimAuto** is PowerWorld Simulator's COM **Automation Server** — it exposes the
-running simulator to external scripts (open cases, read/write objects, solve
-power flow, run script commands, switch EDIT/RUN modes). It is the layer
-*underneath* [esapp](esapp.md). In esapp it is wrapped by the **`SAW` (SimAuto Wrapper)**
-class and reached through `pw.esa`. Because it is a COM server, everything here
+**SimAuto** exposes the running simulator to external scripts: open cases,
+read/write objects, solve power flow, run script commands, switch EDIT/RUN modes.
+It is the layer *underneath* [esapp](esapp.md), which wraps it in the
+**`SAW` (SimAuto Wrapper)** class. Because it is a COM server, everything here
 is **Windows-only** (esapp talks to it via `pywin32`).
 
 ## SAW — the wrapper esapp puts on top
 
 `SAW` lives in `esapp/saw/saw.py` and is assembled by the **mixin pattern**:
 `SAWBase` (`saw/base.py`, core COM interface + case management + generic data
-retrieval) plus ~20 capability mixins — `DataMixin`, `PowerflowMixin`,
+retrieval) plus ~20 capability mixins: `DataMixin`, `PowerflowMixin`,
 `MatrixMixin`, `ContingencyMixin`, `TransientMixin`, `SensitivityMixin`,
 `GICMixin`, `OPFMixin`, `PVMixin`, `QVMixin`, `ATCMixin`, `FaultMixin`,
 `TopologyMixin`, `RegionsMixin`, `ModifyMixin`, `GeneralMixin`,
 `CaseActionsMixin`, `ScheduledActionsMixin`, `TimeStepMixin`, `WeatherMixin`.
 
-You rarely instantiate `SAW` directly — `PowerWorld.open()` does
+You rarely instantiate `SAW` directly. `PowerWorld.open()` does
 `SAW(fname, CreateIfNotFound=True, early_bind=True)` and stores it on `pw.esa`.
 
 ## Raw calls (when the bracket interface isn't enough)

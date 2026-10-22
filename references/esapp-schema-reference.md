@@ -141,7 +141,7 @@ Notes / gotchas read from source:
   (duplicate enum members). Under Python ≥3.13's stricter `Enum` this raises on import
   (the package targets 3.11, where the dup is treated as an alias). Effective key is
   `SubNum`, secondary `SubName`.
-- **` contingencies / interfaces / injection groups / nomograms`** are **string-keyed**
+- **Contingencies, interfaces, injection groups and nomograms** are **string-keyed**
   (`CTGLabel`, `FGName`, `InjGrpName`) — no numeric key.
 - Keyless objects exist too (e.g. `Sim_Solution_Options`): `Type.keys()` is empty and
   the bracket setter takes a positional value list instead (`indexable.py:282-296`).
@@ -247,7 +247,7 @@ Task-organized SCRIPT-command index → [aux-script-commands](aux-script-command
 The named methods above (§B.2) remain the preferred Python entry points; the catalog
 is the raw script-command reference for anything unwrapped.
 
-> Preference (per wiki house rules): for **data**, use the bracket interface
+> Preference (house rule): for **data**, use the bracket interface
 > (`pw[Gen, fields]`, `pw[Gen] = df`) over raw `GetParametersMultipleElement` /
 > `ChangeParametersMultipleElementRect`; for **script commands**, use the named SAW
 > methods (`pw.esa.SolvePowerFlow()`) or `pw.esa.RunScriptCommand("...")` for anything

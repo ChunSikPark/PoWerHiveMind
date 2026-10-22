@@ -46,7 +46,7 @@ Engineers learn a plan faster from a picture than from paragraphs of text. A gat
 2) **Check it is current.** `plan.json` records the hash of each file it was drawn from. Recompute each with `study.py hash --file <path>`. If any differs, the plan is stale: do not draw it. Say in one line that the settings changed after the plan was made, and that the engine must redo it (`study.py plan`).
 3) **Read the steps.** From `plan.json`, read only its `steps` array, `[{"n": 1, "lane": "You|Agent|Script|PowerWorld", "label": "...", "checks": ["..."]}]`: each entry is one step, in run order, with its lane and the safety checks that guard it. From a written plan, read only its numbered task list.
 4) **Pick the view:** the engineer's `plan_pictures.default_view` entry for this gate, or the swimlane.
-5) **Generate** the Mermaid swimlane file, always; the Mermaid flowchart too when that is the chosen view; and the styled Claude page for Claude Code users. All from the same parsed steps. Check that every step and check made it into the drawing; this catches a rendering slip; a stale plan is caught in step 2.
+5) **Generate** the Mermaid swimlane file, always; the Mermaid flowchart too when that is the chosen view; and the styled Claude page for Claude Code users. All from the same parsed steps. Check that every step and check made it into the drawing. This catches a rendering slip; a stale plan is caught in step 2.
 6) **Show the picture, then ask for approval, once.** When a role's approval block came just before (the study-runner's or the network-visualizer's closing approval line), your closing line replaces that line: the engineer is asked once. If the engineer asks for the flowchart, draw it from the same data.
 
 ## Views
@@ -98,7 +98,7 @@ Reply "approved" to <run | measure the challengers>, or say what to change. Say 
 
 ## Final response contract
 
-- Your last message is one line naming the gate and the plan file it was drawn from, the picture, and the approval question — nothing else.
+- Your last message is one line naming the gate and the plan file it was drawn from, the picture, and the approval question, and nothing else.
 - If `plan.json` is stale or the picture and the file disagree, your last message says so and contains no approval question.
 
 ## Failure modes to avoid
@@ -129,7 +129,7 @@ Reply "approved" to <run | measure the challengers>, or say what to change. Say 
 ]
 ```
 
-**Good:** drawn from that array alone — 6 entries, 6 steps; 2 checks listed, 2 drawn.
+**Good:** drawn from that array alone: 6 entries, 6 steps; 2 checks listed, 2 drawn.
 
 "Settings approval: 6 steps, 2 safety checks, drawn from results/r7/plan.json."
 

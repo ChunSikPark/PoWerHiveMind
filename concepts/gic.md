@@ -27,7 +27,7 @@ absorption, and in severe cases thermal damage. PowerWorld models GIC natively, 
 ### The physics, briefly
 
 A changing geomagnetic field induces a geoelectric field at the earth's surface. That
-field drives quasi-DC current through any long conductor grounded at both ends — which
+field drives quasi-DC current through any long conductor grounded at both ends, which
 describes a transmission line with grounded-wye transformers at each end.
 
 The current is quasi-DC relative to 60 Hz, so it biases the transformer core into
@@ -94,11 +94,10 @@ The `GIC` object exposes the modelling knobs as attributes rather than arguments
 
 GIC results are dominated by substation grounding resistance and transformer winding
 configuration. A case that has never been prepared for GIC study will have placeholder
-grounding data, and it will still produce numbers — plausible-looking, and meaningless.
+grounding data, and it will still produce plausible-looking, meaningless numbers.
 
 Before trusting any GIC result, confirm the case actually carries substation grounding
-resistances and correct transformer configurations. This is the GIC equivalent of the
-silent failures elsewhere in this knowledge base: nothing errors, the answer is simply
+resistances and correct transformer configurations. Nothing errors; the answer is just
 not about your system.
 
 ### Direction matters, and the worst case is not obvious
@@ -110,7 +109,7 @@ guessing, or sweep the direction and keep the envelope.
 
 ### Script-level access
 
-Everything above maps to PowerWorld `GIC*` SCRIPT actions — `GICCalculate`,
+Everything above maps to PowerWorld `GIC*` SCRIPT actions: `GICCalculate`,
 `GICTimeVaryingCalculate`, `GICSaveGMatrix`, and the PTI/PSLF exchange actions. See
 [aux-script-commands](../references/aux-script-commands.md). Reach for those only when the `esapp.utils.GIC` surface does
 not cover what you need.

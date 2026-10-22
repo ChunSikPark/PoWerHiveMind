@@ -12,13 +12,13 @@ tags: [esapp, powerworld, simauto, branch, transformer, linexfmr, editmode]
 
 How to reclassify existing `Branch` objects as transformers when a case models every branch as a
 line even where the two ends sit at different nominal kV. Two gotchas, both live-verified on
-Synth8k: **(1)** `BranchDeviceType` is derived and read-only — the real switch is `LineXFMR = "YES"`
-plus `XFNominalKV`/`XFNominalKV:1`; **(2)** esapp flags every `XF*` field read-only from its own
-**static whitelist**, which is wrong — the fields are writable in PowerWorld EDIT mode. On esapp
+Synth8k. **(1)** `BranchDeviceType` is derived and read-only; the real switch is `LineXFMR = "YES"`
+plus `XFNominalKV`/`XFNominalKV:1`. **(2)** esapp flags every `XF*` field read-only from its own
+**static whitelist**, which is wrong: the fields are writable in PowerWorld EDIT mode. On esapp
 0.2.1 that flag is only a `UserWarning` and `pw[Branch] = df` works; on 0.1.x it raised and you had
 to go around esapp via `pw.esa.ChangeParametersMultipleElement`. With `XFFixedTap = 1.0`
 and `LineC = 0`, the conversion is electrically a **no-op** (verified: max |ΔV| = 0.0 pu,
-max |ΔMW| = 0.0) — pure reclassification, R+jX untouched.
+max |ΔMW| = 0.0). It is pure reclassification, with R+jX untouched.
 
 ## Connections
 
@@ -35,8 +35,8 @@ with every branch typed `Line`, including the step-down connections. Symptom: `p
 returns empty and `BranchDeviceType.value_counts()` is 100% `Line`, yet many branches have
 `BusNomVolt != BusNomVolt:1`.
 
-The mismatched-nominal-kV test is the right detector — check the pairs it finds are sane step-downs
-before trusting it. On Synth8k the only pairs were 765/345, 345/138, 138/69 (about 12% of branches).
+The mismatched-nominal-kV test is the right detector. Check that the pairs it finds are sane
+step-downs before trusting it. On Synth8k the only pairs were 765/345, 345/138, 138/69 (about 12% of branches).
 
 ### The two traps
 
@@ -44,9 +44,9 @@ before trusting it. On Synth8k the only pairs were 765/345, 345/138, 138/69 (abo
 `YES`. Setting `LineXFMR` alone is the switch; the `XF*` fields are the transformer's parameters.
 
 **esapp's read-only list is a static whitelist, not PowerWorld truth.** It marks every `XF*`
-field read-only — `['LineXFMR', 'XFAuto', 'XFNominalKV', 'XFNominalKV:1', 'XFFixedTap',
+field read-only (`['LineXFMR', 'XFAuto', 'XFNominalKV', 'XFNominalKV:1', 'XFFixedTap',
 'XFMVABase', 'XFTapMin', 'XFTapMax', 'XFStep', 'XFTapDegree', 'XFRegMin', 'XFRegMax',
-'XFRegBus', 'XFUseLineZ', 'XFPhaseType']` — and PowerWorld disagrees. What that costs you
+'XFRegBus', 'XFUseLineZ', 'XFPhaseType']`), and PowerWorld disagrees. What that costs you
 depends on your esapp version:
 
 | esapp | `pw[Branch] = df` with `XF*` columns |
@@ -58,8 +58,8 @@ depends on your esapp version:
 2-row `pw[Branch] = df` carrying `LineXFMR='YES'` raised nothing and flipped
 `BranchDeviceType` from `Line` to `Transformer`.
 
-So **on 0.2.1 the bracket writer is the recipe** — just don't run under
-`-W error::UserWarning`, which turns that harmless warning back into a hard failure.
+So **on 0.2.1 the bracket writer is the recipe**. Don't run under `-W error::UserWarning`,
+which turns that harmless warning back into a hard failure.
 
 ### The recipe (esapp 0.2.1)
 
@@ -69,7 +69,7 @@ pw[Branch] = df                    # keys + XF* columns; warns, writes
 pw.run_mode()
 ```
 
-`df` must carry the key columns (`BusNum`, `BusNum:1`, `LineCircuit`) — the bracket read
+`df` must carry the key columns (`BusNum`, `BusNum:1`, `LineCircuit`). The bracket read
 includes them automatically, so a read-modify-write round-trip is safe. A filtered subset
 is fine: PowerWorld matches rows by key, so writing 1586 of 13523 branches touches only
 those 1586.
@@ -93,13 +93,13 @@ with `fields` (keys first, as always):
  "XFTapDegree", "XFRegMin", "XFRegMax"]    # 0.0, 0.51, 1.5
 ```
 
-`LineCircuit` must be a **string** (`"1"`, not `1`). `XFConfiguration` is derived — it self-populates
-to `Unknown`; don't try to set it.
+`LineCircuit` must be a **string** (`"1"`, not `1`). `XFConfiguration` is derived: it self-populates
+to `Unknown`, so don't try to set it.
 
 ### House defaults (from Synth2k_series2)
 
-Worth knowing these are not invented: all 1351 transformers in
-`Synth2k_series2_case1` share **identical** settings, so this is the series' convention:
+All 1351 transformers in `Synth2k_series2_case1` share **identical** settings, so this is the
+series' convention:
 
 | Field | Value | Meaning |
 |---|---|---|
@@ -115,13 +115,12 @@ Worth knowing these are not invented: all 1351 transformers in
 | `LineC` | `0.0` | transformers carry no line charging |
 
 `XFAuto=NO` + `XFTapPos=0` + `XFFixedTap=1.0` means **fixed-tap, non-regulating**. If a study needs
-these regulating voltage (e.g. reactive power planning), that is a separate setup — regulated bus
-and setpoint scheme — not covered here.
+these regulating voltage (e.g. reactive power planning), that is a separate setup (regulated bus
+and setpoint scheme) not covered here.
 
 ### Verify it was a no-op
 
-The whole point of copying `XFFixedTap = 1.0` is that the power flow should not move. Solve before
-and after and assert it:
+With `XFFixedTap = 1.0` the power flow should not move. Solve before and after and assert it:
 
 ```python
 pw.pflow(); before = pw[Branch, "LineMW"]["LineMW"]; vb = pw.voltage(complex=False)[0]
@@ -135,22 +134,21 @@ A branch with real line charging **may** move when reclassified, since a transfo
 treated as magnetizing susceptance rather than π-model charging. It may also not: one 2026-10-20
 run converted a single branch on a public synthetic case with its `LineC` kept, and the solution
 was identical (41.917784% loading before and after). That is one branch, measured once, so run the
-before/after assertion above rather than assuming either way. Zeroing nonzero charging is a
-modelling decision, not a cleanup; surface it rather than doing it silently.
+before/after assertion above instead of assuming either way. Zeroing nonzero charging is a
+modelling decision, not a cleanup; surface it instead of doing it silently.
 
-Then save via the aux script command, never the COM function — see [save-powerworld-case](save-powerworld-case.md):
+Then save via the aux script command, never the COM function (see [save-powerworld-case](save-powerworld-case.md)):
 
 ```python
 pw.esa.RunScriptCommand(f'SaveCase("{out}", PWB);')
 assert os.path.exists(out)
 ```
 
-Reopen the saved file and re-check `BranchDeviceType.value_counts()`; EDIT-mode writes that look fine
-in-session are worth confirming survived the round-trip.
+Reopen the saved file and re-check `BranchDeviceType.value_counts()` to confirm that EDIT-mode
+writes which looked fine in-session survived the round-trip.
 
 ### Worked application
 
-an 8,000-bus working model (reactive power planning inputs):
-13523 branches, all typed `Line`, 1586 with mismatched nominal kV and all with `LineC = 0`.
-Converted to 1586 transformers with the table above; power flow bit-identical; written to
-`..._xfmr.pwb` (a new file — the source WIP case was left untouched).
+An 8,000-bus synthetic working model: 13523 branches, all typed `Line`, 1586 with mismatched
+nominal kV and all with `LineC = 0`. Converted to 1586 transformers with the table above; power
+flow bit-identical; written to `..._xfmr.pwb` (a new file; the source WIP case was left untouched).

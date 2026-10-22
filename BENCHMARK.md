@@ -28,7 +28,7 @@ both. Had it missed either, every score here would have been thrown away.
 setup was given web search but never allowed to use it: every search was blocked, so the
 earlier "6 of 23 with a web browser" was the same model with no tools at all.
 
-**Right or wrong only — there is no partial credit.** An earlier version of this benchmark
+**Right or wrong only, with no partial credit.** An earlier version of this benchmark
 used a three-level scale, and the middle level is where two of five scoring errors hid: a
 wrong answer marked *partly right* reads as a judgement call rather than a mistake, so
 nobody re-checks it.
@@ -62,9 +62,8 @@ error. These are the ones that cost you a day.
 | A16 | Speeding up a two-hour outage run | ✅ | ❌ |
 | | **solved** | **15 of 16** | 7 of 16 |
 
-**This is what the repository is for.** A fresh assistant with the whole open web could
-confirm 7 of these 16. Public documentation describes what a command
-does; it does not tell you that the call returns success and writes nothing, or that a
+A fresh assistant with the whole open web could confirm 7 of these 16. Public documentation
+describes what a command does. It does not tell you that the call returns success and writes nothing, or that a
 filter silently drops every tie-line, or that a field you are summing is already on a
 different base than you think.
 
@@ -93,8 +92,8 @@ HiveMind gets 7 of 7 against 6 for the web, and spends **103 searches** doing it
 ## 3. What it costs
 
 **Cost here is counted in searches, not tokens.** A search means the same thing in both
-setups: the assistant did not know, and went to look. A token does not — the setups read
-different amounts of conversation per step, and separately, in an earlier run, the same corpus
+setups: the assistant did not know, and went to look. A token does not. The setups read
+different amounts of conversation per step. Separately, in an earlier run, the same corpus
 searched 8.1 times per question when asked an ordinary question and 14.3 times when asked
 for the best answer it could give. One sentence of instruction moved cost by 1.8x.
 **Ranking setups by tokens partly ranks the instructions they happened to be given.**
@@ -144,8 +143,8 @@ Every check is pass or fail.
 | Invented no cost data, used only the three severity labels, did not paste the raw findings | 51 of 51 | 50 of 51 |
 | **Passed every check in the run** | **20 of 24** | 0 of 24 |
 
-**Where the agent helps is judgment, not honesty.** The plain model hardly ever invents
-anything: it passed 50 of 51 of those checks. What it gets wrong is the call. It treats an
+**The agent helps with judgment more than honesty.** The plain model hardly ever invents
+anything: it passed 50 of 51 of those checks. It gets the call wrong. It treats an
 imperfection as a blocker, misses the one finding that stops the study, or buries the verdict.
 The verdict-form row partly measures format, because only the agent was given the form. Read the
 judge's row as the headline.

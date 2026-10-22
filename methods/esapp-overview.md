@@ -20,16 +20,11 @@ The entry-point how-to for driving PowerWorld from Python with `esapp`: open a c
 ## Content
 
 **Step 1 of this reading sequence** → next: [timestep-simulation-setup](timestep-simulation-setup.md).
-What esapp *is* (the full API map): [esapp](../concepts/esapp.md). The COM server underneath:
-[powerworld-simauto](../concepts/powerworld-simauto.md).
-
-This is the "how do I actually drive a PowerWorld case from Python" entry point.
-All snippets below are verified against `C:\path\to\esapp`.
 
 ## 0. Prereqs
 
-Windows + PowerWorld Simulator installed (SimAuto is a COM server). Use the
-project venv `C:\path\to\.venv` (Python 3.13, `esapp` editable).
+Windows + PowerWorld Simulator installed (SimAuto is a COM server), and a Python environment
+with `esapp` installed (verified on Python 3.13).
 See [esapp-environment](../concepts/esapp-environment.md) for the exact environment.
 
 ## 1. Open a case
@@ -72,13 +67,13 @@ loads[["LoadMW", "LoadMVR"]] *= 1.10
 pw[Load] = loads                      # bulk update; must carry primary keys
 ```
 
-Bulk `pw[Type] = df` can also create new objects — but only in EDIT mode
+Bulk `pw[Type] = df` can also create new objects, but only in EDIT mode
 (`pw.edit_mode()`) with `CreateIfNotFound=True`, and the DataFrame must carry a complete
 key set. A filtered subset is fine: PowerWorld matches rows by key, so writing 3 rows
 touches 3 objects (the positional `pw[Obj, field]` form differs; see [AGENTS.md](../AGENTS.md) code rule 2).
 
 On esapp 0.1.x a read-only column made the whole write raise. **On 0.2.1 it only emits
-`UserWarning: Read-only field(s)` and the write is attempted anyway** — and that warning is
+`UserWarning: Read-only field(s)` and the write is attempted anyway.** That warning is
 more often wrong than right (112 `Branch` fields, 33 `Bus`, 5 `Gen`, 1 `Load` are enterable
 in PowerWorld but flagged read-only by esapp). Treat it as advisory, check
 `pw.esa.GetFieldList(<type>)`'s `enterable` column for the real answer, and confirm writes
@@ -118,11 +113,11 @@ with pw.snapshot():             # auto-saves/restores case state
 Tune the solver via descriptor attributes before solving:
 `pw.max_iterations = 30`, etc. Not `pw.dc_mode = True` or `pw.flat_start = True`: a
 scripted solve ignores both. Use `pw.pflow(method="DC")` for a DC solve and
-`pw.flatstart()` for a flat start — see [handling-errors](handling-errors.md).
+`pw.flatstart()` for a flat start (see [handling-errors](handling-errors.md)).
 
 ## Where to go next
 
-> **Note:** Older repos import `esa`; esapp is the updated, better-documented version of the same thing — write esapp. (Library choice only — unrelated to the TimeStep-vs-Transient-Stability distinction.)
+> **Note:** Older repos import `esa`; esapp is the updated, better-documented version of the same thing, so write esapp. (This is a library choice only, unrelated to the TimeStep-vs-Transient-Stability distinction.)
 
 - Run a study over time → [timestep-simulation-setup](timestep-simulation-setup.md) (then [timestep-simulation](../concepts/timestep-simulation.md))
 - Pull weather into the study → [pww-data](../concepts/pww-data.md)

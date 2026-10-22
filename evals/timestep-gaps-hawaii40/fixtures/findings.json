@@ -277,7 +277,7 @@
     "missing_wind": 0,
     "missing_wind_with_class": 0
    },
-   "handoff": "the Grid-Workshop Auto_PFW scripts (concepts/grid-workshop-auto-pfw.md); 0 of the 0 missing wind units carry a class it can use, and it skips the rest without a warning; send back the _PFW copy it writes",
+   "handoff": "the Auto_PFW scripts (concepts/auto-pfw-scripts.md); 0 of the 0 missing wind units carry a class it can use, and it skips the rest without a warning; send back the _PFW copy it writes",
    "label": "Worth a look",
    "count": 3
   },

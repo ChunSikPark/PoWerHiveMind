@@ -10,10 +10,10 @@ tags: [demo, remediation, contingency, n-1, reinforcement, esapp, worked-example
 
 ## Abstract
 
-The full study, not a readout: find the N-1 violations, work out *why* they happen,
-propose candidate reinforcements, test each one independently, and rank them by measured
-effect. Real numbers from the public synthetic Synth40 case (37 buses). The headline result is one you cannot reach
-by intuition — **two of five plausible reinforcements made the system worse**, and a
+The full study: find the N-1 violations, work out *why* they happen, propose candidate
+reinforcements, test each one independently, and rank them by measured effect. Real
+numbers from the public synthetic Synth40 case (37 buses). Intuition would miss the
+headline result: **two of five plausible reinforcements made the system worse**, and a
 third reduced the violation count while making the worst violation more severe.
 
 ## Connections
@@ -26,8 +26,6 @@ third reduced the violation count while making the worst violation more severe.
 ### The user's prompt
 
 > *"Run N-1, work out what's wrong, and tell me what to build to fix it."*
-
-That is a study, not a query. Everything below is what answering it properly looks like.
 
 ### Step 1 — measure the baseline
 
@@ -57,12 +55,12 @@ print(f"BASE: {base_n} violation rows, worst {base_w:.2f}% of limit")
 BASE: 12 violation rows, worst 100.22% of limit
 ```
 
-**Track two numbers, not one.** Count and severity move independently, and a change that
-improves one can degrade the other — as Step 4 shows.
+**Track two numbers.** Count and severity move independently, and a change that improves
+one can degrade the other, as Step 4 shows.
 
 ### Step 2 — diagnose before proposing anything
 
-Do not jump to a fix. Ask which contingencies are producing the violations:
+Before proposing a fix, ask which contingencies produce the violations:
 
 ```python
 v = pw[ViolationCTG, ["CTGLabel", "LimViolValue", "LimViolLimit"]]
@@ -77,11 +75,10 @@ L_000019PEARLCITY69-000023WAIPAHU69C4
 ```
 
 All twelve violations come from **one corridor**: the four parallel 69 kV circuits
-between PEARLCITY (bus 19) and WAIPAHU (bus 23). Circuits C1 through C4.
+(C1 through C4) between PEARLCITY (bus 19) and WAIPAHU (bus 23).
 
-That is the whole diagnosis. Losing any one of the four pushes the surviving three over
-their limit. This is not twelve problems; it is **one problem seen four times**, and it
-tells you exactly where reinforcement belongs.
+Losing any one of the four pushes the surviving three over their limit. That is **one
+problem seen four times**, and it tells you where reinforcement belongs.
 
 Reporting "12 violations" without this step is a readout. Reporting "the 19–23 corridor
 is N-1 insecure against loss of any of its four parallel circuits" is an answer.
@@ -124,8 +121,8 @@ for frm, to in CANDIDATES:
     p.close()
 ```
 
-**The `!= 1` guard is not optional.** Without it, a silently skipped `CreateData` yields
-"this reinforcement changes nothing" — a confident, completely wrong recommendation. See
+**The `!= 1` guard is required.** Without it, a silently skipped `CreateData` yields
+"this reinforcement changes nothing", a confident and wrong recommendation. See
 [adding-a-device](adding-a-device.md).
 
 ### Step 4 — the results, and the surprise
@@ -149,22 +146,21 @@ Ranked:
 | 4 | 2→26 | 13 | 100.23% | **+1** |
 | 5 | 27→29 | 15 | 100.23% | **+3** |
 
-Three findings worth more than the ranking itself:
+Three findings:
 
 **Two candidates made it worse.** Adding a line to 2→26 or 27→29 *increased* violations,
 by 1 and 3. Reinforcing a network can redistribute flow onto elements that were
-previously fine — the same intuition failure Braess's paradox describes. **This is why
-you test rather than reason.** An agent that proposed 27→29 because it was the most
-loaded branch would have recommended making the system worse.
+previously fine, the same intuition failure Braess's paradox describes. Test rather than
+reason. An agent that proposed 27→29 because it was the most loaded branch would have
+recommended making the system worse.
 
 **Count and severity can disagree.** 19→25 removes 5 violations but pushes the worst one
 from 100.22% to **105.76%**. Fewer problems, each one worse. Which is preferable is a
-planning judgement, not an arithmetic one — so present both numbers and let the user
-decide.
+planning judgement, so present both numbers and let the user decide.
 
 **The diagnosis predicted the winner.** Step 2 said the 19–23 corridor was the problem;
-reinforcing 19–23 directly was best by a wide margin. Diagnosing first is not ceremony,
-it is what makes the candidate list intelligent instead of a sweep.
+reinforcing 19–23 directly was best by a wide margin. Diagnosing first turns the
+candidate list from a sweep into a short, targeted set.
 
 ### What to report back
 
@@ -175,8 +171,8 @@ it is what makes the candidate list intelligent instead of a sweep.
 > **Recommendation.** A new 150 MVA circuit on **19→23** takes violations from 12 to
 > **2** and drops the worst from 100.22% to 100.19%. Best of the five tested.
 >
-> **Alternative.** 23→26 gets to 4 violations — worth considering if a fifth parallel
-> circuit on an existing corridor is undesirable for right-of-way or common-mode reasons.
+> **Alternative.** 23→26 gets to 4 violations. Consider it if a fifth parallel circuit on
+> an existing corridor is undesirable for right-of-way or common-mode reasons.
 >
 > **Do not build 27→29 or 2→26.** Both make N-1 *worse* (+3 and +1). 27→29 is the most
 > loaded branch in the base case, so it is the intuitive choice and it is wrong.
@@ -193,19 +189,19 @@ it is what makes the candidate list intelligent instead of a sweep.
 ### What makes this a study and not a query
 
 - The **diagnosis** turned 12 symptoms into 1 cause
-- Candidates were **tested, not argued** — and 2 of 5 refuted the intuition
+- Candidates were **tested, not argued**, and 2 of 5 refuted the intuition
 - **Two metrics** were tracked, because they disagreed
 - Every device creation was **verified**, so no result rests on a silent no-op
 - The recommendation includes what **not** to build, which is often the more valuable half
 
 ### Going further
 
-This loop generalises. The same shape covers redispatch instead of reinforcement
+The same loop covers redispatch instead of reinforcement
 ([applying-a-dispatch-to-a-case](../methods/applying-a-dispatch-to-a-case.md)), adjusting limit monitoring
 ([powerworld-limitset-setdata](../methods/powerworld-limitset-setdata.md)), scoring a large candidate set by severity rather than
 count ([ranking-new-devices-by-severity](../methods/ranking-new-devices-by-severity.md)), and restricting contingencies to a chosen
 device list ([new-device-contingency-aux](../methods/new-device-contingency-aux.md)).
 
-For a weather-driven study — where the violations depend on the hour rather than a single
-snapshot — the same diagnose-propose-test-rank loop runs on top of
+For a weather-driven study, where the violations depend on the hour rather than a single
+snapshot, the same diagnose-propose-test-rank loop runs on top of
 [timestep-workflow](../concepts/timestep-workflow.md).

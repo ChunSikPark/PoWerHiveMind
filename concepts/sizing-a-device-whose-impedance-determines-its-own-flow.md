@@ -50,7 +50,7 @@ rating ↓  →  impedance ↑  →  flow routes elsewhere  →  measured flow �
 ```
 
 Any fixed point of that loop is self-consistent, so nothing in the convergence test fires.
-The loop does not oscillate or diverge; it settles, quietly, on an answer that is wrong.
+The loop does not oscillate or diverge; it settles quietly on a wrong answer.
 
 Test for it before choosing a sizing basis: **does the quantity I am sizing against depend on
 the size I choose?** For a line, no in any practical degree. For a transformer, a phase
@@ -68,8 +68,8 @@ bus. Three sizing rules were tried:
 | converged flow alone | **about a third of the units below the load on their own low-side bus**, worst **4.8×** |
 | `max(converged flow, own-bus load)` | **none** over nameplate, worst **79.1%** |
 
-The middle row is the trap, and it is worth reading twice: it is a *better-targeted* rule than
-the first and it produced a **worse** grid. One substation finished with a **30 MVA** transformer
+The middle row is the trap: a *better-targeted* rule than the first, and it produced a
+**worse** grid. One substation finished with a **30 MVA** transformer
 against roughly five times that in load on its own bus, carrying under a fifth of its own rating.
 The rest of the load arrived across the 69 kV network from neighbouring substations: the
 low-voltage system quietly acting as a distribution bus to backfill under-sized station
@@ -83,7 +83,7 @@ to produce the next one.
 
 The first rule was also wrong, but *conservatively* wrong: its 150 MVA floor accidentally
 masked the circularity. Removing a bad rule can expose a worse one that the bad rule was
-hiding: the improvement is real and the regression is real, simultaneously.
+hiding, so the improvement and the regression are both real.
 
 ### The fix: floor it with something the device cannot influence
 

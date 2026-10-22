@@ -48,7 +48,7 @@ Read the stop reason before running any probe. With island handling on
 (`Sim_Solution_Options.EvalSolutionIsland` and `AllowMultIslands` = YES, Island rows on in
 `CTG_Options`), PowerWorld keeps an energized island and balances it with that island's own AGC
 units. When they cannot, it stops at **RESERVE LIMITS** and the outage reads unsolved. That is a
-power-balance limit, not a Newton failure, and probes 2–4 below do not apply.
+power-balance limit, so probes 2–4 below do not apply.
 
 The **Island Reserve Limits** row in `ViolationCTG` says where it ran out: a bus and an MW. A
 positive MW is a shortfall the island cannot cover (deficit); a negative MW is a surplus it cannot
@@ -114,9 +114,10 @@ solution.
 ### What the probes found (example study)
 
 Every unsolved outage in the example was a **voltage collapse in a pocket that one outage left on
-a single long tie**: none was an island, a real-power infeasibility, or a thermal overload (nothing near the collapsing pocket exceeded its rating at the last solvable step).
-Local generators near several pockets still had reactive headroom that could not reach the
-collapsing bus. The fix is structural:
+a single long tie**. None was an island, a real-power infeasibility, or a thermal overload: nothing
+near the collapsing pocket exceeded its rating at the last solvable step. Local generators near
+several pockets still had reactive headroom that could not reach the collapsing bus. The fix is
+structural:
 [finding-and-fixing-radial-by-n1-pockets](finding-and-fixing-radial-by-n1-pockets.md).
 
 ### Traps, each of which reports success
@@ -125,14 +126,14 @@ collapsing bus. The fix is structural:
   the example study a previous `CTGApply`'s topology survived `LoadState()`, and every later probe
   in the same process measured the previous outage's pocket (an outage far away "showed" the first
   one's collapse). A raw-COM repro (2026-10-21) restored MW and branch status, so the `CTGApply`
-  case is unreproduced; but it did **not** restore branches created or deleted in between, nor
-  impedance edits (`LineR`). So an impedance walk (probe 3) "undone" by `LoadState` is not undone.
+  case is unreproduced. But it did **not** restore branches created or deleted in between, nor
+  impedance edits (`LineR`), so an impedance walk (probe 3) "undone" by `LoadState` is not undone.
   Possibly by design. Workaround either way: run one outage per fresh
   process, or **fingerprint** before every probe (closed-branch count plus a voltage near the
   element) and stop on a mismatch. A control that only checks "the base still solves" passes this
   bug.
 - **`SetData("Sim_Solution_Options", ["DCApprox"], ["YES"])` does not make `SolvePowerFlow()`
-  solve DC.** It still runs Newton, so "DC fails" is just the AC failure again. Use
+  solve DC.** It still runs Newton, so "DC fails" is the AC failure again. Use
   `SolvePowerFlow(DC)` as a script command
   ([powerworld-study-options](../references/powerworld-study-options.md)).
 - **`DoOneIteration=YES` does not step Newton through a failure.** Each failed single step resets

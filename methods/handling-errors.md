@@ -10,8 +10,8 @@ tags: [errors, troubleshooting, recovery, agent-behaviour, powerworld, esapp]
 
 ## Abstract
 
-What to do when something fails. Most PowerWorld failures are recoverable by the agent
-alone, so recover and keep going — the user asked for an analysis, not a running
+What to do when something fails. The agent can recover from most PowerWorld failures
+alone, so recover and keep going. The user asked for an analysis, not a running
 commentary on your debugging. This page sorts failures into **fix it yourself**,
 **fix it and mention it**, and **stop and ask**, and gives the recovery for each. It
 also covers the harder case: the call that did not fail but did nothing.
@@ -32,8 +32,8 @@ also covers the harder case: the call that did not fail but did nothing.
 | **2 — Fix and mention** | You recovered, but the recovery changed the answer's meaning | Fix it, continue, and state it in the final report |
 | **3 — Stop and ask** | A fact about the machine, or a decision that is genuinely the user's | Stop. Say exactly what is blocked and why |
 
-The default is tier 1. Escalating a tier-1 problem to the user is itself a failure —
-"should I install pandas?" is not a question worth a human's attention.
+The default is tier 1. Escalating a tier-1 problem to the user is itself a failure.
+"Should I install pandas?" does not need a human.
 
 ---
 
@@ -48,8 +48,7 @@ ModuleNotFoundError: No module named 'pandas'
 ```
 
 Install it and carry on. `pip install esapp`, `pip install pywin32`,
-`pip install TeamOverbyeWeather`. Dependencies are plumbing; the user asked for an
-analysis. If `pip` itself fails on permissions, retry with `--user` before escalating.
+`pip install TeamOverbyeWeather`. If `pip` itself fails on permissions, retry with `--user` before escalating.
 
 **You used the wrong access path.** These are the common ones, all verified:
 
@@ -60,12 +59,15 @@ analysis. If `pip` itself fails on permissions, retry with `--user` before escal
 | `pw.flows`, `pw.ptdf`, `pw.lodf`, `pw.ybus` | all methods — call them | Same |
 | `pw.dc_mode(True)` or `pw.dc_mode = True` | `pw.pflow(method="DC")` | `dc_mode` is not a method, and assigning it does not make a scripted solve run DC (see *Power flow did not converge* below) |
 
-**A field name is wrong.** Do not guess a second time. Read the whole table and look:
+**A field name is wrong.** Do not guess a second time. Ask PowerWorld for the field list and look:
 
 ```python
-df = pw[Branch, :]
-print([c for c in df.columns if "mva" in c.lower()])
+fl = pw.esa.GetFieldList('branch')
+print(fl[fl.internal_field_name.str.contains("mva", case=False)].internal_field_name.tolist())
 ```
+
+Don't read every field with `pw[Branch, :]` to find a name: on some cases that read hits a suspected access
+violation (glitch `2026-10-20-savedata-all-field-av`).
 
 Then check [esapp-schema-reference](../references/esapp-schema-reference.md). Guessing field names is how you spend an hour.
 
@@ -84,7 +86,7 @@ resolve against PowerWorld's working directory, not your script's.
 
 ### The dangerous case: it did not fail, it did nothing
 
-This deserves its own section because no exception handler will catch it.
+No exception handler will catch this.
 
 PowerWorld frequently accepts a malformed request, reports success, and changes nothing.
 An agent that treats "no exception" as "it worked" produces a confident wrong answer,
@@ -118,7 +120,7 @@ have proven otherwise. Never report them as results.
 
 ### Tier 2 — recover, then say so
 
-**The recovery changed what the answer means.** A real example from this case:
+**The recovery changed what the answer means.** A real example on Hawaii40:
 
 ```
 PowerWorldError: Error in script action execution:
@@ -136,12 +138,12 @@ snk = int(next(b for b in l.index if int(b) != src))   # must differ
 P = pw.ptdf(seller=src, buyer=snk)
 ```
 
-Note the second failure hiding inside the first: on this case the largest generator and
-the largest load are **the same bus**, so the naive recovery reproduces the original
-error. Force the buses to differ.
+A second failure hides inside the first. On this case the largest generator and the
+largest load are **the same bus**, so the naive recovery reproduces the original error.
+Force the buses to differ.
 
-Report it as: *"the case has a single area, so I computed a bus-to-bus PTDF from bus 23
-to bus 26 instead"* — because the user's mental model of the answer is now different.
+Report it, because the answer now means something different to the user: *"the case has
+a single area, so I computed a bus-to-bus PTDF from bus 23 to bus 26 instead"*.
 
 **Power flow did not converge.** Escalate through the ladder, do not give up at step 1:
 
@@ -159,7 +161,7 @@ also resets generator voltage setpoints to 1.0 pu
 ([powerworld-study-commands](../references/powerworld-study-commands.md), from PowerWorld's manual). `pw.pflow(method="DC")` leaves the case in
 DC mode until an AC method solves it again.
 
-If only the DC solve converges, **say so** — a DC answer is not an AC answer.
+If only the DC solve converges, **say so**. A DC answer is not an AC answer.
 
 **The result is empty.** A filter that returns nothing is usually a filter bug, not a
 finding. Loosen it, confirm the unfiltered set is non-empty, then narrow again. Report
@@ -223,5 +225,5 @@ possible.
    varying parameters.
 6. **Only then** consider whether it is genuinely tier 3.
 
-Track which pages you used. When you finish, cite them — a wrong answer then points at a
-page that needs fixing, rather than at "the AI got it wrong."
+Track which pages you used and cite them when you finish, so a wrong answer points at a
+page that needs fixing rather than at "the AI got it wrong."

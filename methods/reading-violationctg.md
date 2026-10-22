@@ -17,8 +17,8 @@ single solve; the per-bus envelope (`BusMin/MaxVoltageContingency`) collapses ev
 one worst case and cannot say *which* outage did it.
 
 Six traps, each of which produces a **plausible wrong answer rather than an error**. The
-first four were live-measured on `Synth2k_case` on 2026-08-16; the fifth and sixth only
-appear on cases Synth2k cannot produce, which is the point of them:
+first four were live-measured on `Synth2k_case` on 2026-08-16; the fifth and sixth appear
+only on cases Synth2k cannot produce:
 
 1. **`AreaNum` is the branch's OWN area and reads `0` on a tie-line.** Filtering on it
    silently drops every cross-area violation. The endpoint areas are `AreaNum:1` / `:2`.
@@ -29,22 +29,22 @@ appear on cases Synth2k cannot produce, which is the point of them:
    rows came out of a freshly-opened case.
 4. **A bare `pw[ViolationCTG]` returns 2 columns.** You must pass an explicit field list.
 5. **The `LimViolCat` vocabulary is case-dependent, not fixed.** An amp-rated branch
-   reports `Branch Amp`, which Synth2k never emits — so a classifier measured there drops
+   reports `Branch Amp`, which Synth2k never emits, so a classifier measured there drops
    every one of those overloads as an unknown category and still completes, still writes
    plausible CSVs, and still reports a grid it never screened.
 6. **`LimViolID:1` identifies a monitored END, not an element.** A branch monitored at both
    ends appears under two ids, so grouping on the raw string counts ends and reports them as
    distinct violated elements.
 
-Also settled here: the claim in `contingency_esapp.py`'s module docstring that esapp's typed
-read of `ViolationCTG` errors *"interface unknown"* on Synth2k **does not reproduce**.
+Also settled here: an earlier claim that esapp's typed read of `ViolationCTG` errors
+*"interface unknown"* on Synth2k **does not reproduce**.
 
 ## Connections
 
 - **Up:** [esapp](../concepts/esapp.md)
 - **Across:** [new-device-contingency-aux](new-device-contingency-aux.md) (building the set you solve, and scoping
   monitoring to an area) · [powerworld-limitset-setdata](powerworld-limitset-setdata.md) · [parallel-contingency-solve](../concepts/parallel-contingency-solve.md) · [lodf](../concepts/lodf.md) ·
-  [powerworld-simauto](../concepts/powerworld-simauto.md) · critical-branch screening
+  [powerworld-simauto](../concepts/powerworld-simauto.md)
 - **Deeper:** [esapp-package-backend](../references/esapp-package-backend.md)
 
 ## Content
@@ -89,17 +89,15 @@ to appear, with the note *"treat this as a vocabulary to fail loudly against, no
 exhaustive enum."* **That note was right, and ignoring it cost a wrong answer.** Synth2k
 rates every branch in MVA, so `Branch Amp` was never seen there; a real utility planning
 model rates part of its system in amps and PowerWorld emits **both strings from the same
-solve**, on disjoint sets of branches. In one measured run, 2,972 real overloads on a
-planning model
-(101.7%–240.7% of rating, all 297 contingencies) were classified `unknown` and dropped
-while the run reported 18 violations and looked clean.
+solve**, on disjoint sets of branches. In one measured run on a planning model, 2,972 real
+overloads (101.7%–240.7% of rating, all 297 contingencies) were classified `unknown` and
+dropped while the run reported 18 violations and looked clean.
 
-Two rules follow, and they are not the same rule:
+Two rules follow:
 
-- **`Branch Amp` is thermal.** Score it off `LimViolPct` exactly as `Branch MVA` — percent
+- **`Branch Amp` is thermal.** Score it off `LimViolPct` exactly as `Branch MVA`. Percent
   is percent regardless of the rating's unit, so the two never need an exchange rate. But
-  `LimViolValue` / `LimViolLimit` on those rows **are amps** (284–2,176 A on that model) and
-  must never be compared against an MVA row's.
+  `LimViolValue` / `LimViolLimit` on those rows **are amps** (284–2,176 A on that model) and must never be compared against an MVA row's.
 - **`Unsolved` is not.** It is `CTGSolved = NO` arriving through the violation table.
   Ranking it as a violation scores a contingency the run established *nothing* about.
 
@@ -108,7 +106,7 @@ Before trusting a thermal count on a new case, check what the case rates in:
 
 ### Trap 1 — `AreaNum` is the branch's own area, and it is `0` on a tie-line
 
-This is the expensive one. The four `AreaNum` slots are not four copies of the same thing:
+This is the expensive one. The four `AreaNum` slots mean different things:
 
 | slot | meaning |
 |---|---|
@@ -120,8 +118,8 @@ This is the expensive one. The four `AreaNum` slots are not four copies of the s
 Measured on branch 1004 (Far West) → 3133 (West):
 `AreaNum=0, AreaNum:1=1, AreaNum:2=3, AreaNum:3=1`.
 
-On an intra-area branch all four read the same number, which is exactly why this is easy to
-miss — you have to look at a tie-line to see the difference at all. **1,933 of 36,122
+On an intra-area branch all four read the same number, so the difference shows only on a
+tie-line. **1,933 of 36,122
 thermal rows** on the observed run were tie-lines, i.e. `AreaNum == 0`.
 
 > **A region filter written as `AreaNum in R` drops every tie-line violation and looks
@@ -142,8 +140,8 @@ comparable) and **voltage on the signed pu deviation** from `LimViolValue`. Per-
 sets (`LSCtgBusLowRateSet` / `LSCtgBusHighRateSet`) also mean `LimViolLimit` need not be
 constant across rows, so percent is not comparable bus-to-bus either.
 
-`LimViolValue == LimViolLimit * LimViolPct / 100` held on **120,428 of 120,428 rows** — so
-the typed value is trustworthy, and the arithmetic is a good cross-check assertion.
+`LimViolValue == LimViolLimit * LimViolPct / 100` held on **120,428 of 120,428 rows**. The
+typed value is trustworthy, and the arithmetic makes a good cross-check assertion.
 
 ### Trap 3 — results persist in the `.pwb`
 
@@ -158,7 +156,8 @@ the set you meant to solve.
 `CTGSolveAll` applies each outage to the **stored contingency reference**, not to the state
 the case is in now. Move the operating point (a TimeStep hour, a new dispatch, an edit) and
 solve without `pw.esa.CTGSetAsReference()`, and every contingency is solved against the old
-reference. Nothing errors, and the rows look real.
+reference. Nothing errors, and the rows look real. Status: suspected, possibly by design: glitch `2026-10-20-ctg-reference-timestep`; call `CTGSetAsReference()`
+whichever it turns out to be.
 
 Measured 2026-10-20 on Simulator build 2026-09-25, on the public Texas2k grid with a weather
 file: three TimeStep hours with renewable output from about 2.7 GW to 7.6 GW, each set with
@@ -186,7 +185,7 @@ pw[ViolationCTG, VIOLATION_FIELDS]  # -> everything you asked for
 ### Trap 6 — one identity per MONITORED END, not per element
 
 A branch appears under a **separate `LimViolID:1` per monitored end**. The two strings differ
-only in the monitored-bus token, and the direction token does **not** discriminate — both ends
+only in the monitored-bus token, and the direction token does **not** discriminate; both ends
 can report the same direction. Measured 2026-09-14 on a real planning-model export: about one
 id in a hundred was the second end of a branch already counted, and the two ends reported
 materially different percentages.
@@ -194,14 +193,14 @@ materially different percentages.
 So **grouping on the raw id string counts monitored ends, not elements.** Any "distinct violated
 elements" figure produced that way is an end count wearing an element count's name.
 
-The element key is `(min(from, to), max(from, to), circuit)` — drop the monitored-end and
-direction tokens, normalise the endpoint order — and severity is the **max across ends**,
+The element key is `(min(from, to), max(from, to), circuit)`: drop the monitored-end and
+direction tokens and normalise the endpoint order. Severity is the **max across ends**,
 because the end is where the measurement was taken and not part of the identity. This matters
 most under a one-element-per-round remediation loop: ungrouped, the loop targets one branch on
 two separate rounds, and the second round sizes an action against a branch it already upgraded.
 
 Endpoints are available as real columns on the same row, so only the circuit and monitored end
-need to come from the string — which also makes the parse self-checking, since the string's
+need to come from the string. That also makes the parse self-checking, since the string's
 own endpoint tokens must agree with those columns.
 
 ### The per-category column contract
@@ -216,20 +215,20 @@ Which identity slots are populated, by category (`1.0` = always, `0.0` = never):
 | `Bus Low Volts` | 1.0 | 1.0 | 0.0 | 1.0 | **0.0** | 1.0 | 0.0 |
 | `Interface MW` | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
 
-Two consequences worth internalising:
+Two consequences:
 
 - **A bus violation carries a populated `AreaNum:1`.** So a two-endpoint OR applied
   unconditionally attributes a bus to an unrelated area. `BusNum:1` is the clean
-  discriminator — populated for branch rows, empty for bus rows.
+  discriminator: populated for branch rows, empty for bus rows.
 - **Interface rows carry no identity at all.** They cannot be attributed to a region; drop
   them deliberately and print the count.
 
 ### Row-count integrity, and why not to deduplicate
 
-`rows_per_label == CTGViol` held exactly on **40/40** labels. Assert it — it catches
+`rows_per_label == CTGViol` held exactly on **40/40** labels. Assert it. It catches
 duplication *and* dropped rows for free.
 
-**But it does NOT hold on every model, and the reason matters.** On a regional
+**But it does NOT hold on every model.** On a regional
 planning model (2026-08-17) a label returned 1 row while its own `CTGViol` read `0`.
 
 The tempting explanation — that `CTGViol` counts only branch violations, so a voltage-only
@@ -240,13 +239,13 @@ contingency reads 0 — is **wrong, and was tested**:
   `CTGNBranchViol` / `CTGNVoltViol` / `CTGNInterfaceViol` are the branch / **bus** /
   interface counts.
 - Synth2k confirms it is the sum: `3010 + 1 + 1195 = 4206` exactly, on a label carrying all
-  three kinds (Stage 0b, Q4).
+  three kinds.
 
 So `CTGViol` **does** include voltage violations, and a disagreement is a real signal rather
 than a scope quirk. The live candidates are a **stale or duplicate-labelled `Contingency`
-record** — a label-keyed join silently collapses duplicates to whichever side wins, and
-`Contingency` aggregates persist in the `.pwb` exactly like `ViolationCTG` does (trap 3) —
-or rows genuinely dropped.
+record**, or rows genuinely dropped. A label-keyed join silently collapses duplicates to
+whichever side wins, and `Contingency` aggregates persist in the `.pwb` exactly like
+`ViolationCTG` does (trap 3).
 
 The discriminating probe, from data you have already read:
 
@@ -256,20 +255,20 @@ The discriminating probe, from data you have already read:
 | `rows == 0` while `CTGViol > 0` | rows were dropped — and that device will read as causing nothing |
 | `CTGViol != CTGNBranchViol + CTGNVoltViol + CTGNInterfaceViol` | the aggregate is stale for that label |
 
-Note the guard is worth keeping but **not worth aborting on after an expensive solve** —
-report the evidence and mark the run unverified instead, or you destroy the rows you would
-need to tell these three apart.
+Keep the guard, but **do not abort on it after an expensive solve**. Report the evidence and
+mark the run unverified instead, or you destroy the rows you would need to tell these three
+apart.
 
 `LimViolCTGSpecifiedLimit` (*"If YES, Limit was specified during a contingency action. This
 Limit overrides all Limit Monitoring Settings."*) is a separate, real mechanism for a
 violation whose limit differs from the standing `LimitSet`. It read `NO` on those rows
-above, so it did not explain them — but it is not in the default field list and is worth
-reading when limits and violations disagree.
+above, so it did not explain them. It is not in the default field list; read it when limits
+and violations disagree.
 
 Do **not** deduplicate on `(label, category, element)`. Repeated-looking rows are usually
 real: four parallel circuits on one bus pair produce one contingency each, and outaging any
 one overloads the other three. That is 3 rows per label with identical bus numbers and
-*different* `LineCircuit` values — a dedup on the bus pair would silently eat them.
+*different* `LineCircuit` values, and a dedup on the bus pair would silently eat them.
 
 ### `ContingencyElement` has no `LineCircuit`
 
@@ -288,7 +287,7 @@ else that was probed against eight outages that provably island a bus:
 
 - `BusMinVoltageContingency == 0` is **not** an islanding signal — 1,466 of 2,000 buses read
   0.0 on an ordinary run. It means "the band was never breached in that direction for that
-  bus". (This is the same `0.0` that `n1_voltage_violations` already treats as
+  bus". (This is the same `0.0` that a per-bus N-1 voltage check treats as
   "not evaluated".)
 - All eight islanding contingencies reported `CTGSolved='YES'` with thousands of ordinary
   violations — indistinguishable from any other contingency.
@@ -297,20 +296,20 @@ else that was probed against eight outages that provably island a bus:
 - No `Bus Low Volts` row anywhere read near 0 pu (minimum 0.9312) — **islanded buses emit no
   violation rows at all.**
 
-If you need islanding detection, `ViolationCTG` alone will not give it to you — **and
-[lodf](../concepts/lodf.md) will, for free and without a solve.** When the LODF denominator `1 − ψ_kk → 0`
+`ViolationCTG` alone will not detect islanding, **but [lodf](../concepts/lodf.md) will, for
+free and without a solve.** When the LODF denominator `1 − ψ_kk → 0`
 there is no alternate path, i.e. outaging that branch splits the network; the math flags it
 before any solve is attempted. Measured on Synth8k: **about 3%** of outages (roughly 1 in 30), found in the
 ~6 s it takes to build the PTDF. That page reached the same conclusion from the other
-direction — *"in a PowerWorld CTG sweep, islanded buses read 0 and get skipped, so stranding
-a 138 kV pocket reports CLEAN"* — and this page is the independent confirmation of that hole
-from inside `ViolationCTG`.
+direction (*"in a PowerWorld CTG sweep, islanded buses read 0 and get skipped, so stranding
+a 138 kV pocket reports CLEAN"*); this page confirms the hole independently from inside
+`ViolationCTG`.
 
 **Correction (2026-09-24, completed 2026-09-28): islanding *is* visible after `CTGSolveAll` —
 through three checks that each catch a different set, and no single one catches all.**
 
 - **`Contingency.LoadMW` / `GenMW`** hold the load and generation cut off by each outage and are
-  non-zero only on islanding outages — these are islands PowerWorld **drops**. Checked against a
+  non-zero only on islanding outages. These are islands PowerWorld **drops**. Checked against a
   direct `CTGApply` plus re-solve of every outage on a public 40-bus synthetic case (93 of 93
   agreed). A generation-only pocket reads `LoadMW = 0`; catch it through `GenMW`.
 - **`CTG_Options.Include`** (concise `IslandViolations`) = YES, with `BGLoadMW` and
@@ -322,7 +321,7 @@ through three checks that each catch a different set, and no single one catches 
 
 Measured 2026-09-28 on a regional synthetic planning model. Gate an island check on MW only when
 the stranded pocket carries MW. The LODF denominator above remains the solve-free screen.
-`ViolationCTG` alone still ranks every one of these outages harmless — read the island checks
+`ViolationCTG` alone still ranks every one of these outages harmless. Read the island checks
 alongside it.
 
 ### Branch loading: read the worse end
@@ -348,7 +347,7 @@ an emergency criterion.
 `Contingency` also carries per-contingency aggregates PowerWorld computes itself:
 `CTGViolMaxLine`, `CTGViolMaxVolt`, `CTGViolMinVolt`, `CTGNBranchViol`, `CTGNInterfaceViol`,
 `AggrMVAOverload`, `AggrPercentOverload`. They are **not** region-filtered, so they cannot
-replace a regional study — but they are a free whole-system cross-check on a ranking.
+replace a regional study. They are still a free whole-system cross-check on a ranking.
 
 ## Provenance
 

@@ -30,11 +30,9 @@ transient stability run.
 
 PowerWorld's TimeStep feature solves a sequence of independent steady-state points, one
 per timestamp. It is a production-cost-style study, not dynamics: there is no swing
-equation, no machine model, no sub-second behaviour. If you want transient stability,
-that is the `TS*` family of script actions and a completely different setup.
-
-The name collision causes real confusion. "Timestep simulation" here means hourly
-snapshots across a weather series.
+equation, no machine model, no sub-second behaviour. Transient stability is the `TS*`
+family of script actions and a completely different setup. "Timestep simulation" here
+means hourly snapshots across a weather series.
 
 ### The chain
 
@@ -46,13 +44,13 @@ snapshots across a weather series.
    files with `TimeStepAppendPWW`, then assert the timepoint count. **Do not use plain
    `TimeStepLoadPWW` on Simulator 25:** on builds dated 2026-09-20 and 2026-09-25 it fails on
    every file with `Error With Loading PWWFile`, while `TimeStepLoadPWWRange` loads the same
-   files. A failure of the plain form says nothing about the file.
-4. **Select the renewable generators** — typically those whose fuel type contains `WND`
+   files (suspected PowerWorld issue, not yet confirmed: glitch `2026-10-20-timestep-loadpww-plain`). A failure of the plain form says nothing about the file.
+4. **Select the renewable generators**, typically those whose fuel type contains `WND`
    or `SUN`. Only selected units produce output.
 5. **Declare the fields to save** with `TimeStepSaveFieldsSet(GEN, ...)`. Fields not
    declared here are simply absent from the results, with no warning.
 6. **Run** with `TimeStepDoRun()`. Debug a broken setup with
-   `TimeStepDoSinglePoint()` first — it solves one timestamp and fails in seconds
+   `TimeStepDoSinglePoint()` first: it solves one timestamp and fails in seconds
    rather than after a long run.
 7. **Export** with `TimeStepSaveResultsByTypeCSV`.
 
@@ -60,26 +58,25 @@ snapshots across a weather series.
 call `CTGSetAsReference()` before `CTGSolveAll()`. Without it every hour is solved against an
 older stored reference and returns the same results. Measured 2026-10-20 on build 2026-09-25:
 three hours with about 2.7 GW to 7.6 GW of renewables gave identical answers until the
-reference was reset. See [reading-violationctg](../methods/reading-violationctg.md) (Trap 3b).
+reference was reset (suspected, possibly by design: glitch `2026-10-20-ctg-reference-timestep`). See [reading-violationctg](../methods/reading-violationctg.md) (Trap 3b).
 
 ### PowerWorld does the conversion
 
 You do not compute power curves. Each renewable unit carries an embedded **PFW** (Power
 Flow Weather) model string, and PowerWorld applies it to convert weather into MW for
-that specific unit. Your job is to supply weather and select units; the physics is
-already in the case.
+that unit. You supply weather and select units; the physics is already in the case.
 
-If a unit produces nothing, the usual cause is that it has no PFW model rather than
-anything wrong with your weather.
+If a unit produces nothing, the usual cause is that it has no PFW model, not bad weather
+data.
 
 **PWW and PFW are different things.** PWW is the weather data file; PFW is the
-generator's weather-to-power model. The names are one letter apart and confusing them
-wastes an afternoon. See [pww-data](pww-data.md).
+generator's weather-to-power model. The names are one letter apart. See
+[pww-data](pww-data.md).
 
 ### Reading the output
 
 The exported CSVs are not plain tables. Expect **eight metadata header rows** before the
-data begins — read past them or every column parses as text. Timestamps commonly need
+data begins; read past them or every column parses as text. Timestamps commonly need
 a timezone conversion, and the natural final step is splitting the table into a solar
 file and a wind file.
 
@@ -88,21 +85,19 @@ Details in [how-to-analyze-results](../methods/how-to-analyze-results.md).
 ### Series and parallel
 
 A series runner processes timestamps one at a time: slow, but its errors are legible.
-A parallel runner using a process pool is dramatically faster because each timestamp is
-independent, which makes this an unusually clean parallel problem.
+A parallel runner using a process pool is much faster because each timestamp is
+independent.
 
-Develop against the series runner and switch to parallel for production. Debugging a
-process pool that is failing on one timestamp out of eight thousand is a bad way to
-spend a day.
+Develop against the series runner and switch to parallel for production. A process pool
+failing on one timestamp out of eight thousand is hard to debug.
 
 ### Copper-plate cases
 
-These studies often run on a copper-plate version of the case — transmission constraints
-removed — because the question is usually "what could these renewables have produced?"
+These studies often run on a copper-plate version of the case (transmission constraints
+removed), because the question is usually "what could these renewables have produced?"
 rather than "what could have been delivered?" See [copper-plate](copper-plate.md).
 
-Deciding which question you are asking, before the run rather than after, saves
-rerunning it.
+Decide which question you are asking before the run, or you will rerun it.
 
 ### Granularity
 

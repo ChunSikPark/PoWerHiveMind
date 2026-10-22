@@ -17,7 +17,7 @@ tags: [timestep, powerworld, esapp, simauto, backend, reference]
 
 ## Abstract
 
-Code-reconstruction reference for a timestep simulation pipeline — the worker function's PowerWorld call sequence (weather load → generator selection → field-save wrapper → run → export), `_GEN_PARAM` field list, `process_results` CSV post-processing with 8 header rows skipped, and both series and parallel orchestration variants. Covers every SimAuto command, required wrapper (`TIMESTEPSaveSelectedModifyStart`/`Finish`), and gotcha in enough detail to regenerate working simulation code from scratch. Read this in full only when writing or regenerating code for a timestep simulation; for the gist, use [timestep-simulation](../concepts/timestep-simulation.md).
+Code-reconstruction reference for a timestep simulation pipeline: the worker function's PowerWorld call sequence (weather load → generator selection → field-save wrapper → run → export), `_GEN_PARAM` field list, `process_results` CSV post-processing with 8 header rows skipped, and both series and parallel orchestration variants. Covers every SimAuto command, required wrapper (`TIMESTEPSaveSelectedModifyStart`/`Finish`), and gotcha in enough detail to regenerate working simulation code from scratch. Read this in full only when writing or regenerating code for a timestep simulation; for the gist, use [timestep-simulation](../concepts/timestep-simulation.md).
 
 ## Connections
 
@@ -26,36 +26,32 @@ Code-reconstruction reference for a timestep simulation pipeline — the worker 
 
 ## Content
 
-> **Library note — prefer `esapp` over `esa`.** This repo imports the standalone `esa` (Easy SimAuto) package. For new or regenerated code, prefer **`esapp` (ESA++)**: it wraps the **same** PowerWorld SimAuto server, and esapp exposes each of those SCRIPT commands as a typed named method (`pw.esa.TimeStepDoRun()`), which is what you should call — see [esapp-script-command-wrappers](../concepts/esapp-script-command-wrappers.md) — an agent reasons about it more reliably. Swap esa's data helpers (`GetParametersMultipleElement`, `change_parameters_multiple_element_df`, `get_key_field_list`) for esapp's bracket interface (`pw[Type, fields]`, `pw[Type] = df`, `Type.keys()`). See [esapp-overview](../methods/esapp-overview.md). (Library choice only — unrelated to the TimeStep-vs-Transient-Stability distinction.)
+> **Library note — prefer `esapp` over `esa`.** The original pipeline imports the standalone `esa` (Easy SimAuto) package. For new or regenerated code, prefer **`esapp` (ESA++)**. It wraps the **same** PowerWorld SimAuto server and exposes each of those SCRIPT commands as a typed named method (`pw.esa.TimeStepDoRun()`), which is what you should call (see [esapp-script-command-wrappers](../concepts/esapp-script-command-wrappers.md)). Swap esa's data helpers (`GetParametersMultipleElement`, `change_parameters_multiple_element_df`, `get_key_field_list`) for esapp's bracket interface (`pw[Type, fields]`, `pw[Type] = df`, `Type.keys()`). See [esapp-overview](../methods/esapp-overview.md). (Library choice only — unrelated to the TimeStep-vs-Transient-Stability distinction.)
 
-Code-reconstruction knowledge for the timestep simulation pipeline. Given a plain prompt
-("run the renewable sim on the Synth2k case"), an agent reads this page and
-writes WORKING code. Everything here is verified against the real source on disk
-(the pipeline's source tree). Hub: [Home](../index.md).
+Given a plain prompt ("run the renewable sim on the Synth2k case"), an agent reads this
+page and writes working code. Everything here is verified against the pipeline's source.
 
-The whole engine is two functions in one engine module: `timestep_worker(...)` (drives
-PowerWorld) and `process_results(...)` (post-processes the CSV). The pipeline's CLI entry script and
-the parallel variant's entry script are just CLI + grouping + I/O around them. The time math lives in
-`time_utils.py`. **The parallel variant's engine module is byte-identical to the series one** — the
-engine is shared; only the entry-script orchestration differs.
+The engine is two functions in one module: `timestep_worker(...)` (drives PowerWorld) and
+`process_results(...)` (post-processes the CSV). The CLI entry script and the parallel
+variant's entry script are CLI, grouping and I/O around them. The time math lives in
+`time_utils.py`. **The parallel variant's engine module is byte-identical to the series
+one**; only the entry-script orchestration differs.
 
 ---
 
 ## 0. Imports & environment (get these wrong and nothing runs)
 
-- **`from esapp import PowerWorld`** — esapp (ESA++) wraps the same PowerWorld SimAuto
-  server as the older standalone `esa` package, and is the one to write. `pw.esa` is
-  esapp's own raw SimAuto handle, and each SCRIPT command below is exposed as a typed named
-  method (`pw.esa.TimeStepDoRun()`) — call those, not a hand-written script string. Only the
-  data helpers differ beyond that: the bracket interface replaces esa's
+- **`from esapp import PowerWorld`**, not the standalone `esa` (see the library note
+  above). `pw.esa` is esapp's raw SimAuto handle; call each SCRIPT command below through its
+  typed named method, not a hand-written script string. The bracket interface replaces esa's
   `GetParametersMultipleElement` / `change_parameters_multiple_element_df`.
-- The import is **lazy** — done *inside* the worker function, not at module top —
+- The import is **lazy**, done *inside* the worker function rather than at module top,
   so importing the engine module never requires PowerWorld to be installed. Keep it lazy
   if you regenerate this.
 - **Windows-only.** esapp drives PowerWorld Simulator through SimAuto (COM). No
   PowerWorld → no run.
-- `numpy` is imported at module top with `# noqa: F401` purely "for parity with
-  downstream tooling" — it's not used directly in the engine module. `pandas` is used.
+- `numpy` is imported at module top with `# noqa: F401` "for parity with downstream
+  tooling"; the engine module does not use it. `pandas` is used.
 - `sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))` is done so
   `from time_utils import convert_to_utc` resolves regardless of CWD.
 
@@ -104,9 +100,9 @@ Key fields come from `Gen.keys()` (typically `BusNum`, `GenID`)
 and are **prepended**, so the resulting `gen` DataFrame has columns
 `[<key fields>] + _GEN_PARAM`.
 
-> ⚠️ **This prepend is not optional.** Later the code pushes `gen` back with
-> `pw[Gen] = gen` (twice — to set `Selected` and
-> `TimeDomainSelected`). PowerWorld matches each row to a generator by its key fields, so
+> ⚠️ **This prepend is required.** Later the code pushes `gen` back with
+> `pw[Gen] = gen` twice, to set `Selected` and
+> `TimeDomainSelected`. PowerWorld matches each row to a generator by its key fields, so
 > if `BusNum`/`GenID` weren't in the DataFrame the write would **silently do nothing** and
 > no generators would be selected. Always keep the key columns in any DataFrame you write
 > back. (Same rule on the esapp bracket path — see [esapp](../concepts/esapp.md).)
@@ -139,7 +135,7 @@ def timestep_worker(case_path, pww_list, result_csv):
 
         # (d) load weather file(s): first = Load, rest = Append. The project calls plain
         # TimeStepLoadPWW here, which fails on every file on Simulator 25 (builds dated
-        # 2026-09-20 and 2026-09-25). Load the file's full span with the Range form instead.
+        # 2026-09-20 and 2026-09-25; suspected glitch 2026-10-20-timestep-loadpww-plain). Load the file's full span with the Range form instead.
         d0, d1 = struct.unpack_from("<dd", open(pww_list[0], "rb").read(22), 6)  # OLE days, UTC
         t0, t1 = [(pd.Timestamp("1899-12-30") + pd.Timedelta(days=d)).round("h") for d in (d0, d1)]
         pw.esa.TimeStepLoadPWWRange(pww_list[0], f"{t0:%Y-%m-%dT%H:%M:%SZ}",
@@ -187,7 +183,7 @@ Step-by-step, every SimAuto call / SAW method in execution order:
 4. `gen = pw[Gen, gen_param]` — DataFrame of all gens.
 5. `pw.esa.TimeStepLoadPWWRange(pww0, t0, t1, "Weather Only")` — load the first weather file over
    its full span, read from the file header. Plain `TimeStepLoadPWW` fails on Simulator 25 builds
-   dated 2026-09-20 and 2026-09-25; assert the case now has timepoints.
+   dated 2026-09-20 and 2026-09-25 (suspected PowerWorld issue, not yet confirmed: glitch `2026-10-20-timestep-loadpww-plain`); assert the case now has timepoints.
 6. for each remaining pww: `pw.esa.TimeStepAppendPWW(pww, "Weather Only")` — append.
 7. `pw.esa.EnterMode("EDIT")`
 8. set `gen['Selected'] = 'YES'` where `GenFuelType` contains `WND|SUN`.
@@ -213,14 +209,13 @@ TIMESTEPSaveSelectedModifyFinish;
 
 The `TimeStepSaveFieldsSet` + `TimeDomainSelected` changes **MUST** be bracketed by
 `TIMESTEPSaveSelectedModifyStart;` … `TIMESTEPSaveSelectedModifyFinish;`. Without this
-wrapper the field-save selection **silently fails** — the sim runs, the CSV is
-written, but the per-generator MW columns you wanted are missing/empty. There is no
-error; you just get a useless file. If you regenerate this code, keep the Start/Finish
-pair around steps 11–15 exactly.
+wrapper the field-save selection **silently fails**: the sim runs and the CSV is
+written, but the per-generator MW columns you wanted are missing or empty. There is no
+error. If you regenerate this code, keep the Start/Finish pair around steps 11–15 exactly.
 
 ### Field codes `BGGenMWFuelTypeGeneric:10` / `:12`
 
-These are the two PowerWorld TimeStep result fields saved per selected generator —
+These are the two PowerWorld TimeStep result fields saved per selected generator:
 "generator MW by generic fuel type", indices `10` and `12`. Downstream
 `process_results` splits output columns by the literal substrings `'solar'` and
 `'wind'` in the exported CSV column names, so the two indices correspond to the solar
@@ -232,8 +227,8 @@ and wind MW outputs.
 
 `pww_list[0]` → `TimeStepLoadPWWRange` over its full span; every subsequent entry → `TimeStepAppendPWW`. Both
 use the `"Weather Only"` mode argument. In practice the callers pass **one PWW per
-worker call** (`[pww]`) and concatenate the resulting CSVs in pandas afterward — the
-Append branch exists but the production paths feed single-file lists and stitch
+worker call** (`[pww]`) and concatenate the resulting CSVs in pandas afterward. The
+Append branch exists, but the production paths feed single-file lists and stitch
 quarters at the DataFrame level (see §4).
 
 ---
@@ -343,12 +338,11 @@ Both returned frames carry the 8 header rows on top.
 
 ## 5. The parallel variant's entry script
 
-Same engine (the parallel variant's copy of the engine module); only orchestration differs. What can produce a wrong
-or failed run:
+Same engine; only orchestration differs. What can produce a wrong or failed run:
 
 - **Cap `--workers` at what the PowerWorld licence and RAM allow.** Each worker drives its
-  own SimAuto instance against its own temp copy of the case — the temp-copy in
-  the worker function is what makes concurrency safe.
+  own SimAuto instance against its own temp copy of the case. The temp copy in the worker
+  function is what makes concurrency safe.
 - **Workers must stay top-level and import the engine inside the child.** Windows spawn
   needs them picklable, and the parent must never load PowerWorld.
 - **Incomplete years are skipped silently** — only years with all four quarters become
@@ -373,9 +367,10 @@ Two facts that change an answer:
   therefore 7 h earlier than the true UTC hour, and a winter label 6 h earlier.
 - **`interpolate_to_hourly` exists but is NOT called** in the current run path. It fills
   3-hour forecast gaps; assuming it ran is how a gapped forecast series gets read as hourly.
+
 ## 7. Gotchas checklist (regenerate-safe)
 
-- ✅ `from esapp import PowerWorld` — **esapp, not the standalone `esa`**. Same SimAuto
+- ✅ `from esapp import PowerWorld`: **esapp, not the standalone `esa`**. Same SimAuto
   underneath; do not mix the two in one script.
 - ✅ **Windows + PowerWorld only** (SimAuto/COM).
 - ✅ **Temp-copy the case** (`mkstemp('.PWB')` + `shutil.copy2`) and run against the

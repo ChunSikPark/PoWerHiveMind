@@ -73,7 +73,7 @@ def pfw_missing(cd: CaseData) -> list[Finding]:
                 "GenMWMax": u.GenMWMax} for u in miss.itertuples()],
         details={"missing": int(len(miss)), "renewables": int(len(r)), "missing_mw": mw, "installed_mw": total,
                  "missing_wind": int(len(wind)), "missing_wind_with_class": classed},
-        handoff=(f"the Grid-Workshop Auto_PFW scripts (concepts/grid-workshop-auto-pfw.md); {classed} of the "
+        handoff=(f"the Auto_PFW scripts (concepts/auto-pfw-scripts.md); {classed} of the "
                  f"{len(wind)} missing wind units carry a class it can use, and it skips the rest without a "
                  f"warning; send back the _PFW copy it writes"))]
 

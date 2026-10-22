@@ -23,18 +23,17 @@ has cost people entire afternoons, and mixing them produces results that look ri
 
 ### Pairs that get confused
 
-Read this table before the alphabetical list. These are near-identical names for
-entirely different things, and confusing them produces plausible-looking wrong answers
-rather than errors.
+These are near-identical names for different things. Confusing them produces
+plausible-looking wrong answers, not errors.
 
 | These two | Are not the same |
 |---|---|
 | **PWW** vs **PFW** | `PWW` is a **weather data file** — measurements at stations over time. `PFW` (Power Flow Weather) is a **model string embedded in a generator** that converts weather into MW for that unit. You load a PWW; a PFW is already inside the case. One letter apart, unrelated |
 | **`esapp`** vs **`esa`** | Two different Python packages wrapping the same SimAuto server. This kit assumes `esapp`. Do not mix them |
 | **`PowerWorld`** vs **`SAW`** | `PowerWorld` is esapp's high-level entry point. `SAW` is the raw SimAuto wrapper beneath it, reached as `pw.esa`. `pw.RunScriptCommand(...)` does not exist; `pw.esa.RunScriptCommand(...)` does |
-| **TimeStep** vs **Transient Stability** | *TimeStep* solves a sequence of independent steady-state points across a weather series — a production study. *Transient stability* (the `TS*` actions) simulates sub-second dynamics. Completely different machinery |
+| **TimeStep** vs **Transient Stability** | *TimeStep* solves a sequence of independent steady-state points across a weather series — a production study. *Transient stability* (the `TS*` actions) simulates sub-second dynamics. Different machinery |
 | **`Simulator`** vs **`SimAuto`** | Simulator is the program. SimAuto is its automation interface, **licensed separately**. Having one does not mean having the other |
-| **`LimViolPct`** on thermal vs voltage rows | The polarity differs between the two. Never rank the two kinds of violation on this field directly — see [reading-violationctg](../methods/reading-violationctg.md) |
+| **`LimViolPct`** on thermal vs voltage rows | The polarity differs between the two. Never rank the two kinds of violation on this field directly; see [reading-violationctg](../methods/reading-violationctg.md) |
 | **`.pwb`** vs **`.aux`** | `.pwb` is the binary case file. `.aux` is a text file of data and/or SCRIPT actions that is **merged into** an open case |
 
 ### Alphabetical
@@ -63,7 +62,6 @@ rather than errors.
 | **kcmil** | Thousand circular mils — a conductor size unit |
 | **LODF** | Line Outage Distribution Factor. How flow redistributes onto other branches when one branch is outaged |
 | **Mismatch** | Residual power imbalance at a bus after solving. Near zero means converged — but see *DC solve* |
-| **MOC** | Map of Content — a hub page linking a domain's pages. Not a PowerWorld term |
 | **MVA / MW / MVAR** | Apparent, real, and reactive power. Branch limits are usually MVA; dispatch is in MW |
 | **N-1** | The reliability criterion that the system must survive the loss of any single element |
 | **OPF / SCOPF** | Optimal Power Flow, and its Security-Constrained form which additionally respects contingency limits |

@@ -4,7 +4,7 @@ This page assumes nothing. If you have never installed Python and have never use
 coding agent, you are the person it is written for.
 
 About fifteen minutes. Do the steps in order. **You will not type a single terminal
-command** — it is downloads, buttons, and one line pasted into a chat box.
+command**, only downloads, buttons, and one line pasted into a chat box.
 
 ---
 
@@ -18,7 +18,7 @@ command** — it is downloads, buttons, and one line pasted into a chat box.
 | **Two Python packages** | `esapp` talks to PowerWorld, `TeamOverbyeWeather` fetches weather. Step 5 installs them for you |
 
 You also need **PowerWorld Simulator** itself. You either have it through your university
-or employer, or you do not — see [About the PowerWorld
+or employer, or you do not. See [About the PowerWorld
 licence](#about-the-powerworld-licence).
 
 Throughout this page, **agent** means the program in row one. An agent can open your files
@@ -61,8 +61,7 @@ button. Run the installer.
 
 This is the single most common thing to get wrong. The box is small, near the bottom, and
 off by default. Miss it and later steps fail with errors that never mention Python.
-
-You do not have to check this yourself. Step 5 checks it for you.
+Step 5 checks it for you.
 
 ---
 
@@ -81,8 +80,8 @@ in the wrong one is a common way to get stuck.
 
 ## Step 4 — Install the knowledge base
 
-Paste this into the box where you type and press Enter. It is a sentence, not a command —
-you are asking Claude to fetch something for you.
+Paste this into the box where you type and press Enter. It is a plain sentence asking
+Claude to fetch something for you.
 
 ```
 Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PowerWorldHiveMind ~/.claude/skills/powerworld-hivemind
@@ -98,7 +97,7 @@ to unzip, and nothing to remember the location of.
 ```
 
 **Closing and reopening the app is not enough.** It usually reopens the same conversation,
-and a reopened conversation keeps whatever it started with — so the knowledge stays
+and a reopened conversation keeps whatever it started with. The knowledge stays
 invisible and it looks like the install failed. `/reload-plugins` avoids that. Starting a
 genuinely new conversation works too.
 
@@ -124,10 +123,10 @@ This installs the two Python packages and runs four quick checks. One of three t
 happens.
 
 > The other command the plugin registers is `/powerworld-hivemind:kb-page`, which
-> writes what you learn back into the kit as a new page. You do not need it yet —
-> see **Add to it** in [README.md](README.md) when you do.
+> writes what you learn back into the kit as a new page. You do not need it yet. See
+> [README.md](README.md) when you do.
 
-**Everything passes.** It prints your PowerWorld **build date** — worth noting, because
+**Everything passes.** It prints your PowerWorld **build date**. Keep a note of it, because
 PowerWorld's behaviour changes between versions. Go to Step 6.
 
 **It cannot find Python.** The "Add Python to PATH" box in Step 2 was not ticked. Re-run
@@ -141,8 +140,8 @@ licence](#about-the-powerworld-licence). No code change fixes this one.
 
 ## Step 6 — Prove it worked
 
-Step 5 checked your machine. This checks that your agent actually got the knowledge, which
-is a separate thing and fails separately.
+Step 5 checked your machine. This checks that your agent got the knowledge, which can fail
+separately.
 
 **Open a folder that has nothing to do with PowerWorld** — any project, or an empty one.
 The knowledge travels with you, and this proves it. Ask:
@@ -177,7 +176,7 @@ codex plugin marketplace add ChunSikPark/PowerWorldHiveMind
 ```
 
 Then open `/plugins`, install **powerworld-hivemind**, and start a new session. *(Not yet
-tested against a released Codex build — if it fails, use the manual route below and please
+tested against a released Codex build. If it fails, use the manual route below and please
 open an issue.)*
 
 **Cursor, Windsurf, or anything else**: clone the repository and start your agent inside
@@ -190,7 +189,7 @@ git clone https://github.com/ChunSikPark/PowerWorldHiveMind
 No `git`? On the repository page, click the green **Code** button, then **Download ZIP**,
 and unzip it somewhere you will find again.
 
-Then point your agent at that folder — every agent has some way to open one — and ask:
+Then point your agent at that folder (every agent has some way to open one) and ask:
 
 > Read AGENTS.md. Check whether Python is installed, install the `esapp` and
 > `TeamOverbyeWeather` packages if they are missing, then run the preflight check.
@@ -208,8 +207,7 @@ PowerWorld automation needs three things, and the third catches almost everyone.
 2. **PowerWorld Simulator, installed and licensed.**
 3. **The SimAuto add-on, licensed separately.**
 
-That third point is the one to understand. **SimAuto is a different licence from
-Simulator.** Your Simulator can open cases, run studies, and look completely healthy while
+**SimAuto is a different licence from Simulator.** Your Simulator can open cases, run studies, and look completely healthy while
 every line of automation fails, and nothing in the program tells you that is why.
 
 If Step 5 fails on that check, no amount of changing the code will help. Ask whoever
@@ -253,7 +251,7 @@ You do not need to know which page covers what. That is the agent's job.
 ## When something goes wrong
 
 **I installed Claude but cannot find it.** Either the installer downloaded and was never
-run — look in `Downloads` for a file starting with `Claude`, ending in `.exe`, and
+run: look in `Downloads` for a file starting with `Claude`, ending in `.exe`, and
 double-click it. Or it did install and you are looking at the desktop, where Claude puts no
 icon: open Start, type `Claude`, right-click, **Pin to taskbar**.
 
@@ -263,25 +261,24 @@ icon: open Start, type `Claude`, right-click, **Pin to taskbar**.
 **Clicking Code asks me to upgrade.** Claude Code needs a paid plan. See Step 1.
 
 **A slash command is not recognized.** For `/powerworld-hivemind:powerworld-setup`, the
-knowledge base is installed but this conversation has not loaded it — type
+knowledge base is installed but this conversation has not loaded it. Type
 `/reload-plugins`. Check the prefix too: plain `/powerworld-setup` is not its name. As for
 `/plugin`, it does not exist in the desktop app at all; Step 4 does not need it.
 
 **Claude cannot run `git`.** Git is not installed. See the table in Step 1.
 
 **My agent does not seem to know about PowerWorld.** Type `/reload-plugins`, or start a new
-conversation. On the manual route, it is pointed at the wrong folder — tell it
+conversation. On the manual route, it is pointed at the wrong folder. Tell it
 `Read AGENTS.md in this folder.`
 
 **The code it writes errors.** Ask it to check itself against the knowledge base: `Check
-the preflight page and the relevant page — is this the documented way to do it?`
+the preflight page and the relevant page. Is this the documented way to do it?`
 
 **Everything fails with a COM or licence error.** See [About the PowerWorld
 licence](#about-the-powerworld-licence). Not fixable in code.
 
 **An answer looks wrong.** Ask which pages it used: `Which pages from this knowledge base
-did you use?` If a page is wrong, that is worth reporting — open an issue saying which page
-and what it got wrong. Those reports are the most valuable ones this project gets.
+did you use?` If a page is wrong, open an issue saying which page and what it got wrong. Those reports are the most valuable ones this project gets.
 
 ---
 

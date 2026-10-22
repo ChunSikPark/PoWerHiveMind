@@ -12,12 +12,11 @@ tags: [powerworld, contingency, ctg, esapp, simauto, n-1]
 
 `CTGSkip` and `Delete(Contingency, <filter>)` do two different jobs and are
 routinely confused. **`CTGSkip` partitions a set without shrinking it** — every
-contingency stays in the case and the skipped ones are simply not solved this
-pass, which is how the parallel solver gives each worker a slice. **`Delete` with
+contingency stays in the case and the skipped ones are not solved this pass,
+which is how the parallel solver gives each worker a slice. **`Delete` with
 a violation filter is the only thing that actually reduces the set**, and it is
 destructive, so it needs a backup first. This page collects the mechanism, the
-three places it is used, and the three silent failures around it; before this,
-`CTGSkip` was mentioned on five pages and owned by none. **A parallel sweep driver overwrites
+three places it is used, and the three silent failures around it. **A parallel sweep driver overwrites
 `CTGSkip` in every worker**, so for a parallel loop keep every label in the case and scope by the
 active-label list, never by `Delete`.
 
@@ -37,7 +36,7 @@ active-label list, never by `Delete`.
 | solve part of the set now, keep all of it | `CTGSkip` = `YES` / `NO` | no |
 | permanently drop contingencies that did nothing | `Delete(Contingency, "<filter>")` | **yes** |
 
-**"Are you reducing the ctg set by setting SKIP to YES?"** — no. Setting
+**"Are you reducing the ctg set by setting SKIP to YES?"** No. Setting
 `CTGSkip="YES"` excludes a contingency from *this* `CTGSolveAll` and leaves it in
 the case. The set is the same size afterwards. That is the right tool for
 partitioning and the wrong tool for reduction.
@@ -106,8 +105,8 @@ Step 3 above assumes `Delete` is what makes later rounds cheaper. **For a chunke
 it is not, and `Delete` buys nothing there.** A parallel driver of the kind in
 [parallel-contingency-solve](../concepts/parallel-contingency-solve.md) reads every label off the
 `Contingency` object itself, and each worker **overwrites `CTGSkip`** to scope itself to its own
-chunk. A skip list saved in the `.pwb` speeds up a serial solve and the GUI, and does nothing at
-all here.
+chunk. A skip list saved in the `.pwb` speeds up a serial solve and the GUI, and does nothing
+here.
 
 Scoping the parallel path happens through **its active-label argument or not at all**. Two
 consequences:
@@ -159,10 +158,10 @@ there.
 
 - **An unquoted action string in a hand-written `.aux`.** Written bare as
   `BRANCH 1001 1064 1 OPEN` instead of quoted, a 691-contingency file loads as
-  **one** contingency — and the load **reports success**. Always quote the action.
+  **one** contingency, and the load **reports success**. Always quote the action.
 - **`SaveContingencies` is not a script command** ("Unknown script command"). Use
-  `SaveData(<path>,AUX,Contingency,[CTGLabel,CTGSkip],[CTGElement],"",[],[],YES);`
-  — the filter argument is a bare string and the sort lists must be bracketed.
+  `SaveData(<path>,AUX,Contingency,[CTGLabel,CTGSkip],[CTGElement],"",[],[],YES);`.
+  The filter argument is a bare string and the sort lists must be bracketed.
 - **A missing key field on the write-back.** `change_parameters_multiple_element_df`
   needs the object's key field present or the `CTGSkip` change does nothing and
   says nothing.

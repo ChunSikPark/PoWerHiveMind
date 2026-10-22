@@ -11,13 +11,12 @@ tags: [powerworld, aux, script, external-program, llm, simulator-25, undocumente
 ## Abstract
 
 Simulator 25 beta can watch a directory and execute any `.aux` dropped into it, writing
-back the message-log slice produced by that load. Write a file, read a file — **no COM and
+back the message-log slice produced by that load. Write a file, read a file: **no COM and
 no SimAuto call of your own.** This is the cheapest channel an external program (an LLM
 among them) has ever had into PowerWorld, and it needs nothing installed on the caller's
 side.
 
-**The deck goes further and says it therefore needs no SimAuto licence. That is the deck's
-claim, and it is untested.** Every run behind this page was made on a machine that *has*
+**The deck also says it therefore needs no SimAuto licence. That claim is untested.** Every run behind this page was made on a machine that *has*
 the add-on, so nothing measured here could have falsified it. The script actions a dropped
 file executes are the same action set SimAuto invokes, so where the licence check actually
 sits is an open question. **Do not repeat it as a benefit** until someone has run a drop on
@@ -33,10 +32,10 @@ for More Interaction with External Programs*, which describes the functionality 
 ## Connections
 
 - **Up:** [powerworld-simauto](powerworld-simauto.md) · [Home](../index.md)
-- **Across:** [aux-only-powerworld](aux-only-powerworld.md) (what to write *inside* the dropped file — every trap
+- **Across:** [aux-only-powerworld](aux-only-powerworld.md) (what to write *inside* the dropped file; every trap
   and the read-back rule apply unchanged) · [aux-script-commands](../references/aux-script-commands.md) ·
   [esapp-script-command-wrappers](esapp-script-command-wrappers.md) (the Python-side channel this one bypasses)
-- **Deeper:** [esapp-schema-reference](../references/esapp-schema-reference.md) (field-name provenance — still mandatory here)
+- **Deeper:** [esapp-schema-reference](../references/esapp-schema-reference.md) (field-name provenance, still mandatory here)
 
 ## Content
 
@@ -45,20 +44,20 @@ for More Interaction with External Programs*, which describes the functionality 
 With the feature enabled, every `ScriptInputOutputPollSec` Simulator checks the configured
 directory for a file named exactly **`SimulatorScriptInput.aux`**. If it is there:
 
-1. the aux file is **loaded** (i.e. executed — unnamed `SCRIPT{}` blocks auto-run, see
+1. the aux file is **loaded** (i.e. executed; unnamed `SCRIPT{}` blocks auto-run, see
    [aux-only-powerworld](aux-only-powerworld.md)),
 2. the input file is **deleted**,
 3. **`SimulatorScriptOutput.txt`** is written into the same directory, containing the new
    message-log entries associated with that load.
 
-That is the whole protocol. Request is a file appearing; response is a file appearing; the
-deletion of the request is the acknowledgement.
+The request is a file appearing, the response is a file appearing, and the deletion of the
+request is the acknowledgement.
 
 ### Turning it on
 
-Two preconditions the deck states explicitly, and both are real constraints rather than
-setup steps: **a case must already be loaded**, and **the Script Command Execution Dialog
-(SCED) must be visible**. Tools → Script opens it.
+The deck states two preconditions, and both are real constraints rather than setup steps:
+**a case must already be loaded**, and **the Script Command Execution Dialog (SCED) must be
+visible**. Tools → Script opens it.
 
 In the SCED:
 
@@ -93,7 +92,7 @@ Two things to copy from this rather than invent:
 - **A single dropped file mixes `DATA` and `SCRIPT` blocks and they run in file order.**
   The edit lands, then the solve runs against it.
 
-The corresponding `SimulatorScriptOutput.txt` is the raw log slice — `1 records read from
+The corresponding `SimulatorScriptOutput.txt` is the raw log slice: `1 records read from
 file.`, the AGC adjustments, the mismatch iterations, `Simulation: Successful Power Flow
 Solution`, bracketed by `Starting load of auxiliary file:` and `Finished load of auxiliary
 file:` lines.
@@ -103,9 +102,8 @@ file:` lines.
 The deck says to create `SimulatorScriptInput.aux` and "store it somewhere other than in
 this directory", then copy it into the watched directory. Treat that as mandatory. The
 poller has no way to tell a finished file from one still being written, so authoring in
-place races the poll interval and can feed Simulator half an aux — which, given that a
-truncated script is still a *valid* script up to the truncation point, is the silent
-failure this whole vault exists to prevent.
+place races the poll interval and can feed Simulator half an aux. A truncated script is
+still a *valid* script up to the truncation point, so that failure is silent.
 
 An atomic move within the same volume is the safer version of the same idea.
 
@@ -121,7 +119,7 @@ without parsing. So:
 - `Simulation: Successful Power Flow Solution` is the string worth grepping for, but its
   absence is not the same as a specific diagnosis.
 - This is **not headless**. A visible GUI dialog is required, so it does not replace
-  [esapp](esapp.md) for batch or parallel work — see [parallel-contingency-solve](parallel-contingency-solve.md).
+  [esapp](esapp.md) for batch or parallel work; see [parallel-contingency-solve](parallel-contingency-solve.md).
 
 ### Open questions to settle by experiment
 
@@ -130,7 +128,7 @@ None of these are answered by the deck, and each one changes how a caller must b
 - Is `SimulatorScriptOutput.txt` **overwritten or appended** on each cycle?
 - Is there any signal that the output file is **complete**, or must the caller poll for
   size stability?
-- What happens when the aux **fails to parse** — is an output file written at all, and does
+- What happens when the aux **fails to parse**? Is an output file written at all, and does
   the input file still get deleted?
 - Does `StopAuxFile` or `ExitProgram` inside a dropped file behave sanely here?
 - What is the **minimum usable poll interval**, and does a short one cost anything?
@@ -142,11 +140,11 @@ None of these are answered by the deck, and each one changes how a caller must b
 **The deck states Simulator 25 beta with a build date at or after September 19, 2026.**
 
 **A measurement disagrees with that floor and has not been reconciled.** On 2026-09-21 the
-channel was exercised end to end — dozens of drops, every one consumed and answered — on an
+channel was exercised end to end (dozens of drops, every one consumed and answered) on an
 install whose own `CaseSummaryGet` output reports `EXE Build Date: 25 beta September 12,
 2026`, a week before the stated floor.
 
-Two readings, and nothing here settles which: the floor is conservative, or the string the
-EXE reports is not the build date the deck means. Until someone checks, **treat the deck's
-date as the number to quote and the measurement as the reason not to tell anyone their build
-is too old** — a build reporting an earlier date may well work. See [version-requirements](version-requirements.md).
+Either the floor is conservative, or the string the EXE reports is not the build date the
+deck means; nothing here settles which. Until someone checks, **treat the deck's date as the
+number to quote and the measurement as the reason not to tell anyone their build is too
+old**. A build reporting an earlier date may well work. See [version-requirements](version-requirements.md).

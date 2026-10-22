@@ -26,7 +26,7 @@ availability and script-action behaviour both shift between releases, and they s
 
 ### Find your version — three ways
 
-**1. From Python, during preflight** — no admin rights needed:
+**1. From Python, during preflight** (no admin rights needed):
 
 ```python
 import win32com.client
@@ -37,7 +37,7 @@ build = date(1899, 12, 30) + timedelta(days=int(sa.RequestBuildDate))
 print("PowerWorld build date:", build.isoformat())
 ```
 
-`RequestBuildDate` is a Delphi serial date — days since 1899-12-30, not a version number.
+`RequestBuildDate` is a Delphi serial date (days since 1899-12-30), not a version number.
 `46225` decodes to `2026-07-22`.
 
 **Ask SimAuto for the release name too.** `sa.ProgramInformation[0]` returns
@@ -53,7 +53,7 @@ Get-ChildItem 'C:\Program Files\PowerWorld\Simulator*\pwrworld.exe' |
 # 24.2026.7.22
 ```
 
-The format is `<major>.<year>.<month>.<day>` — major version 24, built 2026-07-22. A beta keeps
+The format is `<major>.<year>.<month>.<day>`: major version 24, built 2026-07-22. A beta keeps
 the old major: a Simulator 25 beta installed into the `Simulator 24` folder reports
 `24.2026.9.25`. Use way 1's release label to tell them apart.
 
@@ -74,7 +74,7 @@ is authoritative; the version-numbered keys are not.
 | | |
 |---|---|
 | **Simulator** | 24, build `24.2026.7.22`; and a 25 beta, build `24.2026.9.25` (re-probed 2026-10-21) |
-| **`esapp`** | 0.1.3 — what the pages here were live-tested against. 0.2.1 is current and changes write behaviour; see [esapp-script-command-wrappers](esapp-script-command-wrappers.md) |
+| **`esapp`** | 0.1.3, what the pages here were live-tested against. 0.2.1 is current and changes write behaviour; see [esapp-script-command-wrappers](esapp-script-command-wrappers.md) |
 | **`TeamOverbyeWeather`** | 0.4.0; 0.4.2 on the 25 beta probe |
 | **Python** | 3.13, 64-bit |
 | **Platform** | Windows |
@@ -104,25 +104,24 @@ The 24 `CTGAutoInsert` row proves less than it looks: the case already held 89
 contingencies, so the count could not move whether the call worked or not. Test it after
 deleting the existing set, which is what the beta run did.
 
-That last row is worth reading correctly. `TimeStepClearResults` raised
-`PowerWorldPrerequisiteError` because there were no TimeStep results to clear — that is
-the feature working, not a version problem. Prerequisite errors are about **case state**,
+In the TimeStep row, `TimeStepClearResults` raised `PowerWorldPrerequisiteError` because
+there were no TimeStep results to clear. That is the feature working, not a version problem. Prerequisite errors are about **case state**,
 not capability.
 
 ### Minimum versions
 
 **Not tested here.** Only Simulator 24 and a 25 beta were tested, nothing older.
 
-What can be said honestly:
+What can be said:
 
-- The core surface — power flow, contingency analysis, `CreateData`, `SaveCase`,
-  sensitivities, TimeStep, GIC — has been present in Simulator for many releases. It is
+- The core surface (power flow, contingency analysis, `CreateData`, `SaveCase`,
+  sensitivities, TimeStep, GIC) has been present in Simulator for many releases. It is
   very unlikely you need 24 specifically.
 - The [aux-script-commands](../references/aux-script-commands.md) index was compiled against Simulator 24's action set. Older
   releases have fewer actions; newer ones may add some.
 - **If you are on an older version and something in this kit fails, the version is a
-  plausible cause.** Say so rather than assuming the page is wrong — and if you confirm
-  it, that is worth an issue on the repository.
+  plausible cause.** Say so rather than assuming the page is wrong, and if you confirm
+  it, open an issue on the repository.
 
 ### Known version differences
 
@@ -137,24 +136,23 @@ the workaround.
 
 ### Version-sensitive behaviour to watch for
 
-These shift between releases and fail *silently*, which is what makes them dangerous:
+These shift between releases and fail *silently*:
 
 | Behaviour | Why version matters |
 |---|---|
 | **Field availability** | A field can exist and return blank in one release and be populated in another. Derived weather fields have done exactly this. Check for all-null columns before trusting any derived field |
 | **Script action names and arguments** | Actions are added, and argument lists occasionally change. An unrecognised action is not always a loud failure |
-| **Required key fields for `CreateData`** | The required set is version-specific. A call that worked on an older release can silently no-op on a newer one — which is why [adding-a-device](../demos/adding-a-device.md) insists on asserting the object count |
+| **Required key fields for `CreateData`** | The required set is version-specific. A call that worked on an older release can silently no-op on a newer one, which is why [adding-a-device](../demos/adding-a-device.md) insists on asserting the object count |
 | **Default limit sets and monitoring** | Defaults change, which changes what counts as a violation without changing your code |
 
 ### The SimAuto licence is not a version question
 
-Worth separating, because people conflate them: **SimAuto is licensed separately from
-Simulator**, and having the newest Simulator does not mean you have automation. A perfect
+**SimAuto is licensed separately from Simulator**, and having the newest Simulator does not mean you have automation. A perfect
 Simulator 24 install can fail every script in this kit.
 
 On a working install you will see `PWSimAutoService.exe` alongside `pwrworld.exe` in the
 Simulator directory, and `Dispatch("pwrworld.SimulatorAuto")` will succeed. If it raises,
-see [preflight-powerworld](../methods/preflight-powerworld.md) — no code change fixes a licence.
+see [preflight-powerworld](../methods/preflight-powerworld.md). No code change fixes a licence.
 
 ### What to do at the start of a session
 

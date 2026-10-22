@@ -13,7 +13,7 @@ tags: [synthetic-grid, voltage, contingency, n-1, remediation, siting, powerworl
 
 Post-contingency undervoltage clusters by **driving outage**, not by bus. Buses that fail
 together under one outage are **one problem with one fix**, so the unit of remediation is the
-pocket and not the violated bus, and a worklist that ranks buses cannot see this, because the
+pocket, not the violated bus. A worklist that ranks buses cannot see this, because the
 structure lives in a column it does not group on. Measured 2026-09-14 on a ~9k-bus synthetic
 planning model: the undervoltage buses resolved to fewer than half as many driving outages, and
 the multi-bus pockets among them covered about 85% of the buses. One modest capacitor at the worst
@@ -42,8 +42,8 @@ for siting: the buses of one pocket scatter through it by depth, so the list pre
 separate problems where the network has one. The grouping key is the **driving contingency**,
 which the violation rows already carry.
 
-Grouped that way the shape is stark: a handful of outages cause most of the undervoltage, and
-the long tail is singletons.
+Grouped that way, a handful of outages cause most of the undervoltage, and the long tail is
+singletons.
 
 | pocket size | outages | buses covered |
 |---|---|---|
@@ -51,8 +51,8 @@ the long tail is singletons.
 | 1 bus | the rest | the remainder |
 
 **Most multi-bus pockets are single-transformer-fed.** That is why they behave as units: one
-element is the only path in, and losing it strands everything behind it together. The pocket is
-a *topological* object that a severity ranking has no way to represent.
+element is the only path in, and losing it strands everything behind it together. A severity
+ranking has no way to represent that topology.
 
 ### Why one device fixes the whole pocket
 
@@ -71,8 +71,8 @@ was sized against.
 ### The sizing trap, in its shunt form
 
 A shunt's output goes with the **square of the voltage it is sizing itself against**. Measured on
-an existing fleet, actual-over-nominal equals V² to four figures. Two consequences, and they
-point in opposite directions:
+an existing fleet, actual-over-nominal equals V² to four figures. That has two opposite
+consequences:
 
 - **It is weakest exactly where it is needed most.** At a collapsed bus the device delivers
   substantially less than nameplate: measured here at ~61% while the bus sat deep below limit.
@@ -82,19 +82,19 @@ point in opposite directions:
   ~0.05 pu. That was comfortably inside the emergency band but would sit at the edge of a
   narrower normal band.
 
-So the walk must **re-solve at every step and accept the measurement**; extrapolating a size from
-one step's `dV` is
+So the walk must **re-solve at every step and accept the measurement**. Extrapolating a size from
+one step's `dV` is the trap in
 [sizing-a-device-whose-impedance-determines-its-own-flow](sizing-a-device-whose-impedance-determines-its-own-flow.md)
-wearing a different hat. And the acceptance test has two halves, not one: the target back inside
-band **and** nothing pushed out that was inside before. A device that rescues its own pocket while
+again. The acceptance test has two halves: the target back inside band **and** nothing pushed
+out that was inside before. A device that rescues its own pocket while
 overvolting a neighbour is not a fix.
 
 ### When the pocket is telling you something else
 
 A pocket that collapses by a large margin (a fifth of a per-unit or more) on the loss of a
 single element is describing a **connectivity** problem, not a voltage-support one. Reactive
-support may still hold it, and holding it may be the right economic answer; but the finding
-worth recording is that one element is the only path in
+support may still hold it, and holding it may be the right economic answer, but record that
+one element is the only path in
 ([finding-and-fixing-radial-by-n1-pockets](../methods/finding-and-fixing-radial-by-n1-pockets.md)).
 
 **Both facts belong in the output**: the device that holds it, and the redundancy that is

@@ -11,9 +11,9 @@ tags: [demo, timestep, pfw, pww, weather, renewables, esapp, worked-example]
 ## Abstract
 
 Turning a weather file into hourly wind and solar output. Covers the check that decides
-whether the case can do this at all — **do its renewable units carry PFW model
-strings?** — verified on a real case where 9 of 45 generators do. Getting that check
-wrong is why TimeStep runs "successfully" and produces nothing.
+whether the case can do this at all, **do its renewable units carry PFW model strings?**,
+verified on the public Synth40 case, where 9 of 45 generators do. Getting that check wrong
+is why TimeStep runs "successfully" and produces nothing.
 
 ## Connections
 
@@ -29,8 +29,8 @@ wrong is why TimeStep runs "successfully" and produces nothing.
 
 ### Step 1 — can this case do it at all?
 
-Ask before setting anything up. TimeStep does not convert weather to power — **each
-generator's embedded PFW model does**. A unit without one produces nothing, and nothing
+Ask before setting anything up. TimeStep does not convert weather to power. **Each
+generator's embedded PFW model does.** A unit without one produces nothing, and nothing
 warns you.
 
 ```python
@@ -55,27 +55,26 @@ renewable units: 9
 with a PFW model: 9
 ```
 
-9 renewables — 6 solar, 3 wind — and all 9 carry a PFW model. This case is ready.
+9 renewables (6 solar, 3 wind), and all 9 carry a PFW model. This case is ready.
 
 **If that second number were 0**, stop and say so. Do not run TimeStep and report zero
-output as a finding; report that the case has no weather models. Those are completely
-different answers, and only one of them is true.
+output as a finding; report that the case has no weather models. Only one of those answers
+is true.
 
-Note the two case files here. The base `Synth40.pwb` and
-`Synth40_with_PFW.pwb` differ precisely in this: the `_with_PFW` variant has the
-models. Check which one you were handed.
+There are two case files here. The base `Synth40.pwb` and `Synth40_with_PFW.pwb` differ
+in exactly this: the `_with_PFW` variant has the models. Check which one you were handed.
 
 ### PWW is not PFW
 
-The single most expensive confusion in this workflow:
+The most expensive confusion in this workflow:
 
 | | What it is | Where it lives |
 |---|---|---|
 | **PWW** | PowerWorld **Weather** data — measurements at stations over time | A `.pww` file you load |
 | **PFW** | Power **Flow Weather** — the model converting weather to MW for one unit | A string inside each generator |
 
-One letter apart. You load a PWW; a PFW is already in the case. If output is zero, the
-question is which of the two is missing — and the answer is usually PFW.
+One letter apart. You load a PWW; a PFW is already in the case. If output is zero, ask
+which of the two is missing. It is usually PFW.
 
 ### Step 2 — get the weather
 
@@ -90,7 +89,7 @@ Crop at download time, not after. See [teamoverbyeweather-client](../methods/tea
 footprints, bounding boxes, and the `RegionTooLargeError` recovery.
 
 Match the weather footprint to the case. Loading Texas weather against the Synth40 case
-produces a run with no matching stations — and it will not tell you.
+produces a run with no matching stations, and it will not tell you.
 
 ### Step 3 — run TimeStep
 
@@ -102,7 +101,7 @@ pw.esa.RunScriptCommand('TimeStepDoRun')
 pw.esa.RunScriptCommand(rf'TimeStepSaveResultsByTypeCSV("{out}", GEN)')
 ```
 
-Four things worth internalising:
+Four rules:
 
 1. **`TimeStepDoSinglePoint` before `TimeStepDoRun`.** One timestamp fails in seconds; a
    full run fails after a long wait, with the same error.
@@ -123,23 +122,23 @@ solar from wind. See [how-to-analyze-results](../methods/how-to-analyze-results.
 
 ### When output is zero
 
-Walk this in order — it is almost never the weather file:
+Walk this in order. It is almost never the weather file:
 
 | Check | If it fails |
 |---|---|
 | Do the units have PFW models? | The case cannot do this. Say so |
 | Are the renewables actually selected? | Only selected units produce output |
-| Does the weather footprint cover the case? | Texas weather, the Synth40 case — no matching stations |
+| Does the weather footprint cover the case? | Texas weather, the Synth40 case: no matching stations |
 | Was `GenMW` in `TimeStepSaveFieldsSet`? | The column is absent, not zero |
 | Did `TimeStepDoSinglePoint` work? | Fix that before running the whole series |
 
 Zero output is a setup failure until proven otherwise. Reporting "these units generate
-nothing" when the real answer is "this case has no weather models" is exactly the
-confident wrong answer this kit exists to prevent.
+nothing" when the real answer is "this case has no weather models" is the confident wrong
+answer this kit exists to prevent.
 
 ### What to report back
 
-> The `_with_PFW` case has 9 renewable units — 6 solar, 3 wind — and **all 9 carry PFW
+> The `_with_PFW` case has 9 renewable units (6 solar, 3 wind), and **all 9 carry PFW
 > model strings**, so it is set up for a weather simulation. The base case is not; make
 > sure you are pointing me at the `_with_PFW` variant.
 >

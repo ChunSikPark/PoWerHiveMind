@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.5.1 — 2026-10-21
+
+- Five new pages:
+  - `concepts/gsu-outages-in-n1.md`: double every single generator step-up or leave GSU outages out of N-1. Measured,
+    both fail on the same transmission outages.
+  - `concepts/gsu-tap-vs-generator-voltage-control.md`: a fixed GSU tap, the generator regulating one bus, and one
+    automatic controller per regulated bus.
+  - `methods/emergency-ratings-for-a-synthetic-case.md`: a per-branch Rate B and C from per-class statistics instead of
+    one flat ratio, then contingency monitoring pointed at Rate B.
+  - `methods/fixing-plant-islands-from-single-outages.md`: a topology-only screen for single outages that strand a plant,
+    and the fix for each of four shapes.
+  - `methods/timestep-dispatch-into-design-bands.md`: unit-by-unit wind and solar dispatch from a time-step run, scaled
+    into a scenario's design bands.
+- **The site's front page** puts the page graph right under the hero, coloured by topic, then plays the two animated
+  walkthroughs in place ("When the knowledge exists" / "When no knowledge exists"). Two thumbnail cards open the install
+  guide and the design replay. "Does it help?" leads with the 30-request validation: 30 of 30 for 0.5 against 20 of 30
+  for 0.4. The walkthroughs start at 1.5x, and the results step shows the wind file beside the solar one.
+- **Pages name no private tool repository.** The PFW handoff page is now `concepts/auto-pfw-scripts.md`, and the
+  case-auditor's handoff message says "the Auto_PFW scripts".
+- **Six suspected PowerWorld issues are now marked as suspected**, with their glitch ids, wherever pages stated them
+  as fact: plain `TimeStepLoadPWW` failing on two Simulator 25 builds; contingency results inside TimeStep reusing the
+  first hour's reference; the PWW loader's access violation on weather code 112; `ElementType=GEN` being ignored;
+  `CTGAutoInsert` inserting zero contingencies; and writing a changed `GenMW` clearing `GenAGCAble`. The workaround
+  for each is unchanged.
+- `methods/handling-errors.md` now finds a field name with `GetFieldList` instead of reading every field with
+  `pw[Branch, :]`, which can hit a suspected access violation on some cases.
+- A wording pass across the pages: shorter sentences, fewer em-dashes, and no first-person setup notes. A few worked
+  examples now describe their case generically instead of by its size or counts. The technical claims are unchanged.
+
 ## 0.5.0 — 2026-10-21
 
 - **The site leads with what is new.** The front page board is now "What's new in 0.5", and a
@@ -21,8 +50,9 @@
   says to assert the count and build the set yourself, and now shows how to check that a
   contingency list covers each area asked about (live-tested).
 - **Hourly contingency runs inside TimeStep reuse the first hour** unless `CTGSetAsReference()` is
-  called (Trap 3b in `methods/reading-violationctg.md`). TimeStep's raw CSV exports are UTC.
-  `TimeStepLoadPWWRange` replaces plain `TimeStepLoadPWW`, which fails on Simulator 25.
+  called (Trap 3b in `methods/reading-violationctg.md`; suspected, possibly by design). TimeStep's raw CSV exports are UTC.
+  `TimeStepLoadPWWRange` replaces plain `TimeStepLoadPWW`, which fails on two Simulator 25 builds
+  (suspected PowerWorld issue, not yet confirmed).
 - New pages: `methods/reviewing-a-design.md` (a reviewer's checklist for a submitted design),
   `methods/finding-and-fixing-radial-by-n1-pockets.md`, and
   `methods/zone-load-multiplier-trap.md` (why the served load differs from the load entered).
@@ -66,7 +96,7 @@
   `concepts/unloaded-ehv-stub-overvoltage.md`, with what a live probe of two public cases found
   (a regulated bus of 0 cannot be written through SimAuto; `BusVoltLimLow/High` read the limit
   group's band; generator coordinates live on the substation). A third,
-  `concepts/grid-workshop-auto-pfw.md`, is the handoff for missing PFW models.
+  `concepts/auto-pfw-scripts.md`, is the handoff for missing PFW models.
 - `concepts/opf-preconditions.md`: measured on two public cases, a super area on OPF meets the
   area condition and makes its member areas redispatchable; a refused OPF does not raise through
   esapp (read `LPOPFSolutionStatus`); a zero marginal cost on wind and solar is a price, not

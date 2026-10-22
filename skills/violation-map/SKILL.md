@@ -21,7 +21,7 @@ anything. Reuse the engine; do not rebuild the map from scratch.
 ## 2. Ask before extracting (four questions, defaults stated)
 
 1. **Which cases and which states.** One case per scenario; a second state (after a fix) is
-   optional. If the cases are restricted — CEII or otherwise — say that the built page embeds
+   optional. If the cases are restricted (CEII or otherwise), say that the built page embeds
    bus names, substation names and coordinates, and must be shared accordingly.
 2. **Which violations:** intact voltage, voltage after listed outages, thermal loading (nothing
    out and after each outage), or islanding (the radial page). **The band is the case's own limits by default**: read `BusVoltLimLow` /
@@ -47,7 +47,7 @@ answer: the case's own limits, intact plus N-1, the out-of-band buses as seeds, 
 ## 3. Run
 
 Call each script by its full path with the config as the first argument; the order is on the
-method page. Measurement scripts open PowerWorld once per candidate — say roughly how long
+method page. Measurement scripts open PowerWorld once per candidate. Say roughly how long
 before starting a long one, and run it in the background.
 
 ## 4. Hand it over
@@ -87,9 +87,9 @@ branches from the N-1 pass.
 ## Not built yet
 
 **Opening view:** a light case (under a bus-count cutoff) opens on the whole case with the
-site highlighted; zooming into a site shows that area only, the rest hidden, with boundary
-stubs, click to re-centre; on a light case a "Back to whole case" control returns to the
-whole-case view; and a "Render further network" button that adds N more hops per press; a
-heavy case (over the cutoff) opens straight on the area. The page says which mode it opened in
-and why. The cutoff is a tunable bus-count default, measured by timing page build and render
-on public synthetic cases; the engine does not apply this rule yet.
+site highlighted. Zooming into a site shows that area only, the rest hidden, with boundary
+stubs; click to re-centre. On a light case a "Back to whole case" control returns to the
+whole-case view, and a "Render further network" button adds N more hops per press. A heavy
+case (over the cutoff) opens straight on the area. The page says which mode it opened in and
+why. The cutoff is a tunable bus-count default, measured by timing page build and render on
+public synthetic cases. The engine does not apply this rule yet.

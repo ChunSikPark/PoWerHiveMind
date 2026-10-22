@@ -22,7 +22,7 @@ Two things are easy to skip and are the whole point:
 
 ## If they asked you to check the base rather than add to it
 
-Run the two snippets at the end of the skill — one lists pages missing an
+Run the first two snippets at the end of the skill. One lists pages missing an
 `index.md` row, the other lists links pointing at files that do not exist.
 Paste what they print. Both returning nothing is the healthy state.
 

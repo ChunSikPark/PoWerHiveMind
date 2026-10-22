@@ -22,8 +22,8 @@ planning model with about eleven thousand contingencies: a few dozen actions and
 cut the violated elements by about a quarter in one pass.
 
 The headline rule: **an element is the unit, a sweep is the round, and every number is measured
-rather than asserted.** This toolchain's characteristic failure is not an error, it is a
-confident smaller answer. **The playbook** section is the eight-step order of play that took the
+rather than asserted.** This toolchain fails by returning a confident, smaller answer, not an
+error. **The playbook** section is the eight-step order of play that took the
 last residue to a clean full N-1 (2026-09-24).
 
 ## Connections
@@ -111,9 +111,9 @@ overloads do not**: measured across ~150 thermal elements, the median required m
 by default**. Relaxing the cap by one notch cut the purchased circuit count by roughly **3×**,
 and by three notches by roughly **10×**.
 
-**So the cap is not a tuning knob, it is the answer.** Set it against the regime you are in,
-record it as a decision, and report the sensitivity rather than the single number. The reader
-needs to see what the choice costs.
+**The cap is the answer, not a tuning knob.** Set it against the regime you are in, record it
+as a decision, and report the sensitivity rather than the single number, so the reader sees what
+the choice costs.
 
 ### Fixing the highest voltage first does not relieve the rest
 
@@ -123,9 +123,8 @@ sub-transmission ones. **Measured, on this case, it does not.** After clearing e
 percentage points**, and the single best improvement anywhere was under one point, on a branch
 still over its limit.
 
-EHV fixes here were **electrically local**. The sub-transmission problem is its own problem. This
-is a negative result and it is worth keeping: it is cheap to assume the cascade exists and
-expensive to plan around it.
+EHV fixes here were **electrically local**. The sub-transmission problem is its own problem. It
+is cheap to assume the cascade exists and expensive to plan around it.
 
 ### A parallel circuit is counted across the corridor
 
@@ -154,8 +153,7 @@ a median of ~37%, with the impedance consistently implying a **larger** conducto
 does. Either the ratings are derate artifacts, in which case most sub-transmission thermal
 violations are reporting artifacts rather than real overloads, or the ratings are correct
 because the limiting element is terminal equipment rather than the conductor, which is ordinary
-in a real utility model. **This has not been settled and must not be assumed either way.** The
-pattern also has a hard boundary: at EHV the impedances matched no catalog conductor at all, so
+in a real utility model. **Do not assume either way.** The pattern also has a hard boundary: at EHV the impedances matched no catalog conductor at all, so
 the ratio handle is sub-transmission-only.
 
 A reconductor still **derives R/X/C by ratio** and never recomputes them absolutely, and a

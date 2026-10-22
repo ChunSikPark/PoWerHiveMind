@@ -9,9 +9,8 @@ topic: agents
 This repo is a knowledge base you are expected to **grow**, not just read. A
 session that worked something out and left it in the chat has thrown it away.
 
-The schema below is not taste. It was derived by measuring the pages this
-repo already ships — nearly every one of them follows it. **The
-pages are authoritative.** If this file and the pages ever disagree, read a
+The schema below was derived by measuring the pages this repo already ships,
+and nearly every one of them follows it. **The pages are authoritative.** If this file and the pages ever disagree, read a
 few pages and follow those; then fix this file.
 
 ## Before you write: does a page already cover it?
@@ -23,7 +22,7 @@ likely identifier, several terms at once:
 grep -rn -i "shunt\|Shunt\|GenMVRMax" concepts/ methods/ references/ demos/
 ```
 
-Read a candidate's `## Abstract` first — it is written to tell you whether the
+Read a candidate's `## Abstract` first. It is written to tell you whether the
 page is the right one. If it covers the ground, **edit that page instead of
 adding a second one.** Two pages on one topic is the failure this base exists
 to avoid.
@@ -70,9 +69,8 @@ rest. State the answer here, not a promise of the answer.
 
 **`type:`** is one of `concept`, `method`, `reference`, `tool`, `dataset`.
 **`domain:`** is one of `tooling`, `cross-cutting`, `weather`, `synthetic-grid`.
-Use one of these; adding a value is a decision about the whole base. If your
-page genuinely needs a new value, **say so explicitly** rather
-than bending the page to fit or quietly inventing one — adding a value is a
+Use one of these. If your page genuinely needs a new value, **say so explicitly**
+rather than bending the page to fit or quietly inventing one: adding a value is a
 decision about the whole base, not about your page.
 
 **`topic:`** is exactly one of these seven slugs. It puts the page under its heading in
@@ -98,7 +96,7 @@ reader would actually type, not a restatement of the title.
 
 ## Links are the point
 
-A page with no outbound links is **refused** — it is unreachable and will never
+A page with no outbound links is **refused**: it is unreachable and will never
 be found again. Links are relative markdown, not wikilinks:
 
 ```markdown
@@ -107,7 +105,7 @@ be found again. Links are relative markdown, not wikilinks:
 ```
 
 Every link target must exist on disk; a typo or a renamed page is a refusal.
-Two or more links is the signal — one gets a warning.
+Two or more links passes; one gets a warning.
 
 ## Bookkeeping: add the index.md row
 
@@ -126,14 +124,13 @@ end of `index.md`:
 ```
 
 A page with no row warns rather than refusing, because two pages already ship
-without one. Add it anyway — a page nobody can find is a page nobody reads.
+without one. Add it anyway.
 
 ## Check the corpus when you have finished
 
-There is no checker to run. Writing the page correctly is the job, and the
-shape above is the whole schema. Three questions are worth asking across all
-the pages at once, though, because no amount of care on one page answers
-them. Run these from the repo root when you have added or renamed pages:
+There is no checker to run; the shape above is the whole schema. Three
+questions can only be answered across all the pages at once. Run these from
+the repo root when you have added or renamed pages:
 
 ```bash
 # pages with no row in index.md
@@ -147,14 +144,13 @@ python -c "import pathlib,re;R=pathlib.Path('.');L=re.compile(r'\[[^]]*\]\([^)\s
 ```
 
 Paste what they print. The first two must come back clean before you say you
-are done — a page nobody can reach and a link that goes nowhere are the two
-failures that make a knowledge base stop compounding.
+are done.
 
 The third is a signal to read, not a gate. It looks for a page name written as
 bare text where a link belongs, which the dangling-link check cannot see: with
-no `[](...)` around it there is nothing to resolve. That is not hypothetical —
-the port that seeded the manual pages lost 19 cross-references exactly this way
-and every check passed. But ordinary hyphenated English standing alone in a
+no `[](...)` around it there is nothing to resolve. The port that seeded the
+manual pages lost 19 cross-references exactly this way, and every check passed.
+Ordinary hyphenated English standing alone in a
 segment takes the same shape, so `no-op` and `per-solve` are expected hits.
 Read each one and decide: a page name gets written as a link or deleted, a word
 stays.
@@ -183,19 +179,19 @@ restricted. Write the scrubbed copy to the system temp folder (never inside
 page). Remove or generalize:
 
 - case file names and paths, and any private folder path
-- bus numbers and bus names, substation, utility, area, zone and owner names —
+- bus numbers and bus names, substation, utility, area, zone and owner names:
   write `a 345 kV bus`, `an area`, `<area A>`
 - device identifiers (`GenID`, circuit IDs, contingency labels from the case)
 - parameter values read out of the real case
-- counts that fingerprint a case ("3,911 branches") — give a ratio or an order
-  of magnitude instead
+- counts that fingerprint a case (an exact branch or contingency count): give a
+  ratio or an order of magnitude instead
 - names of people
 
 Keep the mechanism, the rule, the failure mode, the code pattern and the field
 names (`GenMVRMax` is the API, not the case). Cite a measurement by date and
 Simulator build date, never by case: *"measured 2026-10-12, Simulator build
-2026-08-01, on a regional planning model."* Public synthetic grids — Texas2k
-(ACTIVSg2000), Hawaii40, the IEEE test cases — may stay named with their
+2026-08-01, on a regional planning model."* Public synthetic grids such as Texas2k
+(ACTIVSg2000), Hawaii40 and the IEEE test cases may stay named with their
 numbers; they are the preferred worked example. If a point can only be shown on
 a real case, keep the point and drop the demonstration.
 
@@ -216,7 +212,7 @@ page's topic slug, which the script reads from the copy's `topic:` line
 (`--topic <slug>` overrides it; a copy with no valid topic is refused). The
 script percent-encodes the title, body and both labels, writes the full issue body to
 `<scrubbed copy>.issue.md`, and prints the link. If the page would push the
-link past about 8,000 characters — where it stops opening — the link carries
+link past about 8,000 characters (where it stops opening), the link carries
 the note only and the user pastes the `.issue.md` text into the issue body
 themselves; tell them which file. It also lists anything still shaped like case
 data: case file names, personal folder paths, email addresses. Read every hit.
@@ -226,15 +222,15 @@ utility names, so that part of the scrub is still yours.
 
 **4. Show, then hand over.** Give the user, in this order:
 
-1. one line: *"The issue tracker is public — anyone can read what you submit."*
-2. what you removed or changed, as a short list (`bus 31205 → a 345 kV bus`)
-3. the final text — the `.issue.md` file
+1. one line: *"The issue tracker is public. Anyone can read what you submit."*
+2. what you removed or changed, as a short list (`bus 12345 → a 345 kV bus`)
+3. the final text (the `.issue.md` file)
 4. the link, to open, review and submit themselves
 
 Let them edit the text or decline. A shared page is never worth leaking a case.
 
 If `gh` is installed and signed in (`gh auth status`), offer it instead of the
-link — still only after they approve the exact text:
+link, still only after they approve the exact text:
 
 ```bash
 gh issue create --repo ChunSikPark/PowerWorldHiveMind --title "New page: methods/<slug>.md" --label new-page --label <topic> --body-file "<scrubbed copy>.issue.md"

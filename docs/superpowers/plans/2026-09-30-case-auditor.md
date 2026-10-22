@@ -17,14 +17,14 @@
 | # | decision |
 |---|---|
 | D1 | Pure rules over `CaseData`, one esapp reader, a CLI writing `findings.json` + `findings.md`; summary numbers computed by the engine, never the agent |
-| D2 | Read-only proof: sha256 of the case file before and after, in `findings.json`; an AST test fails the build if the engine names SaveCase, LoadAux, ChangeParameters*, SetData, WriteAuxFile, Delete, or any `RunScriptCommand` (the mirror of the `tests/test_no_save_case.py` idea from a sibling research repo — described, not imported). Revision 2 adds an allowlist over every esapp-bound name in `reader.py` and a test that only `reader.py` imports esapp (R7) |
+| D2 | Read-only proof: sha256 of the case file before and after, in `findings.json`; an AST test fails the build if the engine names SaveCase, LoadAux, ChangeParameters*, SetData, WriteAuxFile, Delete, or any `RunScriptCommand` (the same idea as a no-SaveCase test used elsewhere — described, not imported). Revision 2 adds an allowlist over every esapp-bound name in `reader.py` and a test that only `reader.py` imports esapp (R7) |
 | D3 | `base.ac_converges` = `SolvePowerFlow` did not raise **and** max bus mismatch ≤ `Sim_Solution_Options.ConvergenceTol:2` (MVA). Never `vmap.solve()`; no retry, no flat start, no DC |
 | D4 | A live probe (Task 1) resolves every UNVERIFIED item first; the rules are written against what it observed |
 | D5 | Unsourced numbers are named constants in `engine/thresholds.py`, each commented "proposed default, <why>", and listed in the rule pages. `base.gen_over_nameplate` stops past max(1 % of `GenMWMax`, 5 MW), Worth a look above 0.1 MW |
 | D6 | `base.ltc_middle_target` is ONE aggregated finding (count + most common band); the full list is in `findings.md` |
 | D7 | Three-winding LTCs are out of scope for v1; the rule page and the finding text say so |
 | D8 | Not in scope, listed as open questions: a band copied from the tap range, the structure-only stub FYI, `Gen.GenRegNum` pointing at nothing, an `n1` coverage profile |
-| D9 | 0b items owned here: reword the ISO / `CustomString:2` lines of `methods/timestep-simulation-setup.md` and replace its "pfw copperplate" reference with the Auto_PFW handoff; port `grid-workshop-auto-pfw` (scrubbed); fix the `XFAuto` gloss in `methods/converting-lines-to-transformers.md` |
+| D9 | 0b items owned here: reword the ISO / `CustomString:2` lines of `methods/timestep-simulation-setup.md` and replace its "pfw copperplate" reference with the Auto_PFW handoff; port `auto-pfw-scripts` (scrubbed); fix the `XFAuto` gloss in `methods/converting-lines-to-transformers.md` |
 | D10 | `ts.pww_footprint` reads the `.pww` header per `concepts/pww-data.md` with a small reader in the kit; no file given → one FYI |
 | D11 | Evals on pre-computed `findings.*` from the real engine on the public cases, regex graders plus one `llm` grader, and a `tool_used` grader on `Agent` |
 | D12 | The last task moves the agent into `agents/`, registers it, updates `docs/agents/README.md`, re-checks discovery, rebuilds `dist/`, and lists every change to the agent text |
@@ -111,7 +111,7 @@ These are the observations every later task is written against. Rows marked **ch
 | `tools/case-audit-dev/scrub_findings.py` | turn every absolute path in a live audit's findings into its file name |
 | `methods/ltc-regulation-checks.md` (create) | rule page for `base.regulates_nothing`, `base.ltc_middle_target`, `base.ltc_regulates_lv_side` |
 | `concepts/unloaded-ehv-stub-overvoltage.md` (create) | rule page for `base.floating_stub` |
-| `concepts/grid-workshop-auto-pfw.md` (create) | the Auto_PFW handoff for missing PFW models |
+| `concepts/auto-pfw-scripts.md` (create) | the Auto_PFW handoff for missing PFW models |
 | `concepts/opf-preconditions.md` (modify) | super areas, the silent refusal, zero-cost renewables — measured |
 | `methods/timestep-simulation-setup.md`, `methods/converting-lines-to-transformers.md`, `index.md` (modify) | 0b fixes and index rows |
 | `skills/case-audit/engine/thresholds.py` | every number the rules compare against |
@@ -965,7 +965,7 @@ git commit -m "Add the LTC and EHV-stub rule pages the case-auditor cites"
 ### Task 3: The 0b page fixes
 
 **Files:**
-- Create: `concepts/grid-workshop-auto-pfw.md`
+- Create: `concepts/auto-pfw-scripts.md`
 - Modify: `methods/timestep-simulation-setup.md` (lines 12, 20, 32–37, 46–50)
 - Modify: `methods/converting-lines-to-transformers.md` (~line 106)
 - Modify: `concepts/opf-preconditions.md` (after line 102, before `### Always give the solve a failure handler`)
@@ -980,7 +980,7 @@ git commit -m "Add the LTC and EHV-stub rule pages the case-auditor cites"
 Run: `grep -n "pfw copperplate\|an ISO assigned in" methods/timestep-simulation-setup.md; grep -n "not an autotransformer" methods/converting-lines-to-transformers.md`
 Expected: hits on lines 20, 34 and 49 of the first file and line 106 of the second.
 
-- [ ] **Step 2: Write `concepts/grid-workshop-auto-pfw.md`**
+- [ ] **Step 2: Write `concepts/auto-pfw-scripts.md`**
 
 Ported from the author's research notes, scrubbed: links to pages the kit does not carry removed, the ISO field described as one pipeline's convention, and the probe's `CustomInteger:1` observation added.
 
@@ -988,17 +988,17 @@ Ported from the author's research notes, scrubbed: links to pages the kit does n
 ---
 type: tool
 domain: weather
-aliases: [grid-workshop-auto-pfw, auto-pfw, pfw-insertion-script, grid-workshop-pfw, pfw_eia,
+aliases: [auto-pfw-scripts, auto-pfw, pfw-insertion-script, pfw_eia,
   PFW_EIA.py, attach-pfw-models, missing-pfw-models]
 tags: [pfw, weather, renewables, wind, solar, timestep, aux, powerworld, tool]
 ---
 
-# Tool: Grid-Workshop `Auto_PFW` — attaching PFW weather models to renewables
+# Tool: `Auto_PFW` — attaching PFW weather models to renewables
 
 ## Abstract
 
-The research group's `OverbyeResearchGroup/Grid-Workshop` repository has an `Auto_PFW` folder
-that attaches PFW (power-flow weather) models to a case's wind and solar units, so TimeStep can
+A research group's `Auto_PFW` scripts
+attach PFW (power-flow weather) models to a case's wind and solar units, so TimeStep can
 turn weather into MW. It is where the kit's case-auditor sends you when renewables lack a PFW
 model. Read this before running it: it **silently skips wind units it cannot classify**, so
 always re-count PFW coverage on the copy it saves.
@@ -1089,7 +1089,7 @@ In `## Connections` (line 20) replace
 with
 
 ```markdown
-[timestep-simulation](../concepts/timestep-simulation.md) · [grid-workshop-auto-pfw](../concepts/grid-workshop-auto-pfw.md) (attaching the PFW models) · [esapp]
+[timestep-simulation](../concepts/timestep-simulation.md) · [auto-pfw-scripts](../concepts/auto-pfw-scripts.md) (attaching the PFW models) · [esapp]
 ```
 
 Replace the prerequisites paragraph and the section heading after it
@@ -1110,7 +1110,7 @@ PowerWorld needs, on each renewable generator: a `GenFuelType` that contains `WN
 or `SUN` (the case labels them `WND (Wind)`, `SUN (Solar)`), valid coordinates, and a
 PFW model string (`TSPFWModelString` longer than 2 characters). A unit with no PFW model
 runs and reads 0 MW for the whole run; attach models with
-[grid-workshop-auto-pfw](../concepts/grid-workshop-auto-pfw.md). Coordinates: on both public
+[auto-pfw-scripts](../concepts/auto-pfw-scripts.md). Coordinates: on both public
 synthetic cases probed 2026-09-30 the unit's own `Gen.Latitude` read blank and the substation's
 `Gen.Latitude:1` / `Longitude:1` (the field export's "Substation Latitude") were set. That
 TimeStep then reads the substation pair is not verified in the kit.
@@ -1138,7 +1138,7 @@ with
 > **Resolved:** `PFW_Insertion` (`ISO_Insertion_code_shape_file.ipynb`) writes
 > **only `CustomString:2`** (the ISO region via geopandas spatial join). It does
 > **not** touch `TSPFWModelString`. PFW model strings must already be in the case;
-> [grid-workshop-auto-pfw](../concepts/grid-workshop-auto-pfw.md) attaches them, and the
+> [auto-pfw-scripts](../concepts/auto-pfw-scripts.md) attaches them, and the
 > case-auditor's `timestep` profile counts which units still lack one.
 ```
 
@@ -1212,7 +1212,7 @@ of an exception reads a zero-cost "solution".
 In `index.md`, insert after the `| [glossary](concepts/glossary.md) …` row:
 
 ```
-| [grid-workshop-auto-pfw](concepts/grid-workshop-auto-pfw.md) | The Grid-Workshop `Auto_PFW` scripts attach PFW weather models to wind and solar units so TimeStep produces MW. They skip a wind unit with no class without a warning, so re-count coverage on the copy they save. |
+| [auto-pfw-scripts](concepts/auto-pfw-scripts.md) | The `Auto_PFW` scripts attach PFW weather models to wind and solar units so TimeStep produces MW. They skip a wind unit with no class without a warning, so re-count coverage on the copy they save. |
 ```
 
 - [ ] **Step 7: Verify**
@@ -1226,7 +1226,7 @@ Expected: `no dangling links`
 - [ ] **Step 8: Commit**
 
 ```bash
-git add concepts/grid-workshop-auto-pfw.md methods/timestep-simulation-setup.md methods/converting-lines-to-transformers.md concepts/opf-preconditions.md index.md
+git add concepts/auto-pfw-scripts.md methods/timestep-simulation-setup.md methods/converting-lines-to-transformers.md concepts/opf-preconditions.md index.md
 git commit -m "Port the Auto_PFW handoff page; record the measured OPF super-area rule; ISO label is one pipeline's convention; fix the XFAuto gloss"
 ```
 
@@ -3799,7 +3799,7 @@ def pfw_missing(cd: CaseData) -> list[Finding]:
                 "GenMWMax": u.GenMWMax} for u in miss.itertuples()],
         details={"missing": int(len(miss)), "renewables": int(len(r)), "missing_mw": mw, "installed_mw": total,
                  "missing_wind": int(len(wind)), "missing_wind_with_class": classed},
-        handoff=(f"the Grid-Workshop Auto_PFW scripts (concepts/grid-workshop-auto-pfw.md); {classed} of the "
+        handoff=(f"the Auto_PFW scripts (concepts/auto-pfw-scripts.md); {classed} of the "
                  f"{len(wind)} missing wind units carry a class it can use, and it skips the rest without a "
                  f"warning; send back the _PFW copy it writes"))]
 
@@ -6105,13 +6105,13 @@ It solves N-0 (AC) in memory and writes `findings.json` and `findings.md`, inclu
 11. Link the handoff page. Replace
 
 ```markdown
-- **Missing PFW models** → the `Auto_PFW` folder of the research group's `OverbyeResearchGroup/Grid-Workshop` repository.
+- **Missing PFW models** → the research group's `Auto_PFW` scripts.
 ```
 
 with
 
 ```markdown
-- **Missing PFW models** → the `Auto_PFW` folder of the research group's `OverbyeResearchGroup/Grid-Workshop` repository (`concepts/grid-workshop-auto-pfw.md`).
+- **Missing PFW models** → the research group's `Auto_PFW` scripts (`concepts/auto-pfw-scripts.md`).
 ```
 
 - [ ] **Step 4: Run to verify pass**
@@ -6178,7 +6178,7 @@ Expected: `True`
   `concepts/unloaded-ehv-stub-overvoltage.md`, with what a live probe of two public cases found
   (a regulated bus of 0 cannot be written through SimAuto; `BusVoltLimLow/High` read the limit
   group's band; generator coordinates live on the substation). A third,
-  `concepts/grid-workshop-auto-pfw.md`, is the handoff for missing PFW models.
+  `concepts/auto-pfw-scripts.md`, is the handoff for missing PFW models.
 - `concepts/opf-preconditions.md`: measured on two public cases, a super area on OPF meets the
   area condition and makes its member areas redispatchable; a refused OPF does not raise through
   esapp (read `LPOPFSolutionStatus`); a zero marginal cost on wind and solar is a price, not

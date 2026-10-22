@@ -22,10 +22,9 @@ How to write code that reads and analyzes the solar/wind generation CSVs produce
 **Step 4 (final) of this reading sequence.** ← prev: [pww-data](../concepts/pww-data.md) · start over:
 [esapp-overview](esapp-overview.md).
 
-You've written the simulation ([timestep-simulation-setup](timestep-simulation-setup.md)) and produced the output
-CSVs — this page is how those CSVs are structured and how to write code that reads
-and reduces them. The analysis target here is the **solar/wind generation files**,
-not a network/contingency report.
+Once [timestep-simulation-setup](timestep-simulation-setup.md) has produced the output
+CSVs, this page covers how they are structured and how to read and reduce them. It
+covers the **solar/wind generation files**, not a network or contingency report.
 
 ### What the simulation produces
 Each run writes **two CSVs**: one solar, one wind. Naming:
@@ -53,9 +52,9 @@ in order, come from these generator fields:
 | `Longitude` | `Longitude` |
 
 Below the header rows, each data row is one UTC hour and each cell is that
-generator's MW for that hour. The conversion has already happened by this point —
-this file is post-conversion. Its labels are marked UTC but run early, so read
-*Timestamps* below before joining this CSV to anything on time.
+generator's MW for that hour. The time conversion has already run, and its labels are
+marked UTC but run early. Read *Timestamps* below before joining this CSV to anything
+on time.
 
 ### How the values get there
 - **Timestamps:** PowerWorld's **raw** export (`TimeStepSaveResultsByTypeCSV`) writes
@@ -80,7 +79,7 @@ this file is post-conversion. Its labels are marked UTC but run early, so read
 > path (the results post-processor's module / `process_results` / the pipeline's CLI entry script).
 
 ### Reading / analyzing the CSVs
-Because the first 8 rows are metadata, load with pandas accordingly, e.g.:
+The first 8 rows are metadata, so split them off when loading:
 
 ```python
 import pandas as pd
@@ -105,7 +104,7 @@ Then any N-1 results. A 2026-10-20 run that reported only post-contingency rows 
 intact 141% overload.
 
 ### File the answer back
-A good analysis is a knowledge-base asset, not chat exhaust. Per [AGENTS](../AGENTS.md), save notable
+Per [AGENTS](../AGENTS.md), save notable
 comparisons or charts as a new `concept`/`method` page, and link it from
 [timestep-simulation](../concepts/timestep-simulation.md) and [index](../index.md).
 

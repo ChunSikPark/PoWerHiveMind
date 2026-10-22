@@ -10,10 +10,9 @@ tags: [powerworld, simauto, esapp, setup, troubleshooting, preflight]
 
 ## Abstract
 
-Run this before writing any analysis code. It takes about five seconds and answers the
-only question that matters at the start of a session: can this machine drive PowerWorld
-from Python at all? Five checks, each with the exact error you get when it fails and
-what that error actually means. Skipping this is why an agent writes two hundred lines
+Run this before writing any analysis code. It takes about five seconds and answers one
+question: can this machine drive PowerWorld from Python at all? Five checks, each with
+the exact error you get when it fails and what that error means. Skipping this is why an agent writes two hundred lines
 of a study and then discovers on the last line that SimAuto was never licensed.
 
 ## Connections
@@ -25,8 +24,8 @@ of a study and then discovers on the last line that SimAuto was never licensed.
 ## Content
 
 > **Agents: run this first.** Do not write analysis code before the preflight passes.
-> A failure here is not a bug in your code — it is a fact about the machine, and no
-> amount of rewriting the analysis will fix it. Report which check failed and stop.
+> A failure here is a fact about the machine, not a bug in your code, and no amount of
+> rewriting the analysis will fix it. Report which check failed and stop.
 
 ### The preflight script
 
@@ -40,7 +39,7 @@ to run `/powerworld-hivemind:powerworld-setup` (it installs esapp, TeamOverbyeWe
 pywin32 and openpyxl). **Never pip-install on your own.**
 
 Checks 1-4 are about the **machine** and need no case file; check 5 opens **your case**.
-Call `preflight_machine()` on its own when you do not have a case yet — during setup, say —
+Call `preflight_machine()` on its own when you do not have a case yet (during setup, say),
 and `preflight(case_path)` when you do.
 
 ```python
@@ -102,7 +101,7 @@ def preflight_machine() -> bool:
 
 def preflight_case(case_path: str) -> bool:
     """Check 5: this particular case opens. Run preflight_machine() first."""
-    # 5. The case itself opens and solves.
+    # 5. The case itself opens.
     if not Path(case_path).is_file():
         print(f"FAIL 5/5  case not found: {case_path}")
         return False
@@ -140,18 +139,16 @@ if __name__ == "__main__":
 | `com_error: (-2147221164, 'Class not registered', ...)` | Same as above, or a 32/64-bit mismatch between Python and Simulator | Match the bitness. A 32-bit Simulator will not serve a 64-bit Python |
 | A COM error mentioning **licence**, **not authorized**, or **add-on** | Simulator is installed and licensed, but the **SimAuto add-on is a separate licence** and yours does not include it | This cannot be fixed in code. Talk to whoever administers your PowerWorld licence |
 | SimAuto starts but a feature errors | Possibly a version difference | Check the build date against [version-requirements](../concepts/version-requirements.md) before assuming a page is wrong |
-| `PowerWorldPrerequisiteError` | **Not** a version or licence problem — the case lacks a prerequisite state | e.g. clearing TimeStep results that do not exist yet. Do the prerequisite step first |
+| `PowerWorldPrerequisiteError` | **Not** a version or licence problem. The case lacks a prerequisite state | e.g. clearing TimeStep results that do not exist yet. Do the prerequisite step first |
 | `case not found` | Path typo, or a relative path resolving somewhere unexpected | Use an absolute path. Always |
 | Case opens but `n_bus` is 0 | The file opened but is not a valid case | Confirm the `.pwb` is not corrupt; try opening it in Simulator directly |
 
 ### The licence check, specifically
 
-This is the check people forget, so it gets its own note.
-
 **PowerWorld Simulator and the SimAuto add-on are licensed separately.** A machine can
 have a fully valid, fully working Simulator installation and still be unable to run a
-single line of this kit, because automation is a different SKU. Simulator's own GUI will
-give you no hint of this — it works fine.
+single line of this kit, because automation is a different SKU. Simulator's own GUI works
+fine and gives no hint of this.
 
 The symptom is that check 4 fails while Simulator itself launches normally. If you can
 open your case by double-clicking it but `Dispatch("pwrworld.SimulatorAuto")` raises,
@@ -161,7 +158,7 @@ that is the licence, not your code.
 
 Check 4 prints the Simulator build date. Put it in your report. Field availability and
 script-action behaviour both shift between releases, and they shift silently, so when a
-result later looks wrong the build date is the first thing worth checking.
+result later looks wrong, check the build date first.
 
 `RequestBuildDate` is a Delphi serial date (days since 1899-12-30), not a version number.
 For the full version string and what this kit was verified against, see
@@ -177,11 +174,11 @@ win32com.client.Dispatch("pwrworld.SimulatorAuto")   # raises if PowerWorld auto
 ```
 
 If that line runs without raising, everything downstream in this kit is available to
-you. If it raises, nothing is, and no rewrite of the analysis will change that.
+you. If it raises, nothing is.
 
 ### What preflight does not tell you
 
 It confirms you can *drive* PowerWorld. It says nothing about whether the case is
-suitable for the study you have in mind — whether it solves, whether it has the
+suitable for the study you have in mind: whether it solves, whether it has the
 generators or weather models you need, whether its limits are configured. Those are
 questions for the analysis itself, starting at [esapp-overview](esapp-overview.md).

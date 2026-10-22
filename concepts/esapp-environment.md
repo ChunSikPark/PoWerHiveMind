@@ -34,21 +34,19 @@ Pulls in `pandas`, `numpy`, `scipy`, `matplotlib`, `geopandas`, and `pywin32`. T
 one is the COM bridge and is why this is Windows-only.
 
 Before writing anything, run [preflight-powerworld](../methods/preflight-powerworld.md). It takes five seconds and
-distinguishes "my code is wrong" from "this machine cannot run PowerWorld at all",
-which are very different problems.
+distinguishes "my code is wrong" from "this machine cannot run PowerWorld at all".
 
 ### What you actually need
 
 | Requirement | Why | If missing |
 |---|---|---|
-| Windows | SimAuto is a COM server with no cross-platform equivalent | The weather half of this kit still works — see [teamoverbyeweather-client](../methods/teamoverbyeweather-client.md) |
+| Windows | SimAuto is a COM server with no cross-platform equivalent | The weather half of this kit still works; see [teamoverbyeweather-client](../methods/teamoverbyeweather-client.md) |
 | PowerWorld Simulator, installed | esapp drives it; it does not reimplement it | Nothing in the PowerWorld half functions |
 | **The SimAuto add-on, licensed** | Automation is licensed separately from Simulator itself | Simulator's GUI works fine and every script fails. See [preflight-powerworld](../methods/preflight-powerworld.md) |
 | Matching bitness | A 32-bit Simulator will not serve a 64-bit Python | `Class not registered` at dispatch time |
 
-The licensing point is the one that surprises people. A perfectly good Simulator
-installation can be completely unable to run a single line of automation, and nothing in
-the GUI hints at it.
+Without the SimAuto licence, a working Simulator installation cannot run a single line of
+automation, and nothing in the GUI hints at it.
 
 ### Contributing to esapp
 
@@ -57,8 +55,7 @@ the GUI hints at it.
 
 Found a bug, a missing field, or an undocumented behaviour while using this knowledge
 base? Two places to send it: a defect in the **package** goes to the esapp repository
-above; a defect in a **page** here goes to this repository's issues. They are different
-problems with different fixes.
+above; a defect in a **page** here goes to this repository's issues.
 
 ### Prefer `esapp` over `esa`
 
@@ -85,12 +82,12 @@ pwrworld.SimulatorAuto   <- the COM server, i.e. PowerWorld itself
 ```
 
 Most work happens in the bracket interface. Drop to `SAW` when you need a SCRIPT action
-that has no bracket equivalent — see [aux-script-commands](../references/aux-script-commands.md) for the catalogue. Drop
-below that essentially never.
+that has no bracket equivalent (see [aux-script-commands](../references/aux-script-commands.md) for the catalogue). Drop
+below that almost never.
 
 ### Use the high-level helpers before reaching for script commands
 
-`PowerWorld` exposes worked-out helpers for the things people actually do. Verified
+`PowerWorld` exposes helpers for the common tasks. Verified
 against esapp 0.1.3 by calling them:
 
 ```python
@@ -105,14 +102,14 @@ pw.ybus(dense=False)                          # admittance matrix (scipy sparse)
 pw.jacobian(dense=False, form="R")            # the Jacobian
 pw.gens(); pw.lines(); pw.loads()             # convenience tables
 pw.voltage(complex=True, pu=True)
-pw.save(filename=None)                        # write the case back
+pw.save(filename=None)                        # silent no-op: writes nothing, see save-powerworld-case
 pw.snapshot()                                 # restore point
 pw.run_mode(); pw.edit_mode()                 # switch modes
 ```
 
 **Every one of these is a method — call it.** Referencing `pw.overloads` or `pw.flows`
 without parentheses hands you a bound method where you expected a DataFrame, and the
-failure surfaces somewhere further down looking like something else entirely.
+failure surfaces further down looking like something else.
 
 Solver settings are the opposite: they are **assignable options**, not methods.
 
@@ -160,8 +157,8 @@ names track Simulator rather than being hand-maintained. The full field map live
 
 **Always keep an object's key fields in any DataFrame you write back.** For a generator
 that is `BusNum` plus `GenID`; for a branch it includes the circuit identifier. Without
-the key fields PowerWorld cannot tell which row you mean, and the write does not error —
-it simply does nothing.
+the key fields PowerWorld cannot tell which row you mean, and the write does not error;
+it does nothing.
 
 A second, related trap: `pw[Obj, field] = values` is **positional over the entire
 table**. Assigning to a filtered subset writes nothing at all, silently. See
@@ -169,8 +166,7 @@ table**. Assigning to a filtered subset writes nothing at all, silently. See
 [AGENTS.md](../AGENTS.md) code rule 2 describes the same trap differently: a list built from
 a filtered subset lands on the wrong rows. Not settled here; either way, build the full column.
 
-These two are responsible for more wasted debugging than every other esapp behaviour
-combined, because both fail without raising.
+Both fail without raising.
 
 ### Snapshots
 
