@@ -233,26 +233,12 @@ body{position:relative;}
 .btn.primary:hover{box-shadow:0 18px 44px -12px var(--glow),0 0 0 1px var(--btn-a);}
 .btn.primary small{opacity:.9;}
 
-/* the animated walkthroughs: a poster that opens each one */
+/* the animated walkthroughs: two cards, each opening one */
 .walk{margin:0 0 clamp(72px,9vw,120px);}
 .walk h2{font:700 clamp(36px,4.6vw,60px)/1.05 var(--cond);letter-spacing:-.01em;margin:0 0 14px;}
 .walk-intro{font-size:18px;line-height:1.55;color:var(--ink-2);max-width:46em;margin:0 0 20px;}
-.walk-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;margin:0 0 16px;}
-.walk-bar{flex-direction:column;align-items:stretch;}
-.demo-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
-.demo-tabs button{display:flex;flex-direction:column;gap:6px;text-align:left;padding:20px 24px;border-radius:var(--r);border:2px solid var(--rule);
-  background:var(--surface);color:var(--ink-2);cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s;}
-.demo-tabs button b{font:700 clamp(24px,2.4vw,30px)/1.15 var(--cond);color:var(--ink);}
-.demo-tabs button span{font-size:18px;line-height:1.45;}
-.demo-tabs button:hover{border-color:var(--kit);transform:translateY(-2px);}
-.demo-tabs button[aria-pressed="true"]{border-color:var(--kit);background:color-mix(in srgb,var(--kit) 10%,var(--surface));
-  box-shadow:0 0 0 4px color-mix(in srgb,var(--kit) 22%,transparent);}
-.demo-tabs button[aria-pressed="true"] b{color:var(--kit);}
-.demo-tabs button:focus-visible{outline:3px solid var(--kit);outline-offset:3px;}
-@media (max-width:640px){.demo-tabs{grid-template-columns:1fr;}}
-.walk-poster{display:block;max-width:880px;text-decoration:none;color:var(--ink);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;background:var(--surface);box-shadow:var(--card-shadow);}
-.walk-poster img{display:block;width:100%;height:auto;aspect-ratio:16/10;}
-.walk-poster > span{display:block;padding:14px 18px;font-size:17px;font-weight:600;color:var(--kit);}
+.walk .steps{margin:0;}
+@media (max-width:640px){.walk .steps .thumb{display:none;}}
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 
 /* link cards, each with a large thumbnail of the page it opens */
@@ -345,6 +331,30 @@ footer{font-size:17px;color:var(--ink-2);}
       <a class="btn" href="demo-design.html">Watch it design</a>
     </div>
     <p class="stat"><a href="validation.html"><b>30 of 30</b> real PowerWorld study requests solved by a fresh agent with the kit, against <b>20</b> for the previous version, graded against an answer key.</a></p>
+  </section>
+
+  <section class="graph-band">
+    <figure class="grow" id="grow">
+      <svg id="graph" role="img" aria-label="The kit's pages as a graph, linked pages joined by a line, growing in the order the pages were written."></svg>
+      <figcaption>
+        <div class="grow-head"><b id="gCount">The kit, as a graph</b><span id="gDate"></span><button type="button" id="gReplay">Replay</button></div>
+        <div class="legend" id="gLegend"></div>
+        <div class="gtip" id="gTip">Every page is a dot and every link a line. Click a dot to read the page.</div>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="walk" id="demo" aria-labelledby="walk-h">
+    <h2 id="walk-h">How it finds the answer</h2>
+    <p class="walk-intro">The agent never reads the whole kit. It turns your question into search terms, reads only the pages that match, and says so when no page covers it. Two illustrated walkthroughs, built on real pages and searches.</p>
+    <div class="steps"><ol>
+      <li><a href="demo-has-page.html">
+        <span class="thumb"><img src="thumbs/has-page.webp" width="1200" height="750" loading="lazy" alt="A walkthrough at step 6: the time-step result table, and the graph of the kit's pages with the five pages the agent read circled in order."></span>
+        <span class="body"><b>When the knowledge exists</b><span class="say">It finds the pages that cover your question and follows them.</span><span class="open">Open the walkthrough <i aria-hidden="true">→</i></span></span></a></li>
+      <li><a href="demo-new-page.html">
+        <span class="thumb"><img src="thumbs/new-page.webp" width="1200" height="750" loading="lazy" alt="A walkthrough at step 5: the agent's draft of a new page with its abstract and six connections, placed in the page graph with dashed links to those six pages."></span>
+        <span class="body"><b>When no knowledge exists</b><span class="say">It says so, works it out, and writes it down for next time.</span><span class="open">Open the walkthrough <i aria-hidden="true">→</i></span></span></a></li>
+    </ol></div>
   </section>
 
   <section class="panel" id="work">
@@ -452,29 +462,6 @@ footer{font-size:17px;color:var(--ink-2);}
         <span class="thumb"><img src="thumbs/install.webp" width="800" height="500" loading="lazy" alt="The Install page, headed Let Claude install it for you: step 1 gets the Claude app, step 2 copies one setup request to paste into it."></span>
         <span class="body"><b>Install</b><span class="say">About 15 minutes, no coding. Three downloads and one sentence.</span><span class="open">Open the guide <i aria-hidden="true">→</i></span></span></a></li>
     </ol>
-  </section>
-
-  <section class="walk" id="demo" aria-labelledby="walk-h">
-    <h2 id="walk-h">How it finds the answer</h2>
-    <p class="walk-intro">The agent never reads the whole kit. It turns your question into search terms, reads only the pages that match, and says so when no page covers it. Two illustrated walkthroughs, built on real pages and searches.</p>
-    <div class="walk-bar">
-      <div class="demo-tabs" role="group" aria-label="Pick a walkthrough">
-        <button type="button" aria-pressed="true" data-walk="has-page"><b>When the knowledge exists</b><span>It finds the pages that cover your question and follows them.</span></button>
-        <button type="button" aria-pressed="false" data-walk="new-page"><b>When no knowledge exists</b><span>It says so, works it out, and writes it down for next time.</span></button>
-      </div>
-    </div>
-    <a class="walk-poster" id="walkPoster" href="demo-has-page.html"><img src="thumbs/has-page.webp" width="1200" height="750" loading="lazy" alt="A walkthrough at step 6: the time-step result table, and the graph of the kit's pages with the five pages the agent read circled in order."><span>Open the walkthrough <span aria-hidden="true">→</span></span></a>
-  </section>
-
-  <section class="graph-band">
-    <figure class="grow" id="grow">
-      <svg id="graph" role="img" aria-label="The kit's pages as a graph, linked pages joined by a line, growing in the order the pages were written."></svg>
-      <figcaption>
-        <div class="grow-head"><b id="gCount">The kit, as a graph</b><span id="gDate"></span><button type="button" id="gReplay">Replay</button></div>
-        <div class="legend" id="gLegend"></div>
-        <div class="gtip" id="gTip">Every page is a dot and every link a line. Click a dot to read the page.</div>
-      </figcaption>
-    </figure>
   </section>
 
   <section class="panel" id="add">
@@ -627,22 +614,6 @@ $$(".route-pick button").forEach(b => b.addEventListener("click", () => {
   else grow();
 })();
 
-/* ---------- the walkthroughs: a poster for the one picked, which opens the full page ---------- */
-(() => {
-  const WALKS = {
-    "has-page": {url: "demo-has-page.html",
-      alt: "A walkthrough at step 6: the time-step result table, and the graph of the kit's pages with the five pages the agent read circled in order."},
-    "new-page": {url: "demo-new-page.html",
-      alt: "A walkthrough at step 5: the agent's draft of a new page with its abstract and six connections, placed in the page graph with dashed links to those six pages."}
-  };
-  const poster = $("#walkPoster");
-  $$(".walk [data-walk]").forEach(b => b.addEventListener("click", () => {
-    const k = b.dataset.walk, w = WALKS[k];
-    $$(".walk [data-walk]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-    poster.href = w.url;
-    const img = $("img", poster); img.src = `thumbs/${k}.webp`; img.alt = w.alt;
-  }));
-})();
 
 /* ---------- proof: count up once, when it scrolls into view ---------- */
 (() => {

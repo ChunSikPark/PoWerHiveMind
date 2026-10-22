@@ -16,13 +16,16 @@ plugin build.
 
 ## Main page order (set 2026-10-22)
 
-Hero → It runs the whole study (`#work`, recorded run first) → Does it help? (`#proof`)
-→ How your AI talks to PowerWorld (`#talk`) → Install card (`#get`) → How it finds the
-answer (`#demo`) → page graph → Add to it (`#add`).
+Hero → page graph → How it finds the answer (`#demo`, two walkthrough cards) → It runs
+the whole study (`#work`, recorded run first) → Does it help? (`#proof`) → How your AI
+talks to PowerWorld (`#talk`) → Install card (`#get`) → Add to it (`#add`).
 
-The reason is the reader's path: what it does, proof it works, how it works, install, then
-depth. A real run comes before the illustrations, and proof before eye candy. Two design
-reviews (a newcomer reading and an evaluator reading) agreed on this independently.
+The reason is the reader's path: how big the kit is, how the agent searches it, what it
+does, proof it works, then install. The graph sits under the hero because it is the only
+at-a-glance sign of size, and it only grows once it scrolls into view, so at the bottom
+most readers never saw it. The walkthroughs follow it because they animate that same graph.
+They are kept to two cards so proof still starts under 4 screens down on desktop
+(measured 2026-10-22); the "30 of 30" line in the hero already links to the benchmark.
 
 - **No hidden or hash-routed panels.** The old ones were unreachable, because nothing
   linked to them. Every section is a normal section with an id.
