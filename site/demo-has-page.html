@@ -341,13 +341,22 @@ table.grid{border-collapse:collapse;width:100%;font:500 17px/1.25 var(--mono);fo
 .spark{padding:10px 12px 12px;border-top:1px solid var(--rule);}
 .spark-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font:600 17px/1.3 var(--sans);margin-bottom:4px;}
 .spark-h span{color:var(--muted);font-weight:500;}
-#spark{display:block;width:100%;height:130px;}
-#spark .spa{fill:var(--s1);fill-opacity:.18;}
-#spark .spl{fill:none;stroke:var(--s1);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;}
-#spark .head{fill:var(--s1);stroke:var(--bg);stroke-width:2;}
-#spark .ax{stroke:var(--rule);stroke-width:1.5;}
-#spark text{font:500 17px/1 var(--mono);fill:var(--muted);}
-#spark text.pk{fill:var(--ink);font-weight:600;}
+.spk{display:block;width:100%;height:130px;}
+.spk .spa{fill:var(--s1);fill-opacity:.18;}
+.spk .spl{fill:none;stroke:var(--s1);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;}
+.spk .head{fill:var(--s1);stroke:var(--bg);stroke-width:2;}
+.spk .ax{stroke:var(--rule);stroke-width:1.5;}
+.spk text{font:500 17px/1 var(--mono);fill:var(--muted);}
+.spk text.pk{fill:var(--ink);font-weight:600;}
+/* deck copy: solar and wind side by side, each with its table and plot; step 6 takes the full width */
+.csv2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start;}
+.csv2 .grid th,.csv2 .grid td{padding:3px 10px;} .csv2 .spk{height:118px;}
+.stage-grid.wide{grid-template-columns:minmax(0,1fr);}
+.stage-grid.wide .gpane{display:none;}
+.csv.wind .csv-tab.on{box-shadow:inset 0 3px 0 var(--s3);}
+.csv.wind .grid .cap.h td{color:var(--s3);}
+.csv.wind .grid tr.peak td{background:color-mix(in srgb,var(--s3) 16%,transparent);}
+.csv.wind .spk .spa{fill:var(--s3);} .csv.wind .spk .spl{stroke:var(--s3);} .csv.wind .spk .head{fill:var(--s3);}
 .callout{margin:14px 0 0;padding:10px 14px;border-radius:10px;border:1.5px solid var(--eng);background:color-mix(in srgb,var(--eng) 10%,transparent);font-size:18px;line-height:1.45;opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s cubic-bezier(.2,.7,.2,1);}
 .callout.on{opacity:1;transform:none;}
 .callout b{color:var(--eng);}
@@ -411,7 +420,7 @@ table.grid{border-collapse:collapse;width:100%;font:500 17px/1.25 var(--mono);fo
       <button class="btn" id="prevBtn" type="button" aria-label="Previous step">←</button>
       <button class="btn" id="nextBtn" type="button" aria-label="Next step">Step →</button>
       <div class="ctl-pair"><button class="btn mo" id="motionBtn" type="button">Motion: <b>full</b></button>
-      <div class="speed" id="speed" role="group" aria-label="Speed"><span>Speed</span><button type="button" data-s="0.5">0.5×</button><button type="button" data-s="1" aria-pressed="true">1×</button><button type="button" data-s="1.5">1.5×</button><button type="button" data-s="2">2×</button></div></div>
+      <div class="speed" id="speed" role="group" aria-label="Speed"><span>Speed</span><button type="button" data-s="0.5">0.5×</button><button type="button" data-s="1">1×</button><button type="button" data-s="1.5" aria-pressed="true">1.5×</button><button type="button" data-s="2">2×</button></div></div>
       <ul class="chips" id="chips"></ul>
     </div>
     <div class="prog" aria-hidden="true"><i id="progBar"></i></div>
@@ -454,7 +463,7 @@ table.grid{border-collapse:collapse;width:100%;font:500 17px/1.25 var(--mono);fo
 <script>
 /* one virtual clock drives every animation: Pause freezes it, Speed scales it */
 (function(){
-  var P = window.performance, real = P.now.bind(P), speed = 1, base = real(), vbase = 0;
+  var P = window.performance, real = P.now.bind(P), speed = 1.5, base = real(), vbase = 0;
   function now(){ return vbase + (real() - base) * speed; }
   try { P.now = now; } catch (e) {}
   window.VC = {now:now, set:function(s){ vbase = now(); base = real(); speed = s; }, speed:function(){ return speed; }};
@@ -464,7 +473,7 @@ table.grid{border-collapse:collapse;width:100%;font:500 17px/1.25 var(--mono);fo
 <script>
 (function(){
 "use strict";
-var G = {"nodes":[["agc-participation-factors","c",1],["aggregate-clauses-cannot-bound-one-row","c",1],["aux-only-powerworld","c",5],["case-impedance-completeness","c",4],["case-to-case-device-transplant","c",3],["copper-plate","c",0],["esapp-environment","c",5],["esapp-script-command-wrappers","c",5],["esapp","c",5],["gic","c",0],["glossary","c",5],["grid-workshop-auto-pfw","c",2],["lodf","c",1],["one-device-per-voltage-pocket","c",1],["opf-preconditions","c",0],["parallel-contingency-solve","c",1],["per-unit-basis-discipline","c",4],["powerworld-inertia-and-cost-data","c",4],["powerworld-script-transfer","c",5],["powerworld-simauto","c",5],["pww-data","c",2],["sizing-a-device-whose-impedance-determines-its-own-flow","c",3],["timestep-simulation","c",2],["timestep-workflow","c",2],["unloaded-ehv-stub-overvoltage","c",3],["version-requirements","c",5],["adding-devices-esapp","m",3],["applying-a-dispatch-to-a-case","m",0],["aux-file-mode","m",5],["case-data-lint","m",4],["converting-lines-to-transformers","m",4],["diagnosing-a-non-converging-contingency","m",1],["esapp-overview","m",5],["finding-and-fixing-radial-by-n1-pockets","m",1],["handling-errors","m",5],["how-to-analyze-results","m",2],["ltc-regulation-checks","m",4],["new-device-contingency-aux","m",1],["powerworld-limitset-setdata","m",1],["preflight-powerworld","m",5],["ranking-new-devices-by-severity","m",1],["reading-violationctg","m",1],["reducing-a-contingency-set","m",1],["remediating-base-case-violations","m",3],["remediating-n1-contingency-violations","m",1],["removing-empty-buses","m",4],["reviewing-a-design","m",3],["save-powerworld-case","m",5],["teamoverbyeweather-client","m",2],["timestep-simulation-setup","m",2],["violation-network-map","m",1],["visualize-renewable-output","m",2],["zone-load-multiplier-trap","m",4],["adding-a-device","d",3],["aux-file-cookbook","d",5],["comparing-planning-cases","d",3],["contingency-and-aux","d",1],["power-flow-and-sensitivities","d",0],["start-here","d",5],["timestep-and-pfw","d",2],["violation-remediation","d",1],["aux-script-commands","r",5],["esapp-package-backend","r",5],["esapp-schema-reference","r",5],["powerworld-option-objects-v25","r",5],["powerworld-study-commands","r",5],["powerworld-study-options","r",5],["time-step-simulation-backend","r",2]],"edges":[[0,14],[0,41],[0,44],[0,64],[0,65],[1,60],[1,40],[1,41],[1,44],[2,4],[2,7],[2,14],[2,18],[2,19],[2,37],[2,61],[2,63],[3,27],[4,55],[5,22],[8,7],[8,9],[8,19],[8,22],[8,32],[8,61],[8,63],[6,8],[6,19],[6,32],[6,39],[6,62],[6,63],[7,8],[7,19],[7,30],[7,32],[7,47],[7,61],[7,62],[9,8],[9,10],[9,19],[9,61],[10,8],[10,19],[10,20],[11,23],[11,59],[11,49],[12,8],[12,15],[12,19],[13,21],[13,26],[13,40],[13,41],[13,43],[13,44],[14,2],[14,17],[14,19],[14,27],[14,63],[15,8],[15,19],[16,8],[16,9],[16,17],[17,8],[17,16],[17,19],[18,2],[18,7],[18,19],[18,61],[18,63],[19,8],[19,7],[19,32],[19,61],[20,5],[20,22],[20,35],[20,48],[20,49],[21,13],[21,16],[21,33],[21,43],[21,46],[22,20],[22,35],[22,49],[22,67],[23,5],[23,20],[23,22],[23,35],[23,48],[23,49],[23,67],[24,3],[24,26],[24,36],[24,50],[25,6],[25,10],[25,19],[25,39],[53,6],[53,26],[53,34],[54,2],[54,18],[54,58],[54,28],[55,56],[55,26],[55,37],[55,40],[55,41],[56,34],[56,37],[56,41],[56,61],[57,6],[57,12],[57,32],[57,34],[58,32],[58,34],[58,39],[59,20],[59,23],[59,35],[59,48],[59,49],[60,56],[60,26],[60,34],[60,40],[60,41],[26,8],[26,19],[26,32],[26,62],[26,63],[27,3],[27,8],[27,26],[27,30],[27,47],[28,2],[28,8],[28,18],[28,25],[28,61],[29,3],[29,27],[29,36],[29,38],[30,8],[30,26],[30,32],[30,38],[30,47],[30,62],[31,12],[31,15],[31,33],[31,41],[31,44],[31,66],[32,8],[32,19],[32,20],[32,35],[32,49],[33,12],[33,24],[33,60],[33,26],[33,41],[33,50],[34,6],[34,53],[34,26],[34,39],[35,20],[35,22],[35,32],[35,49],[35,51],[36,24],[36,60],[36,26],[36,30],[36,40],[36,47],[37,8],[37,15],[37,55],[37,26],[37,38],[37,41],[37,47],[37,61],[38,8],[38,19],[38,26],[38,47],[38,62],[39,8],[39,19],[39,32],[40,8],[40,12],[40,15],[40,55],[40,37],[40,38],[40,41],[41,8],[41,12],[41,15],[41,19],[41,37],[41,38],[41,62],[42,15],[42,60],[42,37],[42,41],[43,13],[43,21],[43,24],[43,60],[43,26],[43,36],[43,40],[43,44],[43,47],[44,0],[44,1],[44,13],[44,15],[44,21],[44,60],[44,26],[44,31],[44,33],[44,36],[44,41],[44,42],[44,43],[44,47],[45,26],[45,29],[45,33],[45,36],[45,41],[45,47],[46,3],[46,55],[46,26],[46,29],[46,30],[46,33],[46,34],[46,37],[46,52],[47,8],[47,19],[47,26],[47,30],[47,32],[47,38],[47,62],[48,20],[48,23],[48,49],[49,8],[49,11],[49,20],[49,22],[49,32],[49,35],[49,67],[50,60],[50,26],[50,32],[50,34],[50,40],[50,41],[51,20],[51,22],[51,32],[51,35],[52,26],[52,27],[52,29],[52,46],[52,63],[61,8],[61,19],[61,62],[61,63],[62,8],[62,19],[62,61],[63,8],[63,19],[63,32],[63,61],[63,62],[64,63],[64,65],[64,66],[65,15],[65,61],[65,64],[65,66],[66,14],[66,15],[66,38],[66,40],[66,41],[66,42],[66,63],[66,64],[66,65],[67,5],[67,20],[67,22],[67,49]]};
+var G = {"nodes":[["agc-participation-factors","c",1],["aggregate-clauses-cannot-bound-one-row","c",1],["aux-only-powerworld","c",5],["case-impedance-completeness","c",4],["case-to-case-device-transplant","c",3],["copper-plate","c",0],["esapp-environment","c",5],["esapp-script-command-wrappers","c",5],["esapp","c",5],["gic","c",0],["glossary","c",5],["auto-pfw-scripts","c",2],["lodf","c",1],["one-device-per-voltage-pocket","c",1],["opf-preconditions","c",0],["parallel-contingency-solve","c",1],["per-unit-basis-discipline","c",4],["powerworld-inertia-and-cost-data","c",4],["powerworld-script-transfer","c",5],["powerworld-simauto","c",5],["pww-data","c",2],["sizing-a-device-whose-impedance-determines-its-own-flow","c",3],["timestep-simulation","c",2],["timestep-workflow","c",2],["unloaded-ehv-stub-overvoltage","c",3],["version-requirements","c",5],["adding-devices-esapp","m",3],["applying-a-dispatch-to-a-case","m",0],["aux-file-mode","m",5],["case-data-lint","m",4],["converting-lines-to-transformers","m",4],["diagnosing-a-non-converging-contingency","m",1],["esapp-overview","m",5],["finding-and-fixing-radial-by-n1-pockets","m",1],["handling-errors","m",5],["how-to-analyze-results","m",2],["ltc-regulation-checks","m",4],["new-device-contingency-aux","m",1],["powerworld-limitset-setdata","m",1],["preflight-powerworld","m",5],["ranking-new-devices-by-severity","m",1],["reading-violationctg","m",1],["reducing-a-contingency-set","m",1],["remediating-base-case-violations","m",3],["remediating-n1-contingency-violations","m",1],["removing-empty-buses","m",4],["reviewing-a-design","m",3],["save-powerworld-case","m",5],["teamoverbyeweather-client","m",2],["timestep-simulation-setup","m",2],["violation-network-map","m",1],["visualize-renewable-output","m",2],["zone-load-multiplier-trap","m",4],["adding-a-device","d",3],["aux-file-cookbook","d",5],["comparing-planning-cases","d",3],["contingency-and-aux","d",1],["power-flow-and-sensitivities","d",0],["start-here","d",5],["timestep-and-pfw","d",2],["violation-remediation","d",1],["aux-script-commands","r",5],["esapp-package-backend","r",5],["esapp-schema-reference","r",5],["powerworld-option-objects-v25","r",5],["powerworld-study-commands","r",5],["powerworld-study-options","r",5],["time-step-simulation-backend","r",2]],"edges":[[0,14],[0,41],[0,44],[0,64],[0,65],[1,60],[1,40],[1,41],[1,44],[2,4],[2,7],[2,14],[2,18],[2,19],[2,37],[2,61],[2,63],[3,27],[4,55],[5,22],[8,7],[8,9],[8,19],[8,22],[8,32],[8,61],[8,63],[6,8],[6,19],[6,32],[6,39],[6,62],[6,63],[7,8],[7,19],[7,30],[7,32],[7,47],[7,61],[7,62],[9,8],[9,10],[9,19],[9,61],[10,8],[10,19],[10,20],[11,23],[11,59],[11,49],[12,8],[12,15],[12,19],[13,21],[13,26],[13,40],[13,41],[13,43],[13,44],[14,2],[14,17],[14,19],[14,27],[14,63],[15,8],[15,19],[16,8],[16,9],[16,17],[17,8],[17,16],[17,19],[18,2],[18,7],[18,19],[18,61],[18,63],[19,8],[19,7],[19,32],[19,61],[20,5],[20,22],[20,35],[20,48],[20,49],[21,13],[21,16],[21,33],[21,43],[21,46],[22,20],[22,35],[22,49],[22,67],[23,5],[23,20],[23,22],[23,35],[23,48],[23,49],[23,67],[24,3],[24,26],[24,36],[24,50],[25,6],[25,10],[25,19],[25,39],[53,6],[53,26],[53,34],[54,2],[54,18],[54,58],[54,28],[55,56],[55,26],[55,37],[55,40],[55,41],[56,34],[56,37],[56,41],[56,61],[57,6],[57,12],[57,32],[57,34],[58,32],[58,34],[58,39],[59,20],[59,23],[59,35],[59,48],[59,49],[60,56],[60,26],[60,34],[60,40],[60,41],[26,8],[26,19],[26,32],[26,62],[26,63],[27,3],[27,8],[27,26],[27,30],[27,47],[28,2],[28,8],[28,18],[28,25],[28,61],[29,3],[29,27],[29,36],[29,38],[30,8],[30,26],[30,32],[30,38],[30,47],[30,62],[31,12],[31,15],[31,33],[31,41],[31,44],[31,66],[32,8],[32,19],[32,20],[32,35],[32,49],[33,12],[33,24],[33,60],[33,26],[33,41],[33,50],[34,6],[34,53],[34,26],[34,39],[35,20],[35,22],[35,32],[35,49],[35,51],[36,24],[36,60],[36,26],[36,30],[36,40],[36,47],[37,8],[37,15],[37,55],[37,26],[37,38],[37,41],[37,47],[37,61],[38,8],[38,19],[38,26],[38,47],[38,62],[39,8],[39,19],[39,32],[40,8],[40,12],[40,15],[40,55],[40,37],[40,38],[40,41],[41,8],[41,12],[41,15],[41,19],[41,37],[41,38],[41,62],[42,15],[42,60],[42,37],[42,41],[43,13],[43,21],[43,24],[43,60],[43,26],[43,36],[43,40],[43,44],[43,47],[44,0],[44,1],[44,13],[44,15],[44,21],[44,60],[44,26],[44,31],[44,33],[44,36],[44,41],[44,42],[44,43],[44,47],[45,26],[45,29],[45,33],[45,36],[45,41],[45,47],[46,3],[46,55],[46,26],[46,29],[46,30],[46,33],[46,34],[46,37],[46,52],[47,8],[47,19],[47,26],[47,30],[47,32],[47,38],[47,62],[48,20],[48,23],[48,49],[49,8],[49,11],[49,20],[49,22],[49,32],[49,35],[49,67],[50,60],[50,26],[50,32],[50,34],[50,40],[50,41],[51,20],[51,22],[51,32],[51,35],[52,26],[52,27],[52,29],[52,46],[52,63],[61,8],[61,19],[61,62],[61,63],[62,8],[62,19],[62,61],[63,8],[63,19],[63,32],[63,61],[63,62],[64,63],[64,65],[64,66],[65,15],[65,61],[65,64],[65,66],[66,14],[66,15],[66,38],[66,40],[66,41],[66,42],[66,63],[66,64],[66,65],[67,5],[67,20],[67,22],[67,49]]};
 var GH = "https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/";
 var DIRS = {c:"concepts", m:"methods", d:"demos", r:"references"};
 var TOPICS = ["Power flow & OPF","Contingency (N-1)","TimeStep & weather","Design & planning","Case data & audit","Saving & scripting"];
@@ -531,7 +540,7 @@ var GROUPS = [
      "concepts/esapp",
      "concepts/esapp-script-command-wrappers",
      "concepts/glossary",
-     "concepts/grid-workshop-auto-pfw",
+     "concepts/auto-pfw-scripts",
      "concepts/powerworld-simauto",
      "concepts/pww-data",
      "concepts/timestep-simulation",
@@ -561,7 +570,7 @@ var GROUPS = [
     "t": "time step",
     "hits": [
      "concepts/copper-plate",
-     "concepts/grid-workshop-auto-pfw",
+     "concepts/auto-pfw-scripts",
      "concepts/pww-data",
      "methods/ltc-regulation-checks",
      "references/powerworld-option-objects-v25",
@@ -597,7 +606,7 @@ var GROUPS = [
      "concepts/copper-plate",
      "concepts/esapp",
      "concepts/glossary",
-     "concepts/grid-workshop-auto-pfw",
+     "concepts/auto-pfw-scripts",
      "concepts/pww-data",
      "concepts/timestep-simulation",
      "concepts/timestep-workflow",
@@ -618,7 +627,7 @@ var GROUPS = [
     "id": true,
     "hits": [
      "concepts/esapp",
-     "concepts/grid-workshop-auto-pfw",
+     "concepts/auto-pfw-scripts",
      "demos/timestep-and-pfw",
      "methods/how-to-analyze-results",
      "methods/save-powerworld-case",
@@ -1145,7 +1154,7 @@ var STAGES = [
 },
 { chip:"Run", title:"5. Run it.", dur:9000,
   html:function(){
-    var C = [["TimeStepLoadPWWRange", "On Simulator 25 the plain TimeStepLoadPWW fails with “Error With Loading PWWFile”. Use the Range form, and assert the timepoint count."],
+    var C = [["TimeStepLoadPWWRange", "On two Simulator 25 builds the plain TimeStepLoadPWW fails with “Error With Loading PWWFile” (suspected PowerWorld issue). Use the Range form, and assert the timepoint count."],
       ["TimeStepSaveFieldsSet(GEN, …)", "Fields not named in TimeStepSaveFieldsSet are simply absent from the output. No warning."],
       ["TimeStepDoSinglePoint", "Debug ONE point first. One timestamp fails in seconds; a full run fails after a long wait, with the same error."],
       ["TimeStepDoRun", null], ["TimeStepSaveResultsByTypeCSV(…, GEN)", null]];
@@ -1168,37 +1177,28 @@ var STAGES = [
 },
 { chip:"Results", title:"6. The results.", dur:10000,
   html:function(){
-    var META = ["ISO", "PV / Wind", "PV / Wind Types", "Gen Max MW", "State", "Utility", "Latitude", "Longitude"];
-    var VAL = {"PV / Wind":"SUN", "PV / Wind Types":"&lt;PFW model&gt;"};
-    var h = '<div class="csv"><div class="csv-tabs"><span class="csv-tab on">Historical_2025_solar.csv</span><span class="csv-tab">Historical_2025_wind.csv</span><span class="badge">sample values</span></div>' +
-      '<div class="csv-scroll"><table class="grid"><thead><tr><th>DateTime<wbr>UTC<wbr>Excel<wbr>Format</th><th>gen 1</th><th>gen 2</th><th>gen 3</th></tr></thead><tbody>' +
-      '<tr class="cap m rw"><td colspan="4">8 metadata rows</td></tr>';
-    META.forEach(function(m){ var v = VAL[m] || "—"; h += '<tr class="meta rw"><td>' + m + '</td><td>' + v + '</td><td>' + v + '</td><td>' + v + '</td></tr>'; });
-    h += '<tr class="cap h rw"><td colspan="4">Then one row per UTC hour: each cell is that generator\'s MW</td></tr>';
-    SOLAR.forEach(function(r, i){
-      h += '<tr class="hr rw" data-i="' + i + '"><td class="t">' + (45809 + r[0] / 24).toFixed(4) + '<small>' + (r[0] < 10 ? "0" : "") + r[0] + ':00Z</small></td>' +
-        r.slice(1).map(function(v){ return '<td class="' + (v ? "" : "z") + '" data-v="' + v + '">0</td>'; }).join("") + '</tr>';
-    });
-    h += '</tbody></table></div><div class="spark"><div class="spark-h">Fleet total, MW <span>sample values</span></div><svg id="spark" aria-label="Fleet total MW by hour, sample values"></svg></div></div>' +
-      '<p class="callout" id="callout"><b>Hour labels run 6–7 h early:</b> re-label before joining on time.</p>';
-    return h; },
+    return '<div class="csv2">' + csvBlock("solar", "Historical_2025_solar.csv", "SUN") + csvBlock("wind", "Historical_2025_wind.csv", "WND") + '</div>' +
+      '<p class="callout" id="callout"><b>Hour labels run 6–7 h early:</b> re-label before joining on time.</p>'; },
   run:function(){
     routeBase(4);
     status("Reading the CSVs, as methods/how-to-analyze-results does.");
-    var rows = document.querySelectorAll(".grid .rw"), nMeta = 9, sp = spark();
-    Array.prototype.forEach.call(rows, function(tr, k){
-      var hourly = k > nMeta, at = k <= nMeta ? 300 + k * 110 : 1700 + (k - nMeta - 1) * 360;
-      later(at, function(){
-        tr.classList.add("in");
-        if (!hourly) return;
-        Array.prototype.forEach.call(tr.querySelectorAll("td[data-v]"), function(td){ countDec(td, +td.getAttribute("data-v")); });
-        if (sp) sp.to(+tr.getAttribute("data-i"));
+    var nMeta = 9, end = 1700 + SOLAR.length * 360 + 300;
+    /* both files fill in together, row by row, each with its own plot */
+    Array.prototype.forEach.call(document.querySelectorAll(".csv[data-k]"), function(blk){
+      var S = SERIES[blk.getAttribute("data-k")], sp = spark(blk.querySelector("svg.spk"), S);
+      Array.prototype.forEach.call(blk.querySelectorAll(".grid .rw"), function(tr, k){
+        var hourly = k > nMeta, at = k <= nMeta ? 300 + k * 110 : 1700 + (k - nMeta - 1) * 360;
+        later(at, function(){
+          tr.classList.add("in");
+          if (!hourly) return;
+          Array.prototype.forEach.call(tr.querySelectorAll("td[data-v]"), function(td){ countDec(td, +td.getAttribute("data-v")); });
+          if (sp) sp.to(+tr.getAttribute("data-i"));
+        });
       });
-    });
-    var end = 1700 + SOLAR.length * 360 + 300;
-    later(end, function(){
-      var pk = PEAK; var tr = document.querySelector('.grid tr.hr[data-i="' + pk + '"]'); if (tr) tr.classList.add("peak");
-      if (sp) sp.peak();
+      later(end, function(){
+        var tr = blk.querySelector('.grid tr.hr[data-i="' + S.peak + '"]'); if (tr) tr.classList.add("peak");
+        if (sp) sp.peak();
+      });
     });
     later(end + 700, function(){
       var c = $("#callout"); if (c) c.classList.add("on");
@@ -1218,8 +1218,30 @@ var STAGES = [
 /* sample MW for the results picture: [UTC hour, gen 1, gen 2, gen 3]; 0 before 13:00Z, a midday peak, then falling */
 var SOLAR = [[10, 0, 0, 0], [11, 0, 0, 0], [12, 0, 0, 0], [13, 8.4, 5.1, 4.6], [14, 33.1, 22.7, 17.2], [15, 65.8, 46.0, 33.9], [16, 95.2, 67.3, 48.1],
   [17, 113.6, 80.2, 57.0], [18, 119.0, 84.1, 59.4], [19, 107.9, 76.5, 53.2], [20, 79.3, 55.8, 38.7], [21, 40.6, 27.9, 20.1]];
-var FLEET = SOLAR.map(function(r){ return Math.round((r[1] + r[2] + r[3]) * 10) / 10; });
-var PEAK = FLEET.indexOf(Math.max.apply(null, FLEET));
+/* sample MW for the wind file, same shape: high overnight, a midday lull, picking up again by evening */
+var WIND = [[10, 121.4, 84.0, 61.2], [11, 117.8, 80.6, 58.9], [12, 108.3, 74.1, 55.0], [13, 92.6, 63.8, 47.3], [14, 71.0, 49.5, 36.8], [15, 52.4, 37.1, 27.9],
+  [16, 41.7, 29.8, 22.4], [17, 38.9, 27.2, 20.6], [18, 46.3, 32.0, 24.1], [19, 63.5, 43.9, 32.7], [20, 84.2, 58.6, 43.5], [21, 101.7, 70.4, 52.3]];
+function series(rows){
+  var fleet = rows.map(function(r){ return Math.round((r[1] + r[2] + r[3]) * 10) / 10; });
+  return {rows:rows, fleet:fleet, peak:fleet.indexOf(Math.max.apply(null, fleet))};
+}
+var SERIES = {solar:series(SOLAR), wind:series(WIND)};
+/* one CSV picture: the file name, 8 metadata rows, one row per hour, and that file's total under it */
+function csvBlock(k, file, fuel){
+  var META = ["ISO", "PV / Wind", "PV / Wind Types", "Gen Max MW", "State", "Utility", "Latitude", "Longitude"];
+  var VAL = {"PV / Wind":fuel, "PV / Wind Types":"&lt;PFW model&gt;"}, name = k === "solar" ? "Solar" : "Wind";
+  var h = '<div class="csv ' + k + '" data-k="' + k + '"><div class="csv-tabs"><span class="csv-tab on">' + file + '</span><span class="badge">sample values</span></div>' +
+    '<div class="csv-scroll"><table class="grid"><thead><tr><th>DateTime<wbr>UTC<wbr>Excel<wbr>Format</th><th>gen 1</th><th>gen 2</th><th>gen 3</th></tr></thead><tbody>' +
+    '<tr class="cap m rw"><td colspan="4">8 metadata rows</td></tr>';
+  META.forEach(function(m){ var v = VAL[m] || "—"; h += '<tr class="meta rw"><td>' + m + '</td><td>' + v + '</td><td>' + v + '</td><td>' + v + '</td></tr>'; });
+  h += '<tr class="cap h rw"><td colspan="4">Then one row per UTC hour: each cell is that generator\'s MW</td></tr>';
+  SERIES[k].rows.forEach(function(r, i){
+    h += '<tr class="hr rw" data-i="' + i + '"><td class="t">' + (45809 + r[0] / 24).toFixed(4) + '<small>' + (r[0] < 10 ? "0" : "") + r[0] + ':00Z</small></td>' +
+      r.slice(1).map(function(v){ return '<td class="' + (v ? "" : "z") + '" data-v="' + v + '">0</td>'; }).join("") + '</tr>';
+  });
+  return h + '</tbody></table></div><div class="spark"><div class="spark-h">' + name + ' total, MW <span>sample values</span></div>' +
+    '<svg class="spk" aria-label="' + name + ' total MW by hour, sample values"></svg></div></div>';
+}
 /* a decimal cell counts up to its value */
 function countDec(el, v){
   if (!v || rm){ el.textContent = v ? v.toFixed(1) : "0"; return; }
@@ -1228,14 +1250,14 @@ function countDec(el, v){
     el.textContent = (v * e).toFixed(1); if (p < 1 && el.isConnected) requestAnimationFrame(f); })();
 }
 /* the fleet-total sparkline: the line grows one hour at a time as each row lands */
-function spark(){
-  if (!hasD3) return null;
-  var el = document.getElementById("spark"); if (!el) return null;
+function spark(el, S){
+  if (!hasD3 || !el) return null;
+  var FLEET = S.fleet, PEAK = S.peak, ROWS = S.rows;
   var w = el.clientWidth || 500, h = el.clientHeight || 130, sv = d3.select(el).attr("viewBox", "0 0 " + w + " " + h);
   var x = d3.scaleLinear().domain([0, FLEET.length - 1]).range([14, w - 14]), y = d3.scaleLinear().domain([0, d3.max(FLEET) * 1.25]).range([h - 26, 10]);
   sv.append("line").attr("class", "ax").attr("x1", 14).attr("x2", w - 14).attr("y1", y(0)).attr("y2", y(0));
-  sv.append("text").attr("x", 14).attr("y", h - 4).text(SOLAR[0][0] + ":00Z");
-  sv.append("text").attr("x", w - 14).attr("y", h - 4).attr("text-anchor", "end").text(SOLAR[SOLAR.length - 1][0] + ":00Z");
+  sv.append("text").attr("x", 14).attr("y", h - 4).text(ROWS[0][0] + ":00Z");
+  sv.append("text").attr("x", w - 14).attr("y", h - 4).attr("text-anchor", "end").text(ROWS[ROWS.length - 1][0] + ":00Z");
   var area = sv.append("path").attr("class", "spa"), line = sv.append("path").attr("class", "spl"), head = sv.append("circle").attr("class", "head").attr("r", 0);
   var A = d3.area().x(function(p){ return p[0]; }).y0(y(0)).y1(function(p){ return p[1]; }).curve(d3.curveMonotoneX);
   var L = d3.line().x(function(p){ return p[0]; }).y(function(p){ return p[1]; }).curve(d3.curveMonotoneX);
@@ -1253,7 +1275,7 @@ function spark(){
     peak:function(){
       var px = x(PEAK), py = y(FLEET[PEAK]);
       sv.append("circle").attr("class", "head").attr("cx", px).attr("cy", py).attr("r", 6);
-      var t = sv.append("text").attr("class", "pk").attr("x", px).attr("y", py - 12).attr("text-anchor", "middle").text("peak " + FLEET[PEAK].toFixed(1)).style("opacity", 0);
+      var t = sv.append("text").attr("class", "pk").attr("x", px).attr("y", py - 12).attr("text-anchor", px < 70 ? "start" : px > w - 70 ? "end" : "middle").text("peak " + FLEET[PEAK].toFixed(1)).style("opacity", 0);
       t.transition().duration(500).style("opacity", 1);
     }
   };
@@ -1268,7 +1290,7 @@ function graphBase(keepRoute){
 
 /* ---------- player ---------- */
 var pane = $("#stagePane"), chips = $("#chips"), playBtn = $("#playBtn"), prevBtn = $("#prevBtn"), nextBtn = $("#nextBtn"), progBar = $("#progBar");
-var cur = 0, playing = false, tStart = 0, raf = 0, swapTok = 0, idleAt = null, ended = false, speed = 1;
+var cur = 0, playing = false, tStart = 0, raf = 0, swapTok = 0, idleAt = null, ended = false, speed = 1.5;
 var HOLD = [2400, 2400, 2600, 2600, 2400, 5200, 4200];   /* reading time once a stage's animation ends, ms at 1x */
 STAGES.forEach(function(s, i){
   var li = document.createElement("li");
@@ -1286,6 +1308,7 @@ function go(i){
   tStart = VC.now(); idleAt = null; ended = false; progBar.style.width = "0";
   try { history.replaceState(null, "", "#s=" + (cur + 1)); } catch (e) {}
   $("#live").textContent = s.title;
+  document.querySelector(".stage-grid").classList.toggle("wide", s.chip === "Results");
   /* a second click inside the 180 ms fade: drop the half-faded content at once */
   if (old && old._leaving){ pane.innerHTML = ""; old = null; }
   function render(){

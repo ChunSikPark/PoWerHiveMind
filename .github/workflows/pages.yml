@@ -28,6 +28,7 @@ jobs:
         run: |
           mkdir -p _site/demos
           cp site/index.html site/validation.html site/logo.svg site/v05-thermal-map.png site/install.html site/demo-design.html site/demo-has-page.html site/demo-new-page.html _site/
+          cp -r site/thumbs _site/thumbs
           cp -r assets _site/assets
           cp docs/agents/pages/*.html _site/demos/
           python3 site/build_data.py _site/data.json

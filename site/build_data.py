@@ -85,8 +85,12 @@ def graph():
         text = (ROOT / p).read_text(encoding="utf-8")
         added = git("log", "--diff-filter=A", "--follow", "--format=%as", "--", p).split()
         top = p.split("/")[0]
+        front = text.split("\n---", 1)[0] if text.startswith("---") else ""
+        topic = re.search(r"^topic:\s*(\S+)", front, re.M)
         nodes.append({"id": p, "title": title_of(text, Path(p).stem),
                       "group": top if top in GROUPS else "agents",
+                      # the page's `topic:` field, the same one index.md's "Browse by topic" groups on
+                      "topic": topic.group(1) if topic else "agents",
                       "added": added[-1] if added else date.today().isoformat()})
         for target in LINK.findall(text):
             t = posixpath.normpath(posixpath.join(posixpath.dirname(p), target))
