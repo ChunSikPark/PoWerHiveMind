@@ -12,7 +12,7 @@
 <style>
 :root{
   --bg:#F2F5F3; --surface:#FFFFFF; --sunk:#E6ECE9; --ink:#18201D; --muted:#56635E; --rule:#CBD3CF;
-  --live:#C4302B; --live-bg:#F8E3E0; --open:#2C7A4B;
+  --live:#C4302B; --open:#2C7A4B;
   --kit:#0B7A6C; --web:#9AA6A1; --eng:#A8650A;
   --cond:"IBM Plex Sans Condensed","Arial Narrow",sans-serif;
   --sans:"IBM Plex Sans",system-ui,sans-serif;
@@ -22,14 +22,14 @@
   :root:not([data-theme="light"]){
     color-scheme:dark;
     --bg:#101513; --surface:#19201D; --sunk:#202825; --ink:#E2E8E5; --muted:#9AA6A1; --rule:#34403B;
-    --live:#F2665B; --live-bg:#3B1E1B; --open:#6CCB8E;
+    --live:#F2665B; --open:#6CCB8E;
     --kit:#4CC3AE; --web:#5E6B66; --eng:#E3A449;
   }
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
   --bg:#101513; --surface:#19201D; --sunk:#202825; --ink:#E2E8E5; --muted:#9AA6A1; --rule:#34403B;
-  --live:#F2665B; --live-bg:#3B1E1B; --open:#6CCB8E;
+  --live:#F2665B; --open:#6CCB8E;
   --kit:#4CC3AE; --web:#5E6B66; --eng:#E3A449;
 }
 *{box-sizing:border-box;}
@@ -67,6 +67,8 @@ code{font:400 .9em/1.4 var(--mono);background:var(--sunk);padding:1px 5px;border
 .btn:hover{color:var(--kit);border-color:var(--kit);}
 .stat{margin:36px 0 0;padding-left:16px;border-left:3px solid var(--kit);font-size:19px;line-height:1.5;color:var(--muted);max-width:36em;}
 .stat b{color:var(--ink);font-weight:600;}
+.stat a{text-decoration:none;}
+.stat a:hover b{color:var(--kit);}
 .grow{margin:0;background:var(--surface);border:1.5px solid var(--rule);border-radius:4px;display:grid;grid-template-columns:minmax(0,1fr);min-width:0;}
 @media (min-width:821px){.grow{grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);}.grow figcaption{border-top:0 !important;border-left:1.5px solid var(--rule);align-content:center;padding:28px !important;gap:14px !important;}}
 .grow[hidden]{display:none;}
@@ -88,9 +90,8 @@ code{font:400 .9em/1.4 var(--mono);background:var(--sunk);padding:1px 5px;border
 @media (max-width:820px){#graph{height:320px;}}
 
 
-/* the open section */
-.panel{margin:40px 0 clamp(64px,9vw,128px);border-left:4px solid var(--live);background:var(--surface);border-radius:0 4px 4px 0;padding:clamp(28px,4.5vw,64px) clamp(20px,5vw,72px) clamp(32px,5vw,72px);}
-.panel[hidden]{display:none;}
+/* the content sections */
+.panel{margin:0 0 clamp(72px,9vw,120px);border:1px solid var(--rule);background:var(--surface);border-radius:20px;padding:clamp(26px,4.5vw,60px);}
 .panel h2{font:700 clamp(36px,4.6vw,60px)/1.05 var(--cond);letter-spacing:-.01em;margin:0 0 16px;}
 .panel .sub{margin:0 0 clamp(32px,4vw,48px);color:var(--muted);font-size:clamp(19px,1.6vw,21px);line-height:1.55;max-width:38em;}
 .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:56px;align-items:start;}
@@ -123,23 +124,6 @@ figcaption{font-size:15px;color:var(--muted);margin-top:10px;}
 .req{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:10px;font-size:16px;}
 .req li{padding-left:16px;border-left:2px solid var(--rule);}
 
-/* agents */
-.roster{display:grid;gap:0;border-top:1.5px solid var(--rule);}
-.roster button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;text-align:left;padding:14px 4px;border:0;border-bottom:1.5px solid var(--rule);background:none;color:var(--ink);font:inherit;cursor:pointer;}
-.roster button b{font:600 18px/1.2 var(--cond);}
-.roster button i{font-style:normal;font-size:15px;color:var(--muted);grid-column:1/-1;}
-.roster button[aria-pressed="true"]{background:var(--sunk);}
-.roster button[aria-pressed="true"] b{color:var(--live);}
-.pill{font:600 14px/1 var(--sans);padding:4px 8px;border-radius:99px;border:1.5px solid var(--muted);color:var(--muted);align-self:center;white-space:nowrap;}
-.pill.live{border-color:var(--open);color:var(--open);}
-.pill.plan{border-style:dashed;}
-.shows{display:grid;gap:14px;}
-.show{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;align-items:start;}
-.show svg{width:26px;height:26px;stroke:var(--kit);fill:none;stroke-width:1.6;margin-top:2px;}
-.show p{margin:0;font-size:16px;}
-.show b{display:block;font:600 17px/1.3 var(--cond);}
-.demo-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}
-
 /* see it work */
 .pairs{display:grid;gap:14px;margin:0 0 20px;}
 .pair{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:18px;padding-bottom:14px;border-bottom:1.5px solid var(--rule);}
@@ -152,9 +136,7 @@ figcaption{font-size:15px;color:var(--muted);margin-top:10px;}
 .demos b{display:block;font:600 20px/1.3 var(--cond);}
 .demos span{font-size:16px;color:var(--muted);}
 
-/* benchmark */
-.bars{display:grid;gap:26px;}
-.bar-group h3{margin-bottom:10px;}
+/* bar rows, used by the proof */
 .bar-row{display:grid;grid-template-columns:120px minmax(0,1fr) 80px;align-items:center;gap:12px;margin-bottom:8px;font-size:15px;}
 .track{height:22px;background:var(--sunk);border-radius:3px;overflow:hidden;}
 .fill{height:100%;border-radius:3px;}
@@ -173,134 +155,6 @@ figcaption{font-size:15px;color:var(--muted);margin-top:10px;}
 .seq b{font:600 22px/1.3 var(--cond);display:block;margin:2px 0 4px;}
 .seq span{font-size:17px;line-height:1.55;color:var(--muted);}
 
-/* install */
-.cmd{display:flex;align-items:stretch;background:var(--sunk);border-radius:4px;min-width:0;margin:0 0 8px;}
-.cmd pre{margin:0;padding:14px 16px;font:400 16px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;flex:1;min-width:0;}
-.cmd button{flex-shrink:0;border:0;border-left:1px solid var(--rule);background:none;color:var(--muted);font:600 15px/1 var(--sans);padding:0 14px;cursor:pointer;}
-.cmd button:hover{color:var(--kit);}
-.novice{list-style:none;counter-reset:s;margin:0;padding:0;display:grid;gap:0;}
-.novice .cmd,.novice .shot{max-width:820px;}
-.novice > li{counter-increment:s;position:relative;padding:0 0 40px 64px;min-width:0;}
-.novice > li::before{content:counter(s);position:absolute;left:0;top:0;width:42px;height:42px;border-radius:50%;background:var(--ink);color:var(--bg);font:700 22px/42px var(--cond);text-align:center;}
-.novice > li::after{content:"";position:absolute;left:20px;top:48px;bottom:6px;width:2px;background:var(--rule);}
-.novice > li:last-child::after{display:none;}
-.novice h3{font:700 28px/1.2 var(--cond);margin:4px 0 10px;}
-.novice p{max-width:40em;}
-.novice .then{margin:12px 0 6px;font-size:16px;}
-.novice .acts{display:flex;flex-wrap:wrap;gap:10px;}
-.novice .shot{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,300px);gap:24px;align-items:start;}
-.novice .shot img{width:100%;border:1.5px solid var(--rule);border-radius:4px;}
-@media (max-width:760px){.novice .shot{grid-template-columns:1fr;}.novice > li{padding-left:52px;}}
-.stuck{margin:4px 0 0 60px;font-size:16px;color:var(--muted);}
-.other-h{margin-top:40px !important;padding-top:28px;border-top:1.5px solid var(--rule);}
-.inst-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start;}
-.inst{border:1.5px solid var(--rule);border-radius:4px;padding:18px;background:var(--bg);min-width:0;}
-.inst h4{font:700 24px/1.2 var(--cond);margin:0 0 4px;}
-.inst .for{color:var(--muted);font-size:15px;margin:0 0 8px;}
-.inst .do{font-size:16px;margin:10px 0 0;}
-@media (max-width:960px){.inst-grid{grid-template-columns:1fr;}}
-
-/* find */
-.qpick{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px;}
-.qpick button{font:500 16px/1.35 var(--sans);text-align:left;padding:10px 14px;border-radius:4px;border:1.5px solid var(--rule);background:var(--surface);color:var(--ink);cursor:pointer;}
-.qpick button:hover{border-color:var(--ink);}
-.qpick button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);}
-.find-cols{max-width:900px;}
-.ladder{list-style:none;counter-reset:s;margin:0;padding:0;display:grid;gap:32px;}
-.ladder > li{counter-increment:s;position:relative;padding-left:44px;opacity:.22;transition:opacity .35s;min-width:0;}
-.ladder > li.on{opacity:1;}
-.ladder > li::before{content:counter(s);position:absolute;left:0;top:-2px;font:700 17px/30px var(--cond);text-align:center;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--ink);}
-.ladder > li.on::before{background:var(--ink);color:var(--bg);}
-.ladder > li > b{display:block;font:600 24px/1.3 var(--cond);margin-bottom:8px;}
-.ladder p{font-size:16px;margin:0 0 10px;}
-.terms{display:grid;gap:8px;}
-.terms .tk{display:inline-block;width:150px;font-size:14px;color:var(--muted);}
-.chip{display:inline-block;margin:0 6px 4px 0;padding:4px 11px;border-radius:99px;background:var(--sunk);font-size:15px;}
-.chip.id{font:500 14px/1.5 var(--mono);background:var(--surface);border:1.5px solid var(--kit);}
-.rank-wrap{overflow-x:auto;}
-.rank{border-collapse:collapse;font-size:14.5px;width:100%;}
-.rank th{font-weight:500;color:var(--muted);text-align:center;padding:6px 8px;border-bottom:1.5px solid var(--rule);font-size:14px;}
-.rank th:first-child,.rank td:first-child{text-align:left;}
-.rank td{padding:7px 8px;border-bottom:1px solid var(--rule);text-align:center;white-space:nowrap;}
-.rank td:first-child{font:400 14px/1.4 var(--mono);white-space:normal;word-break:break-word;}
-.rank td:first-child span{color:var(--muted);}
-.rank td a{text-decoration:none;}
-.rank td.h{font-weight:600;}
-.rank td.z{color:var(--muted);}
-.rank tr.lead{background:var(--live-bg);}
-.rank tr.lead td:first-child{border-left:3px solid var(--live);}
-.abs{margin:0;padding:14px 16px;background:var(--sunk);border-radius:4px;font-size:16px;line-height:1.6;}
-.abs cite{display:block;font:500 14px/1.4 var(--mono);font-style:normal;margin-bottom:6px;}
-.ans{border-left:3px solid var(--kit);padding:4px 0 4px 16px;font-size:17px;}
-.ans p{margin:0 0 8px;}
-.ans .src{font-size:15px;color:var(--muted);margin-top:8px;}
-.why-line{margin:28px 0 0 !important;padding-top:16px;border-top:1.5px solid var(--rule);font-size:16px;color:var(--muted);max-width:none !important;}
-
-/* status line preview: always a dark terminal, whatever the page theme */
-.term{margin:14px 0 4px;}
-.term-pick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
-.term-pick button{font:600 15px/1 var(--sans);padding:8px 12px;border-radius:4px;border:1.5px solid var(--rule);background:var(--surface);color:var(--ink);cursor:pointer;}
-.term-pick button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);}
-.term-win{background:#0E1311;color:#D8DEDB;border-radius:6px;padding:14px 14px;font:400 14px/1.7 var(--mono);overflow-x:auto;white-space:nowrap;}
-.term-prompt{color:#D8DEDB;padding-bottom:8px;margin-bottom:6px;border-bottom:1px solid #2A3330;}
-.term-win i{font-style:normal;}
-.term-win b{font-weight:700;color:#F2F5F3;}
-.term-win .d{color:#7E8A85;}
-.term-win .c{color:#4FC6D9;}
-.term-win .g{color:#5BCB7F;}
-.term-win .y{color:#F2C14E;}
-.term figcaption{font-size:15px;}
-
-/* agent player */
-.agents-cols{grid-template-columns:minmax(0,.8fr) minmax(0,1.45fr);}
-.roster-note{font-size:15px;color:var(--muted);margin-top:14px;}
-.roster button{grid-template-columns:minmax(0,1fr) auto;}
-.player{border:1.5px solid var(--ink);border-radius:4px;background:var(--bg);display:flex;flex-direction:column;min-width:0;}
-.player-head{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:12px 16px;border-bottom:1.5px solid var(--rule);}
-.player-head b{font:600 19px/1.2 var(--cond);}
-.player-head span{font-size:15px;color:var(--muted);}
-.player-head button{margin-left:auto;font:600 14px/1 var(--sans);padding:7px 12px;border:1.5px solid var(--rule);border-radius:4px;background:none;color:var(--ink);cursor:pointer;}
-.chat{padding:16px;display:grid;gap:10px;min-height:440px;align-content:start;}
-.m{opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s;min-width:0;}
-.m.in{opacity:1;transform:none;}
-.m.you{justify-self:end;max-width:85%;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px 12px 2px 12px;font-size:16px;}
-.m.tool{display:grid;grid-template-columns:16px minmax(0,1fr);font:400 14px/1.5 var(--mono);color:var(--muted);}
-.m.tool .p{color:var(--kit);font-weight:600;}
-.m.tool .res{color:var(--ink);}
-.m.tool pre{margin:6px 0 0;padding:8px 10px;background:var(--sunk);border-radius:3px;font-size:13.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--ink);}
-.m.note{font-size:15px;color:var(--muted);font-style:italic;padding-left:14px;}
-.m.agent{background:var(--surface);border-left:3px solid var(--kit);padding:12px 14px;border-radius:0 4px 4px 0;font-size:16px;}
-.m.agent p{margin:0 0 8px;}
-.m.agent p:last-child{margin:0;}
-.m.agent pre{margin:0 0 8px;font:400 14px/1.6 var(--mono);white-space:pre-wrap;word-break:break-word;}
-.m.agent table{border-collapse:collapse;font-size:14.5px;margin:6px 0 10px;width:100%;}
-.m.agent th,.m.agent td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--rule);}
-.m.agent th{color:var(--muted);font-weight:500;}
-.pplan{max-width:none !important;margin:0;padding:10px 16px;border-bottom:1.5px solid var(--rule);background:var(--sunk);box-shadow:inset 3px 0 0 var(--eng);font:600 15px/1.4 var(--sans);color:var(--ink);}
-.pplan[hidden]{display:none;}
-.pnote{max-width:none !important;margin:0;padding:10px 16px;border-top:1.5px solid var(--rule);font-size:14px;color:var(--muted);}
-.lane-scroll{overflow-x:auto;margin:6px 0 10px;}
-.lane-scroll svg{min-width:480px;}
-.showcase{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:0 0 44px;}
-.sc{display:flex;flex-direction:column;border:1.5px solid var(--rule);border-radius:4px;background:var(--bg);overflow:hidden;min-width:0;}
-.sc-view{display:block;position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--sunk);border-bottom:1.5px solid var(--rule);}
-.sc-view iframe{position:absolute;left:0;top:0;width:400%;height:400%;border:0;transform:scale(.25);transform-origin:0 0;pointer-events:none;}
-.sc-view:hover{outline:2px solid var(--kit);outline-offset:-2px;}
-.sc-lane{display:flex;align-items:center;padding:10px;}
-.sc-lane .lane-scroll{margin:0;overflow:hidden;width:100%;}
-.sc-lane .lane-scroll svg{min-width:0;}
-.sc-body{padding:22px 24px 24px;display:flex;flex-direction:column;gap:6px;flex:1;}
-.sc-body h3{font:700 28px/1.15 var(--cond);margin:0;}
-.sc-body p{margin:0;font-size:17px;}
-.sc-who{color:var(--muted);font-size:14.5px !important;}
-.sc-who b{color:var(--kit);font-weight:600;}
-.sc-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:12px;}
-.sc-acts .btn{padding:10px 15px;font-size:15px;}
-.team-h{font:700 30px/1.2 var(--cond) !important;margin:0 0 14px !important;}
-@media (max-width:960px){.showcase{grid-template-columns:1fr;}}
-@media (max-width:860px){.agents-cols{grid-template-columns:1fr;}.chat{min-height:0;}}
-@media (prefers-reduced-motion: reduce){.m{opacity:1;transform:none;}.ladder > li{opacity:1;}}
-
 footer{border-top:1.5px solid var(--rule);padding:40px 0 64px;color:var(--muted);font-size:16px;line-height:1.6;}
 footer p{margin:0 0 8px;max-width:72ch;}
 
@@ -308,21 +162,21 @@ footer p{margin:0 0 8px;max-width:72ch;}
 :root{
   --ink-2:#36423D; --r:12px; --kicker:#065A50;
   --kit-2:#4C9A2A; --btn-a:#0B7A6C; --btn-b:#2C7A4B; --on-kit:#FFFFFF;
-  --glow:rgba(11,122,108,.30); --live-glow:rgba(196,48,43,.30);
+  --glow:rgba(11,122,108,.30);
   --card-shadow:0 1px 2px rgba(20,32,27,.05),0 10px 30px -16px rgba(20,32,27,.22);
   --sky-a:.055; --sky-glow:rgba(11,122,108,.13); --sky-warm:rgba(168,101,10,.08);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --ink-2:#BCC6C1; --kit-2:#B5E48C; --kicker:#4CC3AE; --btn-a:#4CC3AE; --btn-b:#6CCB8E; --on-kit:#06110E;
-    --glow:rgba(76,195,174,.38); --live-glow:rgba(242,102,91,.38);
+    --glow:rgba(76,195,174,.38);
     --card-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 18px 40px -22px rgba(0,0,0,.75);
     --sky-a:.065; --sky-glow:rgba(76,195,174,.20); --sky-warm:rgba(227,164,73,.10);
   }
 }
 :root[data-theme="dark"]{
   --ink-2:#BCC6C1; --kit-2:#B5E48C; --kicker:#4CC3AE; --btn-a:#4CC3AE; --btn-b:#6CCB8E; --on-kit:#06110E;
-  --glow:rgba(76,195,174,.38); --live-glow:rgba(242,102,91,.38);
+  --glow:rgba(76,195,174,.38);
   --card-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 18px 40px -22px rgba(0,0,0,.75);
   --sky-a:.065; --sky-glow:rgba(76,195,174,.20); --sky-warm:rgba(227,164,73,.10);
 }
@@ -379,7 +233,7 @@ body{position:relative;}
 .btn.primary:hover{box-shadow:0 18px 44px -12px var(--glow),0 0 0 1px var(--btn-a);}
 .btn.primary small{opacity:.9;}
 
-/* the animated walkthroughs, embedded */
+/* the animated walkthroughs: a poster that opens each one */
 .walk{margin:0 0 clamp(72px,9vw,120px);}
 .walk h2{font:700 clamp(36px,4.6vw,60px)/1.05 var(--cond);letter-spacing:-.01em;margin:0 0 14px;}
 .walk-intro{font-size:18px;line-height:1.55;color:var(--ink-2);max-width:46em;margin:0 0 20px;}
@@ -395,21 +249,13 @@ body{position:relative;}
   box-shadow:0 0 0 4px color-mix(in srgb,var(--kit) 22%,transparent);}
 .demo-tabs button[aria-pressed="true"] b{color:var(--kit);}
 .demo-tabs button:focus-visible{outline:3px solid var(--kit);outline-offset:3px;}
-.walk-full{align-self:flex-end;}
 @media (max-width:640px){.demo-tabs{grid-template-columns:1fr;}}
-.walk-full{font-size:17px;font-weight:600;color:var(--kit);text-decoration:none;}
-.walk-full:hover{text-decoration:underline;}
-/* the demo pages are dark whatever the page theme, so the frame is too */
-.walk-frame{display:block;width:100%;height:1800px;border:1px solid var(--rule);border-radius:16px;background:#101513;
-  box-shadow:0 50px 100px -50px var(--glow),0 30px 60px -40px rgba(0,0,0,.35);}
-.walk-poster{display:none;text-decoration:none;color:var(--ink);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;background:var(--surface);box-shadow:var(--card-shadow);}
+.walk-poster{display:block;max-width:880px;text-decoration:none;color:var(--ink);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;background:var(--surface);box-shadow:var(--card-shadow);}
 .walk-poster img{display:block;width:100%;height:auto;aspect-ratio:16/10;}
 .walk-poster > span{display:block;padding:14px 18px;font-size:17px;font-weight:600;color:var(--kit);}
-/* phones: a poster that opens the full page, not a squashed frame */
-@media (max-width:760px){.walk-frame{display:none;}.walk-poster{display:block;}}
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 
-/* how it works: two numbered cards, each with a large thumbnail of the page it opens */
+/* link cards, each with a large thumbnail of the page it opens */
 .steps{margin:0 0 clamp(72px,9vw,120px);}
 .steps ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;}
 .steps a{display:flex;flex-direction:column;height:100%;overflow:hidden;border-radius:var(--r);border:1px solid var(--rule);
@@ -419,14 +265,15 @@ body{position:relative;}
 .steps .thumb img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .4s;}
 .steps a:hover .thumb img{transform:scale(1.03);}
 .steps .body{display:flex;flex-direction:column;gap:10px;flex:1;padding:clamp(20px,2.4vw,30px) clamp(20px,2.6vw,32px) clamp(22px,2.6vw,32px);}
-.steps .num{font:700 clamp(48px,5vw,64px)/1 var(--cond);letter-spacing:-.02em;margin-bottom:4px;background:linear-gradient(120deg,var(--kit),var(--kit-2));
-  -webkit-background-clip:text;background-clip:text;color:transparent;align-self:flex-start;}
 .steps b{font:600 clamp(26px,2.4vw,32px)/1.15 var(--cond);}
 .steps .say{font-size:18px;line-height:1.5;color:var(--ink-2);max-width:34em;}
 .steps .open{margin-top:auto;padding-top:8px;font-size:18px;font-weight:600;color:var(--kit);}
 .steps .open i{display:inline-block;font-style:normal;transition:transform .2s;}
 .steps a:hover .open i{transform:translateX(4px);}
 @media (max-width:640px){.steps ol{grid-template-columns:1fr;gap:18px;}.steps .say,.steps .open{font-size:17px;}}
+.steps.lead ol{grid-template-columns:1fr;}
+.panel .steps.lead{margin:0 0 clamp(28px,4vw,44px);}
+@media (min-width:761px){.steps.lead a{flex-direction:row;}.steps.lead .thumb{flex:0 0 48%;border-bottom:0;border-right:1px solid var(--rule);}.steps.lead .body{justify-content:center;}}
 
 /* proof */
 .proof{margin:0 0 clamp(72px,9vw,120px);padding:clamp(26px,4.5vw,60px);border-radius:20px;border:1px solid var(--rule);
@@ -447,7 +294,6 @@ body{position:relative;}
 .duel-2 .bar-row{font-size:16px;}
 .proof .more{margin-top:20px;font-size:17px;}
 .side-note{margin:12px 0 0;font-size:17px;line-height:1.5;color:var(--ink-2);}
-.proof-old{margin:24px 0 0;padding-top:18px;border-top:1px solid var(--rule);font-size:17px;line-height:1.5;color:var(--muted);max-width:52em;}
 @media (max-width:640px){.duel{grid-template-columns:1fr;}}
 
 /* graph band */
@@ -462,27 +308,18 @@ body{position:relative;}
 .grow-head span,.legend,.gtip{color:var(--ink-2);}
 .legend{font-size:16px;}
 .gtip{font-size:17px;line-height:1.5;}
-.grow-head button,.term-pick button,.route-pick button,.qpick button,.player-head button{border-radius:8px;}
+.grow-head button,.route-pick button{border-radius:8px;}
 
-/* open section and inner cards */
-.panel{border-radius:0 18px 18px 0;box-shadow:var(--card-shadow);}
-.sc,.inst,.demos a,.player{border-radius:var(--r);transition:transform .2s,border-color .2s,box-shadow .2s;}
-.sc,.inst,.demos a{border-width:1px;}
-.sc:hover,.demos a:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--kit) 55%,var(--rule));box-shadow:0 18px 40px -22px var(--glow);}
-.cmd,.check,.abs{border-radius:10px;}
+/* sections and inner cards */
+.panel{box-shadow:var(--card-shadow);}
+.demos a{border-radius:var(--r);border-width:1px;transition:transform .2s,border-color .2s,box-shadow .2s;}
+.demos a:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--kit) 55%,var(--rule));box-shadow:0 18px 40px -22px var(--glow);}
+.check{border-radius:10px;}
 .prompts q{border-radius:0 10px 10px 0;}
-.player{box-shadow:var(--card-shadow);}
-.roster{gap:8px;border-top:0;}
-.roster button{border:1px solid var(--rule);border-radius:10px;padding:14px 16px;background:var(--surface);transition:transform .2s,border-color .2s,box-shadow .2s;}
-.roster button:hover{transform:translateX(3px);border-color:color-mix(in srgb,var(--kit) 55%,var(--rule));}
-.roster button[aria-pressed="true"]{background:var(--surface);border-color:var(--live);box-shadow:inset 3px 0 0 var(--live),0 14px 32px -20px var(--live-glow);}
-.roster button i{color:var(--ink-2);}
-.roster-note{font-size:16px;color:var(--ink-2);}
 
 /* small text, bumped */
 .seq span{font-size:17.5px;color:var(--ink-2);}
 footer{font-size:17px;color:var(--ink-2);}
-.sc-who{font-size:15.5px !important;color:var(--ink-2);}
 </style>
 </head>
 <body>
@@ -492,7 +329,7 @@ footer{font-size:17px;color:var(--ink-2);}
 <header class="topbar">
   <div class="wrap top">
     <a class="brand" href="#"><img src="logo.svg" alt=""> PowerWorldHiveMind</a>
-    <nav><a href="validation.html">Validation</a><a href="install.html">Install</a><a href="demo-has-page.html">How it works</a><a href="demo-design.html">Demo</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/CHANGELOG.md">Changelog</a></nav>
+    <nav><a href="demo-design.html">Demo</a><a href="validation.html">Benchmark</a><a href="install.html">Install</a><a href="#add">Contribute</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/CHANGELOG.md">Changelog</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a></nav>
   </div>
 </header>
 
@@ -504,46 +341,39 @@ footer{font-size:17px;color:var(--ink-2);}
     <p class="lede">Your agent reads PowerWorldHiveMind before it touches PowerWorld Simulator, so it knows the calls that report success and change nothing. Stop babysitting it, and stop being the documentation.</p>
     <p class="who">Built for Claude Code. Codex, Cursor, Windsurf and Copilot read its AGENTS.md, and Gemini CLI reads a copy, GEMINI.md: checked against their docs, not tested on each one. You need Windows, PowerWorld Simulator and its SimAuto add-on.</p>
     <div class="cta">
-      <a class="btn primary" href="#install" data-open="install">Install <small>about 15 min</small></a>
-      <a class="btn" href="https://github.com/ChunSikPark/PowerWorldHiveMind">View on GitHub</a>
+      <a class="btn primary" href="install.html">Install <small>about 15 min</small></a>
+      <a class="btn" href="demo-design.html">Watch it design</a>
     </div>
-    <p class="stat"><b>30 of 30</b> real PowerWorld study requests solved by a fresh agent with the kit, against <b>20</b> for the previous version, graded against an answer key.</p>
+    <p class="stat"><a href="validation.html"><b>30 of 30</b> real PowerWorld study requests solved by a fresh agent with the kit, against <b>20</b> for the previous version, graded against an answer key.</a></p>
   </section>
 
-  <section class="graph-band">
-    <figure class="grow" id="grow">
-      <svg id="graph" role="img" aria-label="The kit's pages as a graph, linked pages joined by a line, growing in the order the pages were written."></svg>
-      <figcaption>
-        <div class="grow-head"><b id="gCount">The kit, as a graph</b><span id="gDate"></span><button type="button" id="gReplay">Replay</button></div>
-        <div class="legend" id="gLegend"></div>
-        <div class="gtip" id="gTip">Every page is a dot and every link a line. Click a dot to read the page.</div>
-      </figcaption>
-    </figure>
-  </section>
-
-  <section class="walk" id="demo" aria-labelledby="walk-h">
-    <h2 id="walk-h">Watch it work</h2>
-    <p class="walk-intro">The agent never reads the whole kit. It turns your question into search terms, reads only the pages that match, and says so when no page covers it. Two illustrated walkthroughs, built on real pages and searches.</p>
-    <div class="walk-bar">
-      <div class="demo-tabs" role="group" aria-label="Pick a walkthrough">
-        <button type="button" aria-pressed="true" data-walk="has-page"><b>When the knowledge exists</b><span>It finds the pages that cover your question and follows them.</span></button>
-        <button type="button" aria-pressed="false" data-walk="new-page"><b>When no knowledge exists</b><span>It says so, works it out, and writes it down for next time.</span></button>
-      </div>
-      <a class="walk-full" id="walkFull" href="demo-has-page.html">Open full screen <span aria-hidden="true">→</span></a>
-    </div>
-    <iframe class="walk-frame" id="walkFrame" title="Walkthrough: when the page exists" loading="lazy"></iframe>
-    <a class="walk-poster" id="walkPoster" href="demo-has-page.html"><img src="thumbs/has-page.webp" width="1200" height="750" loading="lazy" alt="A walkthrough at step 6: the time-step result table, and the graph of the kit's pages with the five pages the agent read circled in order."><span>Open the walkthrough <span aria-hidden="true">→</span></span></a>
-  </section>
-
-  <section class="steps" aria-label="How it works">
-    <ol>
-      <li><a href="install.html">
-        <span class="thumb"><img src="thumbs/install.webp" width="800" height="500" loading="lazy" alt="The Install page, headed Let Claude install it for you: step 1 gets the Claude app, step 2 copies one setup request to paste into it."></span>
-        <span class="body"><span class="num" aria-hidden="true">01</span><b>Install</b><span class="say">About 15 minutes, no coding. Three downloads and one sentence.</span><span class="open">Open the guide <i aria-hidden="true">→</i></span></span></a></li>
+  <section class="panel" id="work">
+    <h2>It runs the whole study</h2>
+    <p class="sub">Most tooling answers "which branches are overloaded" and stops. The useful work comes after that readout.</p>
+    <div class="steps lead"><ol>
       <li><a href="demo-design.html">
         <span class="thumb"><img src="thumbs/design-replay.webp" width="800" height="500" loading="lazy" alt="A finished run on a dark network map: both 1,000 MW data-center buses served by new 230 kV circuits, at a stated price of $518.96M."></span>
-        <span class="body"><span class="num" aria-hidden="true">02</span><b>Watch it design</b><span class="say">A fresh agent designs transmission for two new 1,000 MW loads in AC power flow with N-1. A recorded run, replayed on the map.</span><span class="open">Watch the replay <i aria-hidden="true">→</i></span></span></a></li>
-    </ol>
+        <span class="body"><b>Watch it design</b><span class="say">A fresh agent designs transmission for two new 1,000 MW loads in AC power flow with N-1. A recorded run, replayed on the map.</span><span class="open">Watch the replay <i aria-hidden="true">→</i></span></span></a></li>
+    </ol></div>
+    <div class="cols">
+      <div>
+        <div class="pairs">
+          <div class="pair"><div class="no">12 N-1 violations</div><div class="yes">All 12 come from one corridor, four parallel 69 kV circuits between bus 19 and 23. Losing any one overloads the other three.</div></div>
+          <div class="pair"><div class="no">Here are the loadings</div><div class="yes">Build 19→23 and violations go 12 → 2. Do not build 27→29. I tested it, and it makes N-1 worse.</div></div>
+          <div class="pair"><div class="no">The 2024 case has more branches</div><div class="yes">The plan adds 691 branches and 199 generators, retires nothing, and none of it is a renumbering artifact. I checked.</div></div>
+          <div class="pair"><div class="no">The case has renewables</div><div class="yes">9 of 45 units carry PFW models, so this case can run a weather study. Here is the hourly output.</div></div>
+        </div>
+        <p>In the remediation demo, two of five plausible fixes made the system worse, including the one an engineer would pick first. You only find that out by measuring.</p>
+      </div>
+      <ul class="demos">
+        <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/violation-remediation.md"><b>Violation remediation</b><span>Trace 12 N-1 violations to one cause, test five fixes, rank them</span></a></li>
+        <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/comparing-planning-cases.md"><b>Comparing planning cases</b><span>Diff a 2016 and a 2024 case, and the trap that makes the naive answer 87% wrong</span></a></li>
+        <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/adding-a-device.md"><b>Adding a device</b><span>Three attempts that reported success and created nothing, then the fix</span></a></li>
+        <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/power-flow-and-sensitivities.md"><b>Power flow and sensitivities</b><span>AC, DC, LODF, PTDF, and the 1e8 sentinel</span></a></li>
+        <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/contingency-and-aux.md"><b>Contingency and aux</b><span>N-1 from scratch, then a generated contingency file</span></a></li>
+        <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/timestep-and-pfw.md"><b>Weather to megawatts</b><span>PFW models, TimeStep, and why zero output is usually a setup bug</span></a></li>
+      </ul>
+    </div>
   </section>
 
   <section class="proof" id="proof">
@@ -558,315 +388,117 @@ footer{font-size:17px;color:var(--ink-2);}
       <div class="bar-row"><span>v0.4</span><div class="track"><div class="fill web" data-w="100" style="width:100%"></div></div><span class="n">12.5</span></div>
       <p class="side-note">Cost per request: $1.11 for v0.5, at least $1.27 for v0.4.</p></div>
     <a class="more" href="validation.html">All 30 requests, the answer key and every grade</a>
-    <p class="proof-old">Earlier test: on 23 PowerWorld questions, the kit got 22 right and the same model searching the web got 13, marked blind. <a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/BENCHMARK.md">BENCHMARK.md</a></p>
   </section>
 
-
-  <main id="panel" class="panel" tabindex="-1" hidden>
-
-    <!-- INSTALL -->
-    <section data-panel="install" hidden>
-      <h2>Install</h2>
-      <p class="sub">About fifteen minutes, and no coding. Three downloads, a few clicks, and one sentence pasted into a chat box. You need PowerWorld Simulator on this Windows computer already.</p>
-      <ol class="novice">
-        <li>
-          <h3>Get the Claude app</h3>
-          <p>Download it, open the file it saves, and sign in. You need a paid plan (Pro or above), because the free plan doesn't include the Code tab. Install Git too, clicking through with every default. Claude uses it to fetch the kit.</p>
-          <div class="acts"><a class="btn primary" href="https://claude.com/download">Download Claude</a><a class="btn" href="https://git-scm.com/downloads/win">Download Git</a></div>
-        </li>
-        <li>
-          <h3>Get Python</h3>
-          <p>Run the installer, and <b>on its first screen, tick "Add Python to PATH"</b> before you click Install. The box is off by default, and missing it is the most common way this goes wrong.</p>
-          <div class="acts"><a class="btn" href="https://www.python.org/downloads/">Download Python</a></div>
-        </li>
-        <li class="shot">
-          <div>
-            <h3>Open the Code tab</h3>
-            <p>In Claude, click <b>Code</b> at the top left. The Chat tab can't see your files. Code can, and it's where everything below happens.</p>
-          </div>
-          <img src="assets/desktop-code-toggle.png" alt="The Code button at the top left of the Claude app, next to Chat and Cowork" loading="lazy">
-        </li>
-        <li>
-          <h3>Paste one sentence</h3>
-          <p>Paste this into the message box and press Enter. It's a request, not a command: you're asking Claude to fetch the kit for you.</p>
-          <div class="cmd"><pre>Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PowerWorldHiveMind ~/.claude/skills/powerworld-hivemind</pre><button type="button" data-copy>Copy</button></div>
-          <p class="then">When it's done, type this to load it:</p>
-          <div class="cmd"><pre>/reload-plugins</pre><button type="button" data-copy>Copy</button></div>
-        </li>
-        <li>
-          <h3>Let it check your computer</h3>
-          <p>Type this. It installs what the kit needs and checks that PowerWorld can be driven from this machine.</p>
-          <div class="cmd"><pre>/powerworld-hivemind:powerworld-setup</pre><button type="button" data-copy>Copy</button></div>
-          <p class="then">If it says SimAuto isn't licensed, that's a PowerWorld licence question for whoever manages yours, not a mistake you made.</p>
-          <p class="then">Use Claude Code in a terminal? Setup also offers a PWHM dashboard for your status line: the kit's version, the model, your usage limits and how full the context is. It asks first. If you already have a status line, it keeps yours and adds just the <code>[PWHM#0.5.1]</code> tag. The desktop app doesn't show status lines.</p>
-          <figure class="term" id="term">
-            <div class="term-pick" role="group" aria-label="Show the status line when">
-              <button type="button" data-term="none" aria-pressed="true">No status line yet</button>
-              <button type="button" data-term="omc" aria-pressed="false">Already have one</button>
-              <button type="button" data-term="update" aria-pressed="false">Update available</button>
-            </div>
-            <div class="term-win" aria-label="Claude Code in a terminal, with the status line under the prompt">
-              <div class="term-prompt"><i class="d">&gt;</i> Run an N-1 contingency analysis and show me the worst violations.</div>
-              <div class="term-line" data-line="none"><b>[PWHM#0.5.1]</b><i class="d"> | </i><i class="c">Model: Opus 5.5</i><i class="d"> | </i><i class="d">5h:</i>[<i class="g">#####</i><i class="d">---</i>]<i class="g">58%</i><i class="d">(3h0m)</i> <i class="d">wk:</i>[<i class="g">#</i><i class="d">-------</i>]<i class="g">14%</i><i class="d">(6d8h)</i><i class="d"> | </i>ctx:[<i class="g">####</i><i class="d">------</i>]<i class="g">43%</i> <i class="d">431k/1M</i><i class="d"> | </i>session:<i class="g">42m $1.23</i></div><div class="term-line" data-line="omc" hidden><b>[PWHM#0.5.1]</b><i class="d"> | </i><i class="c">my status line</i><i class="d"> | </i>Opus 5.5<i class="d"> | </i>~/grid-study<i class="d"> | </i><i class="g">main</i></div><div class="term-line" data-line="update" hidden><b>[PWHM#0.5.1]</b> <i class="y">↑0.6.0 available</i><i class="d"> | </i><i class="c">Model: Opus 5.5</i><i class="d"> | </i><i class="d">5h:</i>[<i class="g">#####</i><i class="d">---</i>]<i class="g">58%</i><i class="d">(3h0m)</i> <i class="d">wk:</i>[<i class="g">#</i><i class="d">-------</i>]<i class="g">14%</i><i class="d">(6d8h)</i><i class="d"> | </i>ctx:[<i class="g">####</i><i class="d">------</i>]<i class="g">43%</i> <i class="d">431k/1M</i><i class="d"> | </i>session:<i class="g">42m $1.23</i></div>
-            </div>
-            <figcaption data-line="none">No status line of your own: the PWHM dashboard shows the kit's version, the model, your usage limits, context and session.</figcaption><figcaption data-line="omc" hidden>Already have a status line: yours stays as it is, and only the PWHM tag is added in front of it.</figcaption><figcaption data-line="update" hidden>A new version is out: the tag says so until you update.</figcaption>
-          </figure>
-        </li>
-        <li id="first-question">
-          <h3>Ask your first question</h3>
-          <p>Start with this one. The right answer is <b>"it silently writes no file"</b>. If it says "it saves the case", type <code>/reload-plugins</code> and ask again.</p>
-          <div class="cmd"><pre>Without running any code, what happens if I call pw.esa.SaveCase("out.pwb")?</pre><button type="button" data-copy>Copy</button></div>
-          <p class="then">Then point it at one of your own cases, in plain English:</p>
-          <div class="cmd"><pre>Open my case at C:\path\to\case.pwb and summarize it.</pre><button type="button" data-copy>Copy</button></div>
-          <div class="cmd"><pre>Run an N-1 contingency analysis and show me the worst violations.</pre><button type="button" data-copy>Copy</button></div>
-          <p class="then">You won't have to check for updates. When a new version comes out, Claude tells you at the start of a session and offers to update it.</p>
-        </li>
-      </ol>
-      <p class="stuck">Stuck on a step? <a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/GETTING-STARTED.md">The getting-started guide</a> shows what each failure looks like and how to fix it.</p>
-
-      <h3 class="other-h">Already use another AI coding tool?</h3>
-      <div class="inst-grid">
-        <article class="inst">
-          <h4>Codex</h4>
-          <p class="for">Through the Codex plugin marketplace.</p>
-          <div class="cmd"><pre>codex plugin marketplace add ChunSikPark/PowerWorldHiveMind</pre><button type="button" data-copy>Copy</button></div>
-          <p class="do">Then open <code>/plugins</code>, install <b>powerworld-hivemind</b>, and start a new session.</p>
-          <p class="do">Not yet tested on a released Codex build. If it fails, use the clone route in the other card: Codex reads AGENTS.md too.</p>
-        </article>
-        <article class="inst">
-          <h4>Cursor, Windsurf, Copilot, Gemini CLI</h4>
-          <p class="for">Any agent that reads the files in a folder.</p>
-          <div class="cmd"><pre>git clone https://github.com/ChunSikPark/PowerWorldHiveMind
-cd PowerWorldHiveMind
-pip install esapp TeamOverbyeWeather</pre><button type="button" data-copy>Copy</button></div>
-          <p class="do">Start your agent in that folder and tell it: <code>Read AGENTS.md and run the preflight.</code></p>
-        </article>
-      </div>
-    </section>
-
-    <!-- HOW IT TALKS -->
-    <section data-panel="talk" hidden>
-      <h2>How your AI talks to PowerWorld</h2>
-      <p class="sub">You talk to the agent in plain English. The agent reaches Simulator one of two ways.</p>
-      <div class="cols">
-        <div>
-          <div class="route-pick" role="group" aria-label="Show a route">
-            <button type="button" data-route="1" aria-pressed="true">Python through SimAuto</button>
-            <button type="button" data-route="2" aria-pressed="false">Aux file integration</button>
-          </div>
-          <div data-routetext="1">
-            <h3>The default: one live Python session</h3>
-            <p>The agent writes Python with <a href="https://github.com/lukelowry/ESApp">esapp</a>, which drives Simulator through SimAuto. It opens the case, writes changes, solves, and reads every write back, because PowerWorld reports success on writes that did nothing.</p>
-            <p>Fast, scriptable, runs in parallel. Every demo uses it. Needs the SimAuto add-on, which is licensed separately.</p>
-          </div>
-          <div data-routetext="2" hidden>
-            <h3>Aux file integration: the agent reads what PowerWorld said</h3>
-            <p>Turn on one setting and Simulator watches a folder. The agent writes an <code>.aux</code> script and drops it in. Simulator runs it and writes back the result CSVs and its own message log for that script: records read, control adjustments, every mismatch iteration, and whether the solve succeeded.</p>
-            <p>A SimAuto call hands back only an error string, so a silent failure stays silent. Here the agent reads the log line that explains it, and you keep a script you can read and re-run.</p>
-            <p>It's slower: a dialog has to stay open, so there's no batching, and it needs a recent Simulator build.</p>
-            <a class="more" href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/aux-file-mode.md">Setup, rules and a template</a>
-          </div>
-          <ul class="req">
-            <li>You ask: <i>"Add a 138 kV line between bus 12 and bus 40 and tell me what it does to N-1."</i></li>
-            <li>Without any PowerWorld licence you can still fetch and inspect weather data. It is pure Python.</li>
-          </ul>
+  <section class="panel" id="talk">
+    <h2>How your AI talks to PowerWorld</h2>
+    <p class="sub">You talk to the agent in plain English. The agent reaches Simulator one of two ways.</p>
+    <div class="cols">
+      <div>
+        <div class="route-pick" role="group" aria-label="Show a route">
+          <button type="button" data-route="1" aria-pressed="true">Python through SimAuto</button>
+          <button type="button" data-route="2" aria-pressed="false">Aux file integration</button>
         </div>
-        <figure>
-          <svg class="dia" id="routes" data-route="1" viewBox="0 0 760 300" role="img" aria-label="Two routes from the agent to Simulator: Python through esapp and SimAuto, or an aux script dropped into a watched folder that returns logs and CSVs.">
-            <path class="w" d="M90 142H128" marker-end="url(#ah)" marker-start="url(#ah)"/>
-            <rect class="box" x="10" y="120" width="80" height="44" rx="4"/><text class="t" x="50" y="147" text-anchor="middle">You</text>
-            <rect class="box" x="130" y="120" width="100" height="44" rx="4"/><text class="t" x="180" y="147" text-anchor="middle">Agent</text>
-            <text class="s" x="110" y="108" text-anchor="middle">plain English</text>
-            <g class="g r1">
-              <path class="w" d="M230 132C265 132 265 60 298 60" marker-end="url(#ah)" marker-start="url(#ah)"/>
-              <path class="w" d="M420 60H468" marker-end="url(#ah)" marker-start="url(#ah)"/>
-              <path class="w" d="M590 60C625 60 625 132 638 132" marker-end="url(#ah)" marker-start="url(#ah)"/>
-              <rect class="box" x="300" y="38" width="120" height="44" rx="4"/><text class="t" x="360" y="65" text-anchor="middle">esapp</text>
-              <rect class="box" x="470" y="38" width="120" height="44" rx="4"/><text class="t" x="530" y="65" text-anchor="middle">SimAuto</text>
-              <text class="s" x="445" y="22" text-anchor="middle">one live session, results come straight back</text>
-            </g>
-            <g class="g r2">
-              <path class="w" d="M230 152C265 152 265 220 298 220" marker-end="url(#ah)"/>
-              <path class="w" d="M420 220H468" marker-end="url(#ah)"/>
-              <path class="w" d="M590 220C625 220 625 152 638 152" marker-end="url(#ah)"/>
-              <path class="w" d="M695 166V282H180V168" marker-end="url(#ah)"/>
-              <rect class="box" x="300" y="198" width="120" height="44" rx="4"/><text class="t" x="360" y="225" text-anchor="middle">.aux script</text>
-              <rect class="box" x="470" y="198" width="120" height="44" rx="4"/><text class="t" x="530" y="225" text-anchor="middle">watched folder</text>
-              <rect x="360" y="270" width="160" height="24" fill="var(--surface)"/><text class="s" x="440" y="287" text-anchor="middle">message log + CSVs</text>
-            </g>
-            <rect class="box" x="640" y="120" width="110" height="44" rx="4"/><text class="t" x="695" y="147" text-anchor="middle">Simulator</text>
-          </svg>
-          <figcaption>Pick a route above to trace it. Both end at the same Simulator.</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <!-- FIND -->
-    <section data-panel="find" hidden>
-      <h2>How it finds the answer</h2>
-      <p class="sub">The agent never reads the whole kit. It turns your question into search terms, searches every page at once, and reads only the page that matches. The searches below ran on the kit itself when this site was built.</p>
-      <div class="qpick" id="qpick" role="group" aria-label="Pick a question"></div>
-      <div class="find-cols">
-        <ol class="ladder" id="ladder">
-          <li><b>Turn the question into two kinds of words</b>
-            <p>Your words, and the PowerWorld names they probably map to. A page might use either, so the agent searches both.</p>
-            <div class="terms" id="fTerms"></div></li>
-          <li><b>Search every page for all of them at once</b>
-            <div class="cmd"><pre id="fCmd"></pre></div>
-            <p id="fHit"></p>
-            <div class="rank-wrap"><table class="rank" id="fRank"></table></div></li>
-          <li><b>Read the top page's Abstract</b>
-            <p>A few lines that say whether this is the right page. If it isn't, the page's Connections say which one to open instead.</p>
-            <blockquote class="abs" id="fAbs"></blockquote></li>
-          <li><b>Read that page in full, then answer</b>
-            <div class="ans" id="fAns"></div></li>
-        </ol>
-        <p class="why-line">Why search first: on 16 test questions, searching the pages found the right one 10 times, against 8 for the routing table and 7 for starting at the index. <a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/AGENTS.md#how-to-find-the-page--and-how-much-of-it-to-read">The full search rules</a></p>
-      </div>
-    </section>
-
-    <!-- AGENTS -->
-    <section data-panel="agents" hidden>
-      <h2>The agent team</h2>
-      <p class="sub">A study is more than one command, so the work is split into six roles. Two are live: schema-librarian and case-auditor. The other four are planned and not built yet, and three of them will answer with a page instead of a wall of text.</p>
-      <div class="showcase">
-        <article class="sc">
-          <a class="sc-view" href="demos/design-compare.html" target="_blank" rel="noopener" aria-label="Open the Design Compare page">
-            <iframe src="demos/design-compare.html" loading="lazy" tabindex="-1" aria-hidden="true" title=""></iframe></a>
-          <div class="sc-body">
-            <p class="sc-who"><span class="pill plan">planned</span> <b>network-visualizer</b> will answer with</p>
-            <h3>Design Compare</h3>
-            <p>Your design and up to three challengers on the map, each measured on the full N-1. Pick one and the map redraws with its overloads painted on.</p>
-            <div class="sc-acts"><a class="btn primary" href="demos/design-compare.html" target="_blank" rel="noopener">Open the sample page</a><button type="button" class="btn" data-play="network-visualizer">Watch a sample run</button></div>
-          </div>
-        </article>
-        <article class="sc">
-          <a class="sc-view" href="demos/run-watch.html" target="_blank" rel="noopener" aria-label="Open the Run Watch page">
-            <iframe src="demos/run-watch.html" loading="lazy" tabindex="-1" aria-hidden="true" title=""></iframe></a>
-          <div class="sc-body">
-            <p class="sc-who"><span class="pill plan">planned</span> <b>run-supervisor</b> will answer with</p>
-            <h3>Run Watch</h3>
-            <p>A long N-1 or time step, live: a status badge, progress, a run clock and a timeline. It will alert your phone if the run stalls.</p>
-            <div class="sc-acts"><a class="btn primary" href="demos/run-watch.html" target="_blank" rel="noopener">Open the sample page</a><button type="button" class="btn" data-play="run-supervisor">Watch a sample run</button></div>
-          </div>
-        </article>
-        <article class="sc">
-          <div class="sc-view sc-lane" data-lane></div>
-          <div class="sc-body">
-            <p class="sc-who"><span class="pill plan">planned</span> <b>plan-pictures</b> will answer with</p>
-            <h3>The plan, as a picture</h3>
-            <p>Before you approve anything, the plan will be drawn as a swimlane from the plan the engine wrote from your settings, safety checks included. If the settings change after that, it won't draw a stale plan.</p>
-            <div class="sc-acts"><button type="button" class="btn primary" data-play="plan-pictures">Watch a sample run</button></div>
-          </div>
-        </article>
-      </div>
-      <h3 class="team-h" id="team">Every role, handling a request</h3>
-      <div class="cols agents-cols">
-        <div>
-          <div class="roster" id="roster" role="group" aria-label="Roles"></div>
-          <p class="roster-note">Every role, live or planned, is designed to work from a plain request, ask before it changes anything, and never save over your case.</p>
+        <div data-routetext="1">
+          <h3>The default: one live Python session</h3>
+          <p>The agent writes Python with <a href="https://github.com/lukelowry/ESApp">esapp</a>, which drives Simulator through SimAuto. It opens the case, writes changes, solves, and reads every write back, because PowerWorld reports success on writes that did nothing.</p>
+          <p>Fast, scriptable, runs in parallel. Every demo uses it. Needs the SimAuto add-on, which is licensed separately.</p>
         </div>
-        <div class="player">
-          <div class="player-head"><b id="pName"></b><span id="pRole"></span><button type="button" id="pReplay">Replay</button></div>
-          <p class="pplan" id="pPlan" hidden>Not built yet: this is how it will answer.</p>
-          <div class="chat" id="chat" aria-live="polite"></div>
-          <p class="pnote" id="pNote"></p>
+        <div data-routetext="2" hidden>
+          <h3>Aux file integration: the agent reads what PowerWorld said</h3>
+          <p>Turn on one setting and Simulator watches a folder. The agent writes an <code>.aux</code> script and drops it in. Simulator runs it and writes back the result CSVs and its own message log for that script: records read, control adjustments, every mismatch iteration, and whether the solve succeeded.</p>
+          <p>A SimAuto call hands back only an error string, so a silent failure stays silent. Here the agent reads the log line that explains it, and you keep a script you can read and re-run.</p>
+          <p>It's slower: a dialog has to stay open, so there's no batching, and it needs a recent Simulator build.</p>
+          <a class="more" href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/methods/aux-file-mode.md">Setup, rules and a template</a>
         </div>
-      </div>
-      <template id="laneTpl">
-        <div class="lane-scroll"><svg class="dia" viewBox="0 0 880 280" role="img" aria-label="Plan for running N-1 with 200 iterations: you ask, the agent writes a settings change, you approve, a script applies it and reads it back, PowerWorld solves N-1, the agent reports a scoreboard.">
-          <g class="s"><text x="0" y="33">You</text><text x="0" y="103">Agent</text><text x="0" y="173">Script</text><text x="0" y="243">PowerWorld</text></g>
-          <path d="M100 70H880M100 140H880M100 210H880" stroke="var(--rule)" stroke-width="1.5"/>
-          <path class="w" d="M226 28 238 98M356 98 368 28M486 28 498 168M616 168 628 238M746 238 758 98" marker-end="url(#ah)"/>
-          <rect class="box" x="110" y="10" width="116" height="36" rx="3"/><text class="t" x="168" y="33" text-anchor="middle">1 Ask</text>
-          <rect class="box" x="240" y="80" width="116" height="36" rx="3"/><text class="t" x="298" y="103" text-anchor="middle">2 Settings</text>
-          <rect class="box" x="370" y="10" width="116" height="36" rx="3" style="stroke:var(--eng);stroke-width:2.5"/><text class="t" x="428" y="33" text-anchor="middle">3 Approve</text>
-          <rect class="box" x="500" y="150" width="116" height="36" rx="3"/><text class="t" x="558" y="173" text-anchor="middle">4 Read back</text>
-          <text x="558" y="203" font-size="13" fill="var(--live)" text-anchor="middle">fails → stop + tell you</text>
-          <rect class="box" x="630" y="220" width="116" height="36" rx="3"/><text class="t" x="688" y="243" text-anchor="middle">5 Solve N-1</text>
-          <rect class="box" x="760" y="80" width="116" height="36" rx="3"/><text class="t" x="818" y="103" text-anchor="middle">6 Scoreboard</text>
-        </svg></div>
-      </template>
-    </section>
-
-    <!-- SEE IT WORK -->
-    <section data-panel="work" hidden>
-      <h2>It runs the whole study</h2>
-      <p class="sub">Most tooling answers "which branches are overloaded" and stops. The useful work comes after that readout.</p>
-      <div class="cols">
-        <div>
-          <div class="pairs">
-            <div class="pair"><div class="no">12 N-1 violations</div><div class="yes">All 12 come from one corridor, four parallel 69 kV circuits between bus 19 and 23. Losing any one overloads the other three.</div></div>
-            <div class="pair"><div class="no">Here are the loadings</div><div class="yes">Build 19→23 and violations go 12 → 2. Do not build 27→29. I tested it, and it makes N-1 worse.</div></div>
-            <div class="pair"><div class="no">The 2024 case has more branches</div><div class="yes">The plan adds 691 branches and 199 generators, retires nothing, and none of it is a renumbering artifact. I checked.</div></div>
-            <div class="pair"><div class="no">The case has renewables</div><div class="yes">9 of 45 units carry PFW models, so this case can run a weather study. Here is the hourly output.</div></div>
-          </div>
-          <p>In the remediation demo, two of five plausible fixes made the system worse, including the one an engineer would pick first. You only find that out by measuring.</p>
-        </div>
-        <ul class="demos">
-          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/violation-remediation.md"><b>Violation remediation</b><span>Trace 12 N-1 violations to one cause, test five fixes, rank them</span></a></li>
-          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/comparing-planning-cases.md"><b>Comparing planning cases</b><span>Diff a 2016 and a 2024 case, and the trap that makes the naive answer 87% wrong</span></a></li>
-          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/adding-a-device.md"><b>Adding a device</b><span>Three attempts that reported success and created nothing, then the fix</span></a></li>
-          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/power-flow-and-sensitivities.md"><b>Power flow and sensitivities</b><span>AC, DC, LODF, PTDF, and the 1e8 sentinel</span></a></li>
-          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/contingency-and-aux.md"><b>Contingency and aux</b><span>N-1 from scratch, then a generated contingency file</span></a></li>
-          <li><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/demos/timestep-and-pfw.md"><b>Weather to megawatts</b><span>PFW models, TimeStep, and why zero output is usually a setup bug</span></a></li>
+        <ul class="req">
+          <li>You ask: <i>"Add a 138 kV line between bus 12 and bus 40 and tell me what it does to N-1."</i></li>
+          <li>Without any PowerWorld licence you can still fetch and inspect weather data. It is pure Python.</li>
         </ul>
       </div>
-    </section>
+      <figure>
+        <svg class="dia" id="routes" data-route="1" viewBox="0 0 760 300" role="img" aria-label="Two routes from the agent to Simulator: Python through esapp and SimAuto, or an aux script dropped into a watched folder that returns logs and CSVs.">
+          <path class="w" d="M90 142H128" marker-end="url(#ah)" marker-start="url(#ah)"/>
+          <rect class="box" x="10" y="120" width="80" height="44" rx="4"/><text class="t" x="50" y="147" text-anchor="middle">You</text>
+          <rect class="box" x="130" y="120" width="100" height="44" rx="4"/><text class="t" x="180" y="147" text-anchor="middle">Agent</text>
+          <text class="s" x="110" y="108" text-anchor="middle">plain English</text>
+          <g class="g r1">
+            <path class="w" d="M230 132C265 132 265 60 298 60" marker-end="url(#ah)" marker-start="url(#ah)"/>
+            <path class="w" d="M420 60H468" marker-end="url(#ah)" marker-start="url(#ah)"/>
+            <path class="w" d="M590 60C625 60 625 132 638 132" marker-end="url(#ah)" marker-start="url(#ah)"/>
+            <rect class="box" x="300" y="38" width="120" height="44" rx="4"/><text class="t" x="360" y="65" text-anchor="middle">esapp</text>
+            <rect class="box" x="470" y="38" width="120" height="44" rx="4"/><text class="t" x="530" y="65" text-anchor="middle">SimAuto</text>
+            <text class="s" x="445" y="22" text-anchor="middle">one live session, results come straight back</text>
+          </g>
+          <g class="g r2">
+            <path class="w" d="M230 152C265 152 265 220 298 220" marker-end="url(#ah)"/>
+            <path class="w" d="M420 220H468" marker-end="url(#ah)"/>
+            <path class="w" d="M590 220C625 220 625 152 638 152" marker-end="url(#ah)"/>
+            <path class="w" d="M695 166V282H180V168" marker-end="url(#ah)"/>
+            <rect class="box" x="300" y="198" width="120" height="44" rx="4"/><text class="t" x="360" y="225" text-anchor="middle">.aux script</text>
+            <rect class="box" x="470" y="198" width="120" height="44" rx="4"/><text class="t" x="530" y="225" text-anchor="middle">watched folder</text>
+            <rect x="360" y="270" width="160" height="24" fill="var(--surface)"/><text class="s" x="440" y="287" text-anchor="middle">message log + CSVs</text>
+          </g>
+          <rect class="box" x="640" y="120" width="110" height="44" rx="4"/><text class="t" x="695" y="147" text-anchor="middle">Simulator</text>
+        </svg>
+        <figcaption>Pick a route above to trace it. Both end at the same Simulator.</figcaption>
+      </figure>
+    </div>
+  </section>
 
-    <!-- BENCHMARK -->
-    <section data-panel="bench" hidden>
-      <h2>Does it help? The full breakdown</h2>
-      <p class="sub">The same 23 questions split by kind, and the case-auditor agent's own blind-judged test.</p>
-      <div class="cols">
-        <div class="bars">
-          <div class="bar-group"><h3>Calls that report success and return something wrong</h3>
-            <div class="bar-row"><span>With the kit</span><div class="track"><div class="fill kit" style="width:93.75%"></div></div><span class="n">15 of 16</span></div>
-            <div class="bar-row"><span>Web search</span><div class="track"><div class="fill web" style="width:43.75%"></div></div><span class="n">7 of 16</span></div></div>
-          <div class="bar-group"><h3>Looking up a command name</h3>
-            <div class="bar-row"><span>With the kit</span><div class="track"><div class="fill kit" style="width:100%"></div></div><span class="n">7 of 7</span></div>
-            <div class="bar-row"><span>Web search</span><div class="track"><div class="fill web" style="width:85.7%"></div></div><span class="n">6 of 7</span></div></div>
-          <div class="bar-group"><h3>All 23</h3>
-            <div class="bar-row"><span>With the kit</span><div class="track"><div class="fill kit" style="width:95.7%"></div></div><span class="n">22 of 23</span></div>
-            <div class="bar-row"><span>Web search</span><div class="track"><div class="fill web" style="width:56.5%"></div></div><span class="n">13 of 23</span></div></div>
-          <div class="bar-group"><h3>The case-auditor agent: described the case correctly (blind judge; build after v0.4.0, Sonnet)</h3>
-            <div class="bar-row"><span>With the agent</span><div class="track"><div class="fill kit" style="width:87.5%"></div></div><span class="n">21 of 24</span></div>
-            <div class="bar-row"><span>Plain model</span><div class="track"><div class="fill web" style="width:41.7%"></div></div><span class="n">10 of 24</span></div></div>
-        </div>
-        <div>
-          <p>Web search finds what a command does. It rarely finds that the call reports success and does nothing: on those 16 questions the web got 7 and the kit got 15.</p>
-          <p>The kit also needed 3.2x fewer searches per right answer.</p>
-          <p>The case-auditor agent and a plain model got the same audit findings for 8 cases, 3 runs each. This test ran on a build after v0.4.0, with Sonnet. A blind judge found the agent described the case correctly in 21 of 24 runs, the plain model in 10. The plain model hardly ever invents anything: on one combined check (no invented cost data, only the three severity labels, no pasted raw findings) it passed 50 of 51, the agent 51 of 51. The difference is in the call: what actually stops the study.</p>
-          <p>For exact argument syntax, open PowerWorld's manual instead. The kit deliberately does not publish it, so it sometimes names the right command without a signature.</p>
-          <a class="more" href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/BENCHMARK.md">Every question, both verdicts, and what each setup spent</a>
-        </div>
-      </div>
-    </section>
+  <section class="steps lead" id="get" aria-label="Install">
+    <ol>
+      <li><a href="install.html">
+        <span class="thumb"><img src="thumbs/install.webp" width="800" height="500" loading="lazy" alt="The Install page, headed Let Claude install it for you: step 1 gets the Claude app, step 2 copies one setup request to paste into it."></span>
+        <span class="body"><b>Install</b><span class="say">About 15 minutes, no coding. Three downloads and one sentence.</span><span class="open">Open the guide <i aria-hidden="true">→</i></span></span></a></li>
+    </ol>
+  </section>
 
-    <!-- ADD -->
-    <section data-panel="add" hidden>
-      <h2>Add to it</h2>
-      <p class="sub">Anything you work out and leave in the chat is gone when the session ends. Say so and the agent writes it down.</p>
-      <div class="cols even">
-        <div>
-          <h3 class="add-h">Say it in the chat</h3>
-          <div class="prompts"><q>write that up as a page</q><q>document this gotcha before I forget it</q></div>
-          <p>Or run <code>/powerworld-hivemind:kb-page</code>. Not on the plugin? Tell your agent to read <code>skills/knowledge-base-page/SKILL.md</code>. It is one markdown file.</p>
-          <p>Your copy stays yours. A clone does not sync back, so nothing you write is published unless you open a pull request.</p>
-        </div>
-        <div>
-        <h3 class="add-h">What the agent does next</h3>
-        <ol class="seq">
-          <li><div><b>Search first</b><span>If a page already covers it, edit that page. Two pages on one subject is the failure this kit exists to avoid.</span></div></li>
-          <li><div><b>File it</b><span>concepts for what a thing is, methods for how to do it, references for an API surface, demos for a worked run.</span></div></li>
-          <li><div><b>Write the house shape</b><span>Abstract, Connections, Content, with links to related pages.</span></div></li>
-          <li><div><b>Add the index row</b><span>A page nobody can find is a page nobody reads.</span></div></li>
-          <li><div><b>Share it, if you want</b><span>It scrubs a copy of case names and numbers, then hands you a pre-filled GitHub issue to review and submit yourself.</span></div></li>
-        </ol>
-        </div>
+  <section class="walk" id="demo" aria-labelledby="walk-h">
+    <h2 id="walk-h">How it finds the answer</h2>
+    <p class="walk-intro">The agent never reads the whole kit. It turns your question into search terms, reads only the pages that match, and says so when no page covers it. Two illustrated walkthroughs, built on real pages and searches.</p>
+    <div class="walk-bar">
+      <div class="demo-tabs" role="group" aria-label="Pick a walkthrough">
+        <button type="button" aria-pressed="true" data-walk="has-page"><b>When the knowledge exists</b><span>It finds the pages that cover your question and follows them.</span></button>
+        <button type="button" aria-pressed="false" data-walk="new-page"><b>When no knowledge exists</b><span>It says so, works it out, and writes it down for next time.</span></button>
       </div>
-    </section>
-  </main>
+    </div>
+    <a class="walk-poster" id="walkPoster" href="demo-has-page.html"><img src="thumbs/has-page.webp" width="1200" height="750" loading="lazy" alt="A walkthrough at step 6: the time-step result table, and the graph of the kit's pages with the five pages the agent read circled in order."><span>Open the walkthrough <span aria-hidden="true">→</span></span></a>
+  </section>
+
+  <section class="graph-band">
+    <figure class="grow" id="grow">
+      <svg id="graph" role="img" aria-label="The kit's pages as a graph, linked pages joined by a line, growing in the order the pages were written."></svg>
+      <figcaption>
+        <div class="grow-head"><b id="gCount">The kit, as a graph</b><span id="gDate"></span><button type="button" id="gReplay">Replay</button></div>
+        <div class="legend" id="gLegend"></div>
+        <div class="gtip" id="gTip">Every page is a dot and every link a line. Click a dot to read the page.</div>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="panel" id="add">
+    <h2>Add to it</h2>
+    <p class="sub">Anything you work out and leave in the chat is gone when the session ends. Say so and the agent writes it down.</p>
+    <div class="cols even">
+      <div>
+        <h3 class="add-h">Say it in the chat</h3>
+        <div class="prompts"><q>write that up as a page</q><q>document this gotcha before I forget it</q></div>
+        <p>Or run <code>/powerworld-hivemind:kb-page</code>. Not on the plugin? Tell your agent to read <code>skills/knowledge-base-page/SKILL.md</code>. It is one markdown file.</p>
+        <p>Your copy stays yours. A clone does not sync back, so nothing you write is published unless you open a pull request.</p>
+      </div>
+      <div>
+      <h3 class="add-h">What the agent does next</h3>
+      <ol class="seq">
+        <li><div><b>Search first</b><span>If a page already covers it, edit that page. Two pages on one subject is the failure this kit exists to avoid.</span></div></li>
+        <li><div><b>File it</b><span>concepts for what a thing is, methods for how to do it, references for an API surface, demos for a worked run.</span></div></li>
+        <li><div><b>Write the house shape</b><span>Abstract, Connections, Content, with links to related pages.</span></div></li>
+        <li><div><b>Add the index row</b><span>A page nobody can find is a page nobody reads.</span></div></li>
+        <li><div><b>Share it, if you want</b><span>It scrubs a copy of case names and numbers, then hands you a pre-filled GitHub issue to review and submit yourself.</span></div></li>
+      </ol>
+      </div>
+    </div>
+  </section>
 
   <footer>
     <p>Built on <a href="https://github.com/lukelowry/ESApp">esapp (ESA++)</a>, the Apache-2.0 SimAuto wrapper from Texas A&amp;M, and <a href="https://pypi.org/project/TeamOverbyeWeather/">TeamOverbyeWeather</a>. Found a wrong or missing page? <a href="https://github.com/ChunSikPark/PowerWorldHiveMind/issues">Open an issue</a> and name the page.</p>
@@ -879,223 +511,11 @@ pip install esapp TeamOverbyeWeather</pre><button type="button" data-copy>Copy</
 const GH = "https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/";
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
-const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// Old links to panels that moved or were cut.
+const MOVED = {install: "install.html", bench: "validation.html#earlier", agents: "#work", find: "#demo"};
+if (Object.hasOwn(MOVED, location.hash.slice(1))) location.replace(MOVED[location.hash.slice(1)]);
 const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const DATA = fetch("data.json", {cache: "no-cache"}).then(r => r.json()).catch(() => null);
-const SAMPLE = "Sample run with invented numbers, to show the shape of the answer.";
-
-/* ---------- the agent team: one scripted run per agent ---------- */
-const AGENTS = [
-  {n:"schema-librarian", kind:"agent", live:true, role:"Which object, field or command to use",
-   note:"Both tool outputs are verbatim from the kit's lookup tool, rerun Oct 5, 2026. The chat around them is scripted.",
-   msgs:[
-    {t:"you", text:"Which field sets the maximum iterations for the power flow?"},
-    {t:"tool", cmd:'lookup.py search "maximum iterations power flow" --limit 5', res:"5 fields",
-     pre:"- CTG_Options.ScreenMaxItr (ScreenVoltMaxItr) [yes] - Screening\\Max Iterations\n- Sim_Solution_Options.MaxItr [yes] - Inner Power Flow Loop\\Max Iterations\n- CTGComboResults.CTGNItr (SolveIterations) [aux-only] - Results\\# of iterations\n- CTGComboViolation.CTGNItr (CTG_SolveIterations) [read-only] - Contingency\\Results\\# of iterations\n- CTGComboViolationInjSens.CTGNItr (CTG_SolveIterations) [read-only] - Contingency\\Results\\# of iterations"},
-    {t:"note", text:"The top hit is for contingency screening. The power flow field is second."},
-    {t:"tool", cmd:"lookup.py field Sim_Solution_Options MaxItr", res:"found, with one kit note",
-     pre:"Sim_Solution_Options.MaxItr\ntype: Integer   writable: yes (Yes)   role: -   marker: -\ndialog: Inner Power Flow Loop\\Max Iterations\ndescription: Maximum number of iterations in the inner power flow loop\nhub rows (verbatim; 'name' rows may concern another object):\n  [name] A. Power flow — `Sim_Solution_Options` :: more Newton iterations | `MaxItr` (inner loop) · `MaxItr:1` (voltage-control loop) :: tag S"},
-    {t:"agent", html:`<pre><b>Sim_Solution_Options.MaxItr</b>   Integer, writable
-what it does: maximum iterations in the inner power flow loop
-how to set it: SetData(Sim_Solution_Options, [MaxItr], [200]), then read it back
-the kit says: MaxItr is the inner loop. MaxItr:1 is the voltage-control loop.</pre>`}]},
-
-  {n:"case-auditor", kind:"agent", live:true, role:"Is the case sound, and can it run the study?", note:SAMPLE,
-   msgs:[
-    {t:"you", text:"Scan this case. Can it run a time step?"},
-    {t:"tool", cmd:"Open the case read-only", res:"nothing will be written"},
-    {t:"tool", cmd:"Solve the base case (AC, in memory)", res:"converged in 5 iterations"},
-    {t:"tool", cmd:"Count renewables with a weather model", res:"84 of 87"},
-    {t:"tool", cmd:"Run the readiness checks", res:"1 finding"},
-    {t:"agent", html:`<p><b>Base case: READY. Time step: READY.</b> 84 of 87 renewables will follow the weather. 3 solar units read 0 MW all run (41 MW of 3,210 MW).</p>
-<table><tr><th></th><th>MW</th></tr><tr><td>Load</td><td>6,420</td></tr><tr><td>Generation online</td><td>6,575</td></tr><tr><td>Losses</td><td>155</td></tr><tr><td>Headroom on online units</td><td>1,240</td></tr></table>
-<table><tr><th>What's wrong</th><th>Stops the study?</th><th>Whose call</th></tr><tr><td>3 solar units have no weather model</td><td>No, worth a look</td><td>Yours</td></tr></table>
-<p>Full findings: audit/findings.md. The case file is unchanged.</p>`}]},
-
-  {n:"study-runner", kind:"agent", role:"Runs AC, DC, N-1, OPF, SCOPF and time steps with your settings", note:SAMPLE,
-   msgs:[
-    {t:"you", text:"Run N-1 with 200 iterations and report islands."},
-    {t:"agent", html:`<pre>Ready to run N-1. Nothing has run yet.
-Settings: Sim_Solution_Options.MaxItr 50 → 200
-Monitored: areas 1–3, 69 kV and up (the case's own setup).
-Outages: 412 (full set).
-Reply "approved" to run. Details: runs/n1/manifest.json</pre>`},
-    {t:"you", text:"approved"},
-    {t:"tool", cmd:"Write MaxItr = 200, then read it back", res:"200, it stuck"},
-    {t:"tool", cmd:"Solve 412 outages on 4 PowerWorld copies", res:"410 solved, 2 did not"},
-    {t:"tool", cmd:"Check which outages cut off load", res:"1 outage, 38 MW"},
-    {t:"agent", html:`<p><b>N-1: 410 of 412 outages solved.</b> One corridor carries 9 of the 14 overloads.</p>
-<table><tr><th>Thermal overloads</th><th>Voltage violations</th><th>Did not solve</th><th>Cut off load</th></tr><tr><td>14</td><td>6</td><td>2</td><td>1 outage, 38 MW</td></tr></table>
-<p>Monitored: areas 1–3, 69 kV and up. Results: runs/n1/</p>`}]},
-
-  {n:"network-visualizer", kind:"agent", role:"Maps a design and compares it with alternatives", note:SAMPLE,
-   msgs:[
-    {t:"you", text:"I want to connect a 300 MW data center at bus 6015, with a new 345 kV line to 6027. What happens, and what's better?"},
-    {t:"tool", cmd:"Map the network around bus 6015", res:"5 substations out"},
-    {t:"tool", cmd:"Measure the load alone, full N-1", res:"6 overloads, 2 low buses"},
-    {t:"tool", cmd:"Measure your line, same settings", res:"1 overload, 1 low bus"},
-    {t:"agent", html:`<p>Your line cuts overloads 6 → 1. I have three challengers, cheapest first: redispatch, an uprate, a second circuit. Reply "approved" to measure them on the same settings.</p>`},
-    {t:"you", text:"approved"},
-    {t:"tool", cmd:"Measure 3 challengers, same settings and outages", res:"done"},
-    {t:"agent", html:`<p>Your line cuts overloads 6 → 1. Challenger 3 clears everything for one more circuit.</p>
-<p><a href="demos/design-compare.html" target="_blank" rel="noopener">Open the Design Compare page</a> and tell me which one. Choose on the page copies the line for you.</p>`}]},
-
-  {n:"run-supervisor", kind:"skill", role:"Watches a long run and alerts your phone", note:SAMPLE,
-   msgs:[
-    {t:"you", text:"Run the February time step and keep an eye on it. I'm heading out."},
-    {t:"tool", cmd:"10:00  Started: 672 steps in 12 slices", res:"watching"},
-    {t:"tool", cmd:"10:27  No step finished for 15 min, at 288 of 672", res:"alert sent to your phone"},
-    {t:"tool", cmd:"10:33  Steps finishing again", res:"stall lasted 21 min"},
-    {t:"tool", cmd:"10:52  Finished: 672 of 672", res:"summary sent"},
-    {t:"agent", html:`<pre>Time step, Feb 1 → 28: 672 steps run, in 12 slices. Took 52 min.
-Wind + solar: average 1,840 MW, lowest 212 MW at Feb 15 19:00.
-Biggest drop: 2,310 MW over 5 hours, ending Feb 15 19:00.
-3 units read 0 MW all run (no weather model, 41 MW installed).
-Reply with a number, or say what you want:
-1. Run N-1 at the lowest wind + solar hour
-2. Rerun once the 3 units have weather models
-3. Stop here.</pre>
-<p><a href="demos/run-watch.html" target="_blank" rel="noopener">Open the Run Watch page</a></p>`}]},
-
-  {n:"plan-pictures", kind:"skill", role:"Draws the plan before you approve it", note:SAMPLE,
-   msgs:[
-    {t:"you", text:"Run N-1 with 200 iterations. Show me the plan before anything runs."},
-    {t:"tool", cmd:"Read the plan the engine wrote from the settings", res:"6 steps, 1 safety check, up to date"},
-    {t:"tool", cmd:"Draw it as a swimlane", res:"plan.mmd and a page"},
-    {t:"agent", html:`<p>Here's the plan. Nothing has run yet.</p><div data-lane></div><p>Reply "approved" to run, or tell me what to change.</p>`}]}
-];
-
-const roster = $("#roster"), chat = $("#chat");
-$$(".showcase [data-lane]").forEach(el => el.append($("#laneTpl").content.cloneNode(true)));
-$$("[data-play]").forEach(b => b.addEventListener("click", () => {
-  play(AGENTS.findIndex(a => a.n === b.dataset.play));
-  $("#team").scrollIntoView({block:"start", behavior: still() ? "auto" : "smooth"});
-}));
-let playId = 0;
-AGENTS.forEach((a, i) => {
-  const b = document.createElement("button");
-  b.type = "button";
-  b.innerHTML = `<b>${a.n}</b><span class="pill ${a.live ? "live" : "plan"}">${a.live ? "live" : "planned"} ${a.kind}</span><i>${esc(a.role)}</i>`;
-  b.addEventListener("click", () => play(i));
-  roster.append(b);
-});
-function msgEl(m){
-  const d = document.createElement("div");
-  d.className = "m " + m.t;
-  if (m.t === "you" || m.t === "note") d.textContent = m.text;
-  else if (m.t === "tool") d.innerHTML = `<span class="p" aria-hidden="true">›</span><div><span class="c">${esc(m.cmd)}</span> <span class="res">→ ${esc(m.res)}</span>${m.pre ? `<pre>${esc(m.pre)}</pre>` : ""}</div>`;
-  else {
-    d.innerHTML = m.html;
-    const slot = $("[data-lane]", d);
-    if (slot) slot.replaceWith($("#laneTpl").content.cloneNode(true));
-  }
-  return d;
-}
-let current = 0;
-async function play(i){
-  current = i;
-  const id = ++playId, a = AGENTS[i];
-  $$("button", roster).forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
-  $("#pName").textContent = a.n;
-  $("#pRole").textContent = a.role;
-  $("#pNote").textContent = a.note;
-  $("#pPlan").hidden = !!a.live;
-  chat.replaceChildren();
-  for (const m of a.msgs) {
-    if (id !== playId) return;
-    const el = msgEl(m);
-    chat.append(el);
-    if (still()) { el.classList.add("in"); continue; }
-    requestAnimationFrame(() => el.classList.add("in"));
-    await new Promise(r => setTimeout(r, m.t === "you" ? 700 : m.t === "agent" ? 400 : 850));
-  }
-}
-$("#pReplay").addEventListener("click", () => play(current));
-
-/* ---------- how it finds the answer: real searches from data.json ---------- */
-let findId = 0;
-async function showSearch(k){
-  const data = await DATA;
-  const all = data && data.searches;
-  if (!all || !all.length) { $("[data-panel=find] .find-cols").hidden = true; return; }
-  const s = all[k], id = ++findId;
-  $$("#qpick button").forEach((b, j) => b.setAttribute("aria-pressed", String(j === k)));
-  const terms = [...s.plain, ...s.ident];
-  $("#fTerms").innerHTML =
-    `<div><span class="tk">Your words</span>${s.plain.map(t => `<span class="chip">${esc(t)}</span>`).join("")}</div>` +
-    `<div><span class="tk">PowerWorld names</span>${s.ident.map(t => `<span class="chip id">${esc(t)}</span>`).join("")}</div>`;
-  $("#fCmd").textContent = `rg -ic ${terms.map(t => `-e "${t}"`).join(" ")} concepts methods demos references`;
-  $("#fHit").textContent = `${s.hit_pages} pages mention at least one term. Ranked by how many different terms each page hits, then by total hits:`;
-  $("#fRank").innerHTML =
-    `<thead><tr><th>Page</th>${terms.map(t => `<th>${esc(t)}</th>`).join("")}<th>Terms hit</th></tr></thead><tbody>` +
-    s.rank.map((r, j) => `<tr class="${j === 0 ? "lead" : ""}"><td><a href="${GH + r.page}" target="_blank" rel="noopener"><span>${esc(r.page.split("/")[0])}/</span>${esc(r.page.split("/")[1])}</a></td>` +
-      r.hits.map(h => `<td class="${h ? "h" : "z"}">${h || "–"}</td>`).join("") + `<td><b>${r.terms} of ${terms.length}</b></td></tr>`).join("") + "</tbody>";
-  $("#fAbs").innerHTML = `<cite><a href="${GH + s.top.page}" target="_blank" rel="noopener">${esc(s.top.page)}</a></cite>${esc(s.top.abstract)}`;
-  $("#fAns").innerHTML = s.answer
-    ? `${s.answer.html}<p class="src">From <a href="${GH + s.answer.page}" target="_blank" rel="noopener">${esc(s.answer.page)}</a>, read in full.</p>`
-    : `<p>The agent reads <a href="${GH + s.top.page}" target="_blank" rel="noopener">${esc(s.top.page)}</a> in full and answers from it.</p>`;
-  const steps = $$("#ladder > li");
-  steps.forEach(li => li.classList.remove("on"));
-  for (const li of steps) {
-    if (id !== findId) return;
-    li.classList.add("on");
-    if (!still()) await new Promise(r => setTimeout(r, 1100));
-  }
-}
-DATA.then(data => {
-  if (!data || !data.searches) return;
-  $("#qpick").innerHTML = data.searches.map((s, k) => `<button type="button" data-q="${k}">${esc(s.q)}</button>`).join("");
-  $$("#qpick button").forEach(b => b.addEventListener("click", () => showSearch(+b.dataset.q)));
-});
-
-/* ---------- sections ---------- */
-// Every panel is routable (#install, #agents, #bench …). None is open until one is asked for.
-const IDS = $$("[data-panel]").map(p => p.dataset.panel);
-const started = new Set();
-// Not "open": a top-level function by that name replaces window.open, so clicking a
-// graph node ran this instead and landed on Install.
-// Only a known section id is routed and written to the URL. Anything else (#proof, #demo, a typo)
-// changes nothing and leaves the URL alone, so the browser's own anchor jump still works.
-function openSection(id, focus, user){
-  if (!IDS.includes(id)) return;
-  $("#panel").hidden = false;
-  $$("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== id);
-  if (location.hash.slice(1) !== id) history.replaceState(null, "", "#" + id);
-  if (focus) $("#panel").scrollIntoView({block:"start"});
-  if (user) { const h = $(`[data-panel="${id}"] h2`); h.tabIndex = -1; h.focus({preventScroll: true}); }
-  if (!started.has(id)) {
-    started.add(id);
-    if (id === "agents") play(0);
-    if (id === "find") DATA.then(() => showSearch(0));
-  }
-}
-$$("[data-open]").forEach(a => a.addEventListener("click", e => {
-  e.preventDefault();
-  openSection(a.dataset.open, true, true);
-}));
-window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (IDS.includes(h)) openSection(h); });
-const landing = location.hash.slice(1);
-openSection(landing);
-// A link straight to a section (e.g. #add) lands on it once the page has loaded, unless the
-// reader has already started scrolling.
-if (IDS.includes(landing)) {
-  const y0 = scrollY;
-  addEventListener("load", () => { if (scrollY === y0) $("#panel").scrollIntoView({block: "start", behavior: "instant"}); }, {once: true});
-}
-
-/* ---------- copy buttons ---------- */
-$$("[data-copy]").forEach(b => b.addEventListener("click", async () => {
-  const text = b.previousElementSibling.textContent;
-  try { await navigator.clipboard.writeText(text); b.textContent = "Copied"; }
-  catch { b.textContent = "Select and copy"; }
-  setTimeout(() => b.textContent = "Copy", 1600);
-}));
-
-/* ---------- status line preview ---------- */
-$$("[data-term]").forEach(b => b.addEventListener("click", () => {
-  $$("[data-term]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-  $$("#term [data-line]").forEach(el => el.hidden = el.dataset.line !== b.dataset.term);
-}));
 
 /* ---------- route picker ---------- */
 $$(".route-pick button").forEach(b => b.addEventListener("click", () => {
@@ -1207,42 +627,21 @@ $$(".route-pick button").forEach(b => b.addEventListener("click", () => {
   else grow();
 })();
 
-/* ---------- the walkthroughs: one frame, loaded only on a wide screen and only the demo picked ---------- */
+/* ---------- the walkthroughs: a poster for the one picked, which opens the full page ---------- */
 (() => {
   const WALKS = {
-    "has-page": {url: "demo-has-page.html", title: "When the knowledge exists",
+    "has-page": {url: "demo-has-page.html",
       alt: "A walkthrough at step 6: the time-step result table, and the graph of the kit's pages with the five pages the agent read circled in order."},
-    "new-page": {url: "demo-new-page.html", title: "When no knowledge exists",
+    "new-page": {url: "demo-new-page.html",
       alt: "A walkthrough at step 5: the agent's draft of a new page with its abstract and six connections, placed in the page graph with dashed links to those six pages."}
   };
-  const frame = $("#walkFrame"), poster = $("#walkPoster"), full = $("#walkFull"), wide = matchMedia("(min-width:761px)");
-  let cur = "has-page", ro = null;
-  // Same origin, so the frame can size itself to its page: it only ever grows while a demo plays,
-  // so the page below never jumps up mid-step. The demo's own top bar is hidden, the site has one.
-  frame.addEventListener("load", () => {
-    let doc;
-    try { doc = frame.contentDocument; } catch (e) { return; }
-    if (!doc || !doc.body) return;
-    const st = doc.createElement("style");
-    st.textContent = "body > header{display:none !important}";
-    doc.head.append(st);
-    if (ro) ro.disconnect();
-    // border-box: the frame's own border sits inside its height, so add it back
-    const fit = () => { const h = doc.documentElement.scrollHeight; if (h > frame.clientHeight) frame.style.height = h + frame.offsetHeight - frame.clientHeight + "px"; };
-    ro = new ResizeObserver(fit); ro.observe(doc.body); fit();
-  });
-  function load(){ if (wide.matches && frame.dataset.src !== cur) { frame.dataset.src = cur; frame.style.height = ""; frame.src = WALKS[cur].url; } }
-  function pick(k){
-    cur = k; const w = WALKS[k];
-    $$(".walk [data-walk]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.walk === k)));
-    full.href = poster.href = w.url;
-    frame.title = "Walkthrough: " + w.title;
+  const poster = $("#walkPoster");
+  $$(".walk [data-walk]").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.walk, w = WALKS[k];
+    $$(".walk [data-walk]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    poster.href = w.url;
     const img = $("img", poster); img.src = `thumbs/${k}.webp`; img.alt = w.alt;
-    load();
-  }
-  $$(".walk [data-walk]").forEach(b => b.addEventListener("click", () => pick(b.dataset.walk)));
-  wide.addEventListener("change", load);
-  load();
+  }));
 })();
 
 /* ---------- proof: count up once, when it scrolls into view ---------- */

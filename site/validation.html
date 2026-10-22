@@ -85,6 +85,11 @@ table.lb{width:100%;border-collapse:collapse;min-width:820px;}
 .note{color:var(--muted);font-size:16px;margin:12px 0 0;}
 .cta{text-align:center;display:grid;gap:14px;justify-items:center;padding-top:16px;border-top:1px solid var(--rule);}
 .cta h2{margin:12px 0 0;font:700 40px var(--cond);}
+.earlier{display:grid;gap:16px;}
+.earlier h2{margin:0;font:700 40px var(--cond);}
+.earlier .note{margin:0;max-width:60em;}
+table.lb.et{min-width:0;}
+.et small{display:block;color:var(--muted);font-size:14px;}
 
 /* tasks view */
 .back{justify-self:start;color:var(--accent);font:600 17px var(--sans);text-decoration:none;}
@@ -144,7 +149,7 @@ footer{border-top:1px solid var(--rule);padding:28px 0 48px;color:var(--muted);f
 <div class="wrap">
   <header class="top">
     <a class="brand" href="./"><img src="logo.svg" alt=""> PowerWorldHiveMind</a>
-    <nav><a href="./">Home</a><a href="validation.html" aria-current="page">Benchmark</a><a href="install.html">Install</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a><button type="button" class="thm" id="thm">Light</button></nav>
+    <nav><a href="demo-design.html">Demo</a><a href="validation.html" aria-current="page">Benchmark</a><a href="install.html">Install</a><a href="./#add">Contribute</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/CHANGELOG.md">Changelog</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a><button type="button" class="thm" id="thm">Light</button></nav>
   </header>
 
   <main>
@@ -160,6 +165,22 @@ footer{border-top:1px solid var(--rule);padding:28px 0 48px;color:var(--muted);f
         <thead><tr><th>Rank</th><th>Setup</th><th>Solved</th><th><span class="vh">Solved, as a bar</span></th><th class="r">Min / task</th><th class="r">Tokens / task</th><th class="r">Cost / task</th></tr></thead>
         <tbody id="lb"></tbody></table></div>
       <p class="note" id="lbnote"></p>
+      <section class="earlier" id="earlier" aria-labelledby="earlierH">
+        <h2 id="earlierH">Earlier tests</h2>
+        <p class="lede">Before the 30 tasks: 23 PowerWorld questions, answered with the kit and by the same model searching the web, marked blind. Then the case-auditor agent's own blind-judged test.</p>
+        <div class="tablewrap"><table class="lb et">
+          <thead><tr><th>Test</th><th class="r">With the kit</th><th class="r">Without</th></tr></thead>
+          <tbody>
+            <tr><td>Calls that report success and return something wrong</td><td class="r">15 of 16</td><td class="r">7 of 16<small>web search</small></td></tr>
+            <tr><td>Looking up a command name</td><td class="r">7 of 7</td><td class="r">6 of 7<small>web search</small></td></tr>
+            <tr><td>All 23 questions</td><td class="r">22 of 23</td><td class="r">13 of 23<small>web search</small></td></tr>
+            <tr><td>The case-auditor agent described the case correctly<small>blind judge; build after v0.4.0, Sonnet</small></td><td class="r">21 of 24</td><td class="r">10 of 24<small>plain model</small></td></tr>
+          </tbody></table></div>
+        <p class="note">Web search finds what a command does. It rarely finds that the call reports success and does nothing: on those 16 questions the web got 7 and the kit got 15. The kit also needed 3.2x fewer searches per right answer.</p>
+        <p class="note">The case-auditor agent and a plain model got the same audit findings for 8 cases, 3 runs each. A blind judge found the agent described the case correctly in 21 of 24 runs, the plain model in 10. The plain model hardly ever invents anything: on one combined check (no invented cost data, only the three severity labels, no pasted raw findings) it passed 50 of 51, the agent 51 of 51. The difference is in the call: what actually stops the study.</p>
+        <p class="note">Why the agent searches first: on 16 test questions, searching the pages found the right one 10 times, against 8 for the routing table and 7 for starting at the index. <a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/AGENTS.md#how-to-find-the-page--and-how-much-of-it-to-read">The full search rules</a></p>
+        <p class="note">For exact argument syntax, open PowerWorld's manual instead. The kit deliberately does not publish it, so it sometimes names the right command without a signature. <a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/BENCHMARK.md">Every question, both verdicts, and what each setup spent</a></p>
+      </section>
       <div class="cta"><h2>Wanna try it yourself?</h2><a class="b1" href="install.html">Install HiveMind &gt;_</a>
         <p class="note">One sentence pasted into Claude Code or Codex, then try it on your own case.</p></div>
     </section>
@@ -1149,6 +1170,7 @@ function route() {
   var tasks = h === "tasks" || h.indexOf("task-") === 0;
   $("#p-main").classList.toggle("on", !tasks); $("#p-tasks").classList.toggle("on", tasks);
   if (h.indexOf("task-") === 0) { var d = document.getElementById(h); if (d) { d.open = true; requestAnimationFrame(function () { d.scrollIntoView({block: "start"}); }); } }
+  else if (h === "earlier") requestAnimationFrame(function () { document.getElementById(h).scrollIntoView({block: "start"}); });
   else window.scrollTo(0, 0);
 }
 addEventListener("hashchange", route); route();
