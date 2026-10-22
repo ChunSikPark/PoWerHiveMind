@@ -6,7 +6,7 @@
 
 <p align="center"><strong>Your agent on PowerWorldHiveMind.</strong> Version 0.5.1</p>
 
-<p align="center"><a href="https://chunsikpark.github.io/PowerWorldHiveMind/"><strong>Open the site</strong></a>: pick a topic, read only that part, and watch the knowledge graph grow.</p>
+<p align="center"><a href="https://chunsikpark.github.io/PowerWorldHiveMind/"><strong>Open the site</strong></a>: a recorded design run, the benchmark, and a 15-minute install.</p>
 
 ### Tired of babysitting your coding agent?
 
