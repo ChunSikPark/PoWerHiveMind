@@ -85,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     except ImportError as e:
         return _broke(out, f"The audit engine could not start: {e.name or e} is not installed.",
                       "Nothing was checked; your case is untouched.",
-                      "Run /powerworld-hivemind:powerworld-setup, then ask for the audit again")
+                      "Run /powerhivemind:powerworld-setup, then ask for the audit again")
     try:
         try:
             cd = read_case(a.case)

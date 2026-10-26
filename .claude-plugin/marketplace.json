@@ -1,11 +1,11 @@
 {
-  "name": "powerworld-hivemind",
+  "name": "powerhivemind",
   "owner": {
     "name": "Team Overbye, Texas A&M University"
   },
   "plugins": [
     {
-      "name": "powerworld-hivemind",
+      "name": "powerhivemind",
       "source": "./",
       "description": "Make your agent a PowerWorld expert: automation, weather analysis, and the failure modes that fail silently."
     }

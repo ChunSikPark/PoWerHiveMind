@@ -322,7 +322,7 @@ anything you start and stop only those PIDs (`Stop-Process -Id <pid>`). Never ki
 
 **Never install or upgrade packages on your own.** If an import fails, check first that you
 did not run Python with `-I` (isolated mode hides user-installed packages such as esapp),
-then tell the user to run `/powerworld-hivemind:powerworld-setup`. A `pip install` on a shared
+then tell the user to run `/powerhivemind:powerworld-setup`. A `pip install` on a shared
 machine changes everyone's environment.
 
 ## When something goes wrong

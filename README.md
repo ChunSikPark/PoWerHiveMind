@@ -26,10 +26,10 @@ stop having to be the documentation.
 Paste this sentence into Claude Code (desktop app or CLI):
 
 ```
-Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PoWerHiveMind ~/.claude/skills/powerworld-hivemind
+Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PoWerHiveMind ~/.claude/skills/powerhivemind
 ```
 
-Then run `/reload-plugins`, then `/powerworld-hivemind:powerworld-setup`. The setup installs
+Then run `/reload-plugins`, then `/powerhivemind:powerworld-setup`. The setup installs
 the Python packages and checks that this machine can drive PowerWorld, SimAuto licence
 included.
 
@@ -44,7 +44,7 @@ it keeps yours and adds only the `[PWHM#<version>]` tag.
 means the kit loaded.
 
 - **Codex:** `codex plugin marketplace add ChunSikPark/PoWerHiveMind`, then install
-  **powerworld-hivemind** from `/plugins`. Not yet tested on a released Codex build.
+  **powerhivemind** from `/plugins`. Not yet tested on a released Codex build.
 - **Anything else:** clone the repo, `pip install esapp TeamOverbyeWeather`, start your agent
   in the folder, and tell it `Read AGENTS.md and run the preflight.`
 - **Never used Claude Code or Python?** [GETTING-STARTED.md](GETTING-STARTED.md) takes you

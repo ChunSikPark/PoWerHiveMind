@@ -28,7 +28,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/schema-lookup/engine/lookup.py" search "<wo
 - Don't know the object? `search` without `--object`, then `object` on the best hit.
 - A field may be given by variable name (`DCPFMode`), concise name (`DCApprox`) or Python
   spelling (`MaxItr__1`); all resolve to one field.
-- Exit 2 with "pip install openpyxl": tell the user to run it (or `/powerworld-hivemind:powerworld-setup`).
+- Exit 2 with "pip install openpyxl": tell the user to run it (or `/powerhivemind:powerworld-setup`).
 - Otherwise, relay any other exit-2 message verbatim.
 
 ## 2. Read what the tool printed about the hub

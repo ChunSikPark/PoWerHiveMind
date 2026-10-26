@@ -20,7 +20,7 @@ Live already: [`agents/schema-librarian.md`](../../agents/schema-librarian.md) (
 [`agents/case-auditor.md`](../../agents/case-auditor.md) (Plan 2).
 
 **Rule for each plan:** its last task moves the draft into `agents/` (only after the engine's
-tests pass) and re-checks discovery with `claude --plugin-dir <kit> plugin details powerworld-hivemind`.
+tests pass) and re-checks discovery with `claude --plugin-dir <kit> plugin details powerhivemind`.
 Edit a draft freely until then; the plan that builds the engine treats the draft as its brief for
 the agent file.
 

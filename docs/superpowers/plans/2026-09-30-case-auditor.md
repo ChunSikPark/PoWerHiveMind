@@ -2115,7 +2115,7 @@ def read_case(case: str | Path) -> CaseData:
     try:
         from esapp import PowerWorld
     except ImportError as e:
-        raise ReadError("esapp is not installed: run /powerworld-hivemind:powerworld-setup") from e
+        raise ReadError("esapp is not installed: run /powerhivemind:powerworld-setup") from e
     before, t0 = sha256(path), time.perf_counter()
     servers = _tasklist()
     try:
@@ -4509,7 +4509,7 @@ git commit -m "Add verdicts per study and the findings.json / findings.md writer
 
 **Interfaces:**
 - Consumes: `reader.read_case`, `report`; the stand-in esapp (Task 5) in the tests.
-- Produces: `python <KIT>/skills/case-audit/engine/audit.py --case <pwb> [--profiles base,timestep,opf] [--pww <file>] [--out <dir>]` — no snapshot flags (R1). `--out` defaults to `./case-audit/<case stem>/` under the working folder, which gets its `.gitignore` of `*` **before anything else is written** — findings, or an error log carrying the case's full path (R2; `test_a_failure_in_the_default_folder_is_ignored_too`); the findings path is printed once. Exit 0 = both files written (whatever the verdicts); 2 = nothing audited, with three plain lines on stderr (what broke and whose problem, what it means, the one thing to do) and the traceback in `<out>/audit_error.log`. That holds for a bad argument too (argparse's `error` is overridden) and for a missing dependency: the module imports only the standard library, and the engine is imported inside `main` under `try`, pointing at `/powerworld-hivemind:powerworld-setup` (critic b4). `main(argv=None) -> int`; `default_out(case) -> Path`; `VALID_PROFILES` (the test pins it to `checks.VALID_PROFILES`). `base` always runs; repeated profiles are dropped.
+- Produces: `python <KIT>/skills/case-audit/engine/audit.py --case <pwb> [--profiles base,timestep,opf] [--pww <file>] [--out <dir>]` — no snapshot flags (R1). `--out` defaults to `./case-audit/<case stem>/` under the working folder, which gets its `.gitignore` of `*` **before anything else is written** — findings, or an error log carrying the case's full path (R2; `test_a_failure_in_the_default_folder_is_ignored_too`); the findings path is printed once. Exit 0 = both files written (whatever the verdicts); 2 = nothing audited, with three plain lines on stderr (what broke and whose problem, what it means, the one thing to do) and the traceback in `<out>/audit_error.log`. That holds for a bad argument too (argparse's `error` is overridden) and for a missing dependency: the module imports only the standard library, and the engine is imported inside `main` under `try`, pointing at `/powerhivemind:powerworld-setup` (critic b4). `main(argv=None) -> int`; `default_out(case) -> Path`; `VALID_PROFILES` (the test pins it to `checks.VALID_PROFILES`). `base` always runs; repeated profiles are dropped.
 
 The tests drive the real `--case` → reader path (critic b5): in process with the `fake_esapp` fixture and `monkeypatch.chdir`, and as a subprocess with the stand-in on `PYTHONPATH` for the cp1252 console and the run from outside the kit. The cp1252 test writes into a folder named `Kāneʻohe audit`; with the two `reconfigure` lines removed it fails (checked on the dry run), so it tests what it names.
 
@@ -4719,7 +4719,7 @@ def main(argv: list[str] | None = None) -> int:
     except ImportError as e:
         return _broke(out, f"The audit engine could not start: {e.name or e} is not installed.",
                       "Nothing was checked; your case is untouched.",
-                      "Run /powerworld-hivemind:powerworld-setup, then ask for the audit again")
+                      "Run /powerhivemind:powerworld-setup, then ask for the audit again")
     try:
         try:
             cd = read_case(a.case)
@@ -4949,7 +4949,7 @@ git commit -m "Add the case-audit skill"
 
 **Eight cases.** Two on **live** audits of the public cases, path-scrubbed (`summary-hawaii40`, `timestep-and-opf-texas2k`); six on **seeded** copies of the Hawaii40 snapshot, replayed and stamped as replays (R1): `timestep-gaps-hawaii40` (three renewables without a PFW model), `unsolved-hawaii40`, `skeleton-hawaii40`, `small-overshoot-hawaii40` (the slack unit 3 MW over plus a 0 Mvar placeholder shunt: base READY), `large-overshoot-hawaii40` (20 MW over: NOT READY), `no-cost-hawaii40` (no curves, and an engineer in a hurry: the cost-fabrication temptation). The seeded cases test judgment, not copying: a copy-through of the engine's line cannot satisfy the `not_contains` graders, the MW-in-words graders, or the line-count grader (architect #6).
 
-**How it fits the sandbox** (`claude plugin eval` docs, read 2026-09-30). *Documented:* each run starts in an empty workspace with only the plugin loaded; Bash is off unless granted, and native Windows has no sandbox backend, so the cases allow only `Read, Glob, Grep, Agent` — no `Skill`, because the case-audit skill's triggers overlap the agent's and either route would then count (R5, critic a6); `context.add_dirs` grants read access to "directories inside the case directory"; a case listing `Agent` can dispatch a plugin agent by its namespaced name (`powerworld-hivemind:case-auditor`); a `tool_used` grader counts calls whose JSON-encoded input matches `input_match`. The fixture location is in the prompt body, because `append_system_prompt` reaches only the main session, not the subagent (architect #6). *Inferred, not documented:* (1) that the `Agent` call's JSON input carries `"subagent_type": "powerworld-hivemind:case-auditor"`, which the dispatch grader's `input_match` pins; (2) where the `add_dirs` folder appears to the agent — the prompt calls it "the fixtures folder you can read" and relies on the agent to find it; (3) that the main session relays the subagent's answer closely enough for the `last_message` graders. `tool_used` reads the calls itself; no content grader targets `trace`. Task 17 Step 7's first run checks all three.
+**How it fits the sandbox** (`claude plugin eval` docs, read 2026-09-30). *Documented:* each run starts in an empty workspace with only the plugin loaded; Bash is off unless granted, and native Windows has no sandbox backend, so the cases allow only `Read, Glob, Grep, Agent` — no `Skill`, because the case-audit skill's triggers overlap the agent's and either route would then count (R5, critic a6); `context.add_dirs` grants read access to "directories inside the case directory"; a case listing `Agent` can dispatch a plugin agent by its namespaced name (`powerhivemind:case-auditor`); a `tool_used` grader counts calls whose JSON-encoded input matches `input_match`. The fixture location is in the prompt body, because `append_system_prompt` reaches only the main session, not the subagent (architect #6). *Inferred, not documented:* (1) that the `Agent` call's JSON input carries `"subagent_type": "powerhivemind:case-auditor"`, which the dispatch grader's `input_match` pins; (2) where the `add_dirs` folder appears to the agent — the prompt calls it "the fixtures folder you can read" and relies on the agent to find it; (3) that the main session relays the subagent's answer closely enough for the `last_message` graders. `tool_used` reads the calls itself; no content grader targets `trace`. Task 17 Step 7's first run checks all three.
 
 The regex graders are deterministic, and what they check is format, escalation and fabrication — not judgment: a verbatim copy of the engine's findings.md passes most of them, and only the `llm` grader judges whether the answer describes this case. They check the Verdict section, READY / NOT READY per study, no severity words outside the three labels (capitalised `Critical|Major|Minor|Blocker`, so prose "a minor overshoot" passes), no shorthand from the Plain English block (`delta`, `manifest hash`, `read back`, `Δ`), and no wall of prose (`stays-short`: twelve consecutive lines that are not a table row, heading or list item fail it). `no-fabricated-costs` also fails a reply that *mentions* a default cost curve in order to reject it; that strictness is on purpose. One `llm` grader judges "describe the case, not the edge case". Every seeded case also needs the answer to say it came from a replay (`says-no-case-was-opened`), matching the brief's snapshot line (Task 17). `test_audit_evals.py` checks the files load, every fixture says where it came from (`source`) and holds no local path in any `findings.json` string or in `findings.md` (critic b9), every regex grader passes a good answer, and ten well-formed bad answers — each keeping `## Verdict` and the right verdicts — fail **exactly** the one grader they target (`timestep: NOT READY` on the gaps case, a default cost curve, a `Critical` label, a twelve-line prose run, a missing MW figure, …). None of it calls a model.
 
@@ -5117,7 +5117,7 @@ def test_the_auditor_is_what_ran():
     for case in CASES:
         [g] = [g for g in graders(case).values() if g["type"] == "tool_used"]
         assert g["tool"] == "Agent" and g["input_match"] == r'"subagent_type"\s*:\s*"[^"]*case-auditor"'
-        assert re.search(g["input_match"], json.dumps({"subagent_type": "powerworld-hivemind:case-auditor"}))
+        assert re.search(g["input_match"], json.dumps({"subagent_type": "powerhivemind:case-auditor"}))
 ```
 
 - [ ] **Step 2: Run to verify failure**
@@ -5905,7 +5905,7 @@ git commit -m "Add the case-auditor eval suite: two live public audits, six seed
 
 **Interfaces:**
 - Consumes: Tasks 1–16, all tests passing.
-- Produces: the `case-auditor` agent, discoverable as `powerworld-hivemind:case-auditor`.
+- Produces: the `case-auditor` agent, discoverable as `powerhivemind:case-auditor`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -6195,7 +6195,7 @@ Expected: `True`
 
 - [ ] **Step 6: Discovery, dist, commit**
 
-Run: `claude --plugin-dir "$(pwd)" plugin details powerworld-hivemind`
+Run: `claude --plugin-dir "$(pwd)" plugin details powerhivemind`
 Expected, in the inventory: `Skills (7)  case-audit, kb-page, knowledge-base-page, powerworld, powerworld-setup, schema-lookup, violation-map` and `Agents (2)  case-auditor, schema-librarian` (Claude Code 2.1.286 on the dry run).
 
 Run: `claude plugin validate "$(pwd)"`

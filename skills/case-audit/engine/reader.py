@@ -86,7 +86,7 @@ def read_case(case: str | Path) -> CaseData:
     try:
         from esapp import PowerWorld
     except ImportError as e:
-        raise ReadError("esapp is not installed: run /powerworld-hivemind:powerworld-setup") from e
+        raise ReadError("esapp is not installed: run /powerhivemind:powerworld-setup") from e
     before, t0 = sha256(path), time.perf_counter()
     servers = _tasklist()
     try:

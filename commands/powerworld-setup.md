@@ -107,7 +107,7 @@ If they say yes:
    changing anything.
 2. **If a `statusLine` is already set, keep it.** Say so in one line: *"You already have a
    status line; the tag goes next to it and nothing of yours is replaced."* Write its
-   `command` string, unchanged, to `~/.claude/powerworld-hivemind-statusline.json` as
+   `command` string, unchanged, to `~/.claude/powerhivemind-statusline.json` as
    `{"previous": "<that command>"}`.
 3. Set `statusLine` to `{"type": "command", "command": "\"<python>\" \"<kit root>/statusline/pwhm_statusline.py\""}`,
    where `<python>` is the full path from `python -c "import sys; print(sys.executable)"` and
@@ -115,7 +115,7 @@ If they say yes:
    slashes. Settings files don't expand variables.
 4. Run that command once with `echo {} |` in front, and confirm the output contains `[PWHM#`.
 5. Tell them it appears on the next refresh, and that saying *"remove the PWHM tag"* undoes it:
-   put back the `statusLine` from `powerworld-hivemind-statusline.json` (or remove the key if
+   put back the `statusLine` from `powerhivemind-statusline.json` (or remove the key if
    that file doesn't exist), then delete that file.
 
 ## 6. Then stop

@@ -8,9 +8,9 @@ already corrected. Run this after editing any page.
     python build_dist.py
 
 Output (byte-for-byte the shape the previous hand-built bundles used):
-  dist/powerworld-hivemind-bundle.md      AGENTS + index + all four directories
-  dist/powerworld-hivemind-<dir>.md       one per directory, basenames only
-  dist/powerworld-hivemind-skill.zip      powerworld/ skill tree
+  dist/powerhivemind-bundle.md      AGENTS + index + all four directories
+  dist/powerhivemind-<dir>.md       one per directory, basenames only
+  dist/powerhivemind-skill.zip      powerworld/ skill tree
 """
 
 import io
@@ -58,21 +58,21 @@ def build_bundle() -> int:
     for d in DIRS:
         for p in pages(d):
             parts.append(section(f"{d}/{p.name}", read(p)))
-    write(DIST / "powerworld-hivemind-bundle.md",
+    write(DIST / "powerhivemind-bundle.md",
           BUNDLE_HEADER + "\n" + SEP.join(parts) + "\n\n\n---\n")
     return len(parts)
 
 
 def build_dir_bundle(d: str) -> int:
     parts = [section(p.name, read(p)) for p in pages(d)]
-    write(DIST / f"powerworld-hivemind-{d}.md",
+    write(DIST / f"powerhivemind-{d}.md",
           f"# PoWerHiveMind - {d.upper()}\n\n" + SEP.join(parts) + "\n\n\n---\n")
     return len(parts)
 
 
 def build_skill_zip() -> int:
     src = ROOT / "skills" / "powerworld"
-    out = DIST / "powerworld-hivemind-skill.zip"
+    out = DIST / "powerhivemind-skill.zip"
     entries = []
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         skill_md = src / "SKILL.md"

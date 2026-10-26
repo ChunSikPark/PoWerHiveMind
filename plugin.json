@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "powerworld-hivemind",
+  "name": "powerhivemind",
   "version": "0.5.1",
   "description": "PowerWorld Simulator automation knowledge: esapp, SimAuto, PWW weather data, timestep simulation, contingency analysis, and the failure modes PowerWorld reports as success.",
   "author": {

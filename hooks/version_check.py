@@ -5,7 +5,7 @@ once a day, and says one line when the published one is newer. It edits nothing,
 failure (offline, GitHub down, no cache) ends silently. Set PWHM_NO_UPDATE_CHECK=1 to turn it
 off.
 
-The result is cached in ~/.claude/powerworld-hivemind-version.json, which a status line can
+The result is cached in ~/.claude/powerhivemind-version.json, which a status line can
 also read.
 """
 import json
@@ -16,7 +16,7 @@ import urllib.request
 from pathlib import Path
 
 LATEST_URL = "https://raw.githubusercontent.com/ChunSikPark/PoWerHiveMind/main/.claude-plugin/plugin.json"
-CACHE = Path.home() / ".claude" / "powerworld-hivemind-version.json"
+CACHE = Path.home() / ".claude" / "powerhivemind-version.json"
 DAY = 24 * 3600
 
 

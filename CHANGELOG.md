@@ -4,8 +4,12 @@
 
 - Renamed PowerWorldHiveMind to PoWerHiveMind. The repository is now github.com/ChunSikPark/PoWerHiveMind and the site
   chunsikpark.github.io/PoWerHiveMind. GitHub redirects the old repository links, including `git clone`; the old site
-  address does not redirect. The plugin ID `powerworld-hivemind` is unchanged, so existing installs keep working.
-  Entries below keep the old name.
+  address does not redirect.
+- The plugin ID is now `powerhivemind` (was `powerworld-hivemind`). Skills are called `powerhivemind:powerworld`,
+  `powerhivemind:case-audit` and so on, setup is `/powerhivemind:powerworld-setup`, and the install sentence clones into
+  `~/.claude/skills/powerhivemind`. An existing install picks up the new ID after `git pull` and `/reload-plugins`;
+  its folder can keep its old name. The `dist/` files are now `powerhivemind-*`.
+  Entries below keep the old names.
 
 ## 0.5.1 — 2026-10-21
 

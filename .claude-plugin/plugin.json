@@ -1,5 +1,5 @@
 {
-  "name": "powerworld-hivemind",
+  "name": "powerhivemind",
   "description": "PowerWorld Simulator automation knowledge: esapp, SimAuto, PWW weather data, timestep simulation, contingency analysis, and the failure modes PowerWorld reports as success.",
   "version": "0.5.1",
   "author": {

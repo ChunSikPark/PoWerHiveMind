@@ -5,8 +5,8 @@ seen a newer version. With no status line of the user's own, it also shows a das
 5-hour and weekly usage limits, context used, and the session's time and cost, all read from
 the JSON Claude Code sends. Status lines render in the terminal only, not in the desktop app.
 
-/powerworld-hivemind:powerworld-setup adds it only when the user says yes. If they already
-had a status line, setup saves that command to ~/.claude/powerworld-hivemind-statusline.json;
+/powerhivemind:powerworld-setup adds it only when the user says yes. If they already
+had a status line, setup saves that command to ~/.claude/powerhivemind-statusline.json;
 this script runs it on the same input and puts the tag beside it, so nothing is replaced.
 """
 import json
@@ -19,8 +19,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 HOME = Path.home() / ".claude"
-VERSION_CACHE = HOME / "powerworld-hivemind-version.json"
-SAVED = HOME / "powerworld-hivemind-statusline.json"
+VERSION_CACHE = HOME / "powerhivemind-version.json"
+SAVED = HOME / "powerhivemind-statusline.json"
 SEP = "\x1b[2m | \x1b[0m"
 OMC_TAG = re.compile(r"(\x1b\[1m\[OMC#[^\]]*\]\x1b\[0m)")
 

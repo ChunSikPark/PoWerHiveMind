@@ -84,7 +84,7 @@ Paste this into the box where you type and press Enter. It is a plain sentence a
 Claude to fetch something for you.
 
 ```
-Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PoWerHiveMind ~/.claude/skills/powerworld-hivemind
+Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PoWerHiveMind ~/.claude/skills/powerhivemind
 ```
 
 Claude downloads it into a folder it already watches. There is no folder to choose, no ZIP
@@ -113,16 +113,16 @@ the folder.
 Type:
 
 ```
-/powerworld-hivemind:powerworld-setup
+/powerhivemind:powerworld-setup
 ```
 
-The `powerworld-hivemind:` prefix is part of the name. Plain `/powerworld-setup` will not
+The `powerhivemind:` prefix is part of the name. Plain `/powerworld-setup` will not
 work.
 
 This installs the two Python packages and runs four quick checks. One of three things
 happens.
 
-> The other command the plugin registers is `/powerworld-hivemind:kb-page`, which
+> The other command the plugin registers is `/powerhivemind:kb-page`, which
 > writes what you learn back into the kit as a new page. You do not need it yet. See
 > [README.md](README.md) when you do.
 
@@ -158,7 +158,7 @@ load:
 
 - **The conversation predates the install.** Type `/reload-plugins`, or start a new
   conversation.
-- **It landed somewhere else.** Ask Claude whether `~/.claude/skills/powerworld-hivemind`
+- **It landed somewhere else.** Ask Claude whether `~/.claude/skills/powerhivemind`
   exists and contains `AGENTS.md`. If not, redo Step 4.
 
 You are done. Skip to [What to ask next](#what-to-ask-next).
@@ -175,7 +175,7 @@ Any agent that runs on your computer and can read your files works with this kit
 codex plugin marketplace add ChunSikPark/PoWerHiveMind
 ```
 
-Then open `/plugins`, install **powerworld-hivemind**, and start a new session. *(Not yet
+Then open `/plugins`, install **powerhivemind**, and start a new session. *(Not yet
 tested against a released Codex build. If it fails, use the manual route below and please
 open an issue.)*
 
@@ -194,7 +194,7 @@ Then point your agent at that folder (every agent has some way to open one) and 
 > Read AGENTS.md. Check whether Python is installed, install the `esapp` and
 > `TeamOverbyeWeather` packages if they are missing, then run the preflight check.
 
-There is no `/powerworld-hivemind:powerworld-setup` on this route; that request replaces it.
+There is no `/powerhivemind:powerworld-setup` on this route; that request replaces it.
 
 ---
 
@@ -260,7 +260,7 @@ icon: open Start, type `Claude`, right-click, **Pin to taskbar**.
 
 **Clicking Code asks me to upgrade.** Claude Code needs a paid plan. See Step 1.
 
-**A slash command is not recognized.** For `/powerworld-hivemind:powerworld-setup`, the
+**A slash command is not recognized.** For `/powerhivemind:powerworld-setup`, the
 knowledge base is installed but this conversation has not loaded it. Type
 `/reload-plugins`. Check the prefix too: plain `/powerworld-setup` is not its name. As for
 `/plugin`, it does not exist in the desktop app at all; Step 4 does not need it.

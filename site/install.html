@@ -213,7 +213,7 @@ details.peek .cmd{margin-top:8px;}
             <div class="cmd"><pre id="setupText">Set up PoWerHiveMind on this computer for me. Ask me before you install anything, and explain each step in plain words. After you install any program, call it by its full path, because this session won't see it on the PATH yet.
 
 1. First ask me one question: do I want to use HiveMind in the terminal? It works better there, because the terminal shows the HiveMind dashboard: the version, my usage limits and how full the context is. If I'm not familiar with the terminal, keep me in the Claude desktop app. That works fine too. Remember my answer.
-2. Install HiveMind: clone https://github.com/ChunSikPark/PoWerHiveMind into ~/.claude/skills/powerworld-hivemind. If Git is missing, install it first.
+2. Install HiveMind: clone https://github.com/ChunSikPark/PoWerHiveMind into ~/.claude/skills/powerhivemind. If Git is missing, install it first.
 3. Run the HiveMind setup: follow commands/powerworld-setup.md in that folder. Where it says ${CLAUDE_PLUGIN_ROOT}, use that folder. If Python is missing, don't stop: install it with "Add Python to PATH" turned on, then use the full path to python.exe. The setup installs or updates the Python packages HiveMind needs and checks that PowerWorld and the SimAuto licence work. When it offers the dashboard, use my answer from step 1 instead of asking again.
 4. Tell me what the check found, including my PowerWorld version and whether HiveMind was tested on it. Do step 5 even if the check failed.
 5. If I chose the terminal: install Claude Code with irm https://claude.ai/install.ps1 | iex, open a new PowerShell window, and start claude there by its full path. Tell me a browser will open once so I can sign in. If I chose the app: tell me to start a new conversation here so HiveMind loads.</pre><button type="button" data-copy>Copy</button></div>
@@ -255,9 +255,9 @@ details.peek .cmd{margin-top:8px;}
       <li>
         <div><h3>1. Install HiveMind <span class="tag"><i aria-hidden="true"></i><span data-tool-name>Claude Code</span></span></h3>
           <p data-tool="claude">Paste into Claude Code, then load it.</p>
-          <p data-tool="codex" hidden>Run in the terminal. Then open <code>/plugins</code>, install <b>powerworld-hivemind</b>, and start a new session. Not yet tested on a released Codex build.</p></div>
+          <p data-tool="codex" hidden>Run in the terminal. Then open <code>/plugins</code>, install <b>powerhivemind</b>, and start a new session. Not yet tested on a released Codex build.</p></div>
         <div class="do">
-          <div class="cmd" data-tool="claude"><pre>Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PoWerHiveMind ~/.claude/skills/powerworld-hivemind</pre><button type="button" data-copy>Copy</button></div>
+          <div class="cmd" data-tool="claude"><pre>Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PoWerHiveMind ~/.claude/skills/powerhivemind</pre><button type="button" data-copy>Copy</button></div>
           <div class="cmd" data-tool="claude"><pre>/reload-plugins</pre><button type="button" data-copy>Copy</button></div>
           <div class="cmd" data-tool="codex" hidden><pre>codex plugin marketplace add ChunSikPark/PoWerHiveMind</pre><button type="button" data-copy>Copy</button></div>
         </div>
@@ -266,8 +266,8 @@ details.peek .cmd{margin-top:8px;}
         <div><h3>2. Run setup <span class="tag"><i aria-hidden="true"></i><span data-tool-name>Claude Code</span></span></h3>
           <p>Installs the Python packages and checks that PowerWorld and SimAuto can be driven from this machine.</p></div>
         <div class="do">
-          <div class="cmd" data-tool="claude"><pre>/powerworld-hivemind:powerworld-setup</pre><button type="button" data-copy>Copy</button></div>
-          <div class="cmd" data-tool="codex" hidden><pre>Read the AGENTS.md of the powerworld-hivemind plugin. Check whether Python is installed, install the esapp and TeamOverbyeWeather packages if they are missing, then run the preflight check.</pre><button type="button" data-copy>Copy</button></div>
+          <div class="cmd" data-tool="claude"><pre>/powerhivemind:powerworld-setup</pre><button type="button" data-copy>Copy</button></div>
+          <div class="cmd" data-tool="codex" hidden><pre>Read the AGENTS.md of the powerhivemind plugin. Check whether Python is installed, install the esapp and TeamOverbyeWeather packages if they are missing, then run the preflight check.</pre><button type="button" data-copy>Copy</button></div>
         </div>
       </li>
       <li>

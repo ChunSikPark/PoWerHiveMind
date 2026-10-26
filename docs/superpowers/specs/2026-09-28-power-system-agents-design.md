@@ -514,4 +514,4 @@ Transient stability, GIC, unit commitment, an n1 audit profile.
 - Does PowerWorld/SimAuto keep running with the PC locked, or the user logged out? Run supervision
   assumes the machine stays up for hours; test this before building Plan 5.
 - ~~Plugin agent discovery~~ — answered 2026-09-28: `agents/` in the kit is loaded
-  (`claude --plugin-dir <kit> plugin details powerworld-hivemind`, Claude Code 2.1.284).
+  (`claude --plugin-dir <kit> plugin details powerhivemind`, Claude Code 2.1.284).
