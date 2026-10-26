@@ -1,11 +1,11 @@
-# Power-system agents for PowerWorldHiveMind — design
+# Power-system agents for PoWerHiveMind — design
 
 Date: 2026-09-28. Status: design approved in conversation, awaiting review of this written spec.
 Revised 2026-09-29 with the decisions from a review of the agent drafts.
 
 ## 1. Goal
 
-Give anyone who installs PowerWorldHiveMind a small team of agents that audit a case, run
+Give anyone who installs PoWerHiveMind a small team of agents that audit a case, run
 steady-state studies with the user's own preferences, map and compare the engineer's designs on
 the full N-1, and answer "which object and field?" questions — so an open-ended request ("the bus is at 1.06, what fixes it?") is worked on
 real numbers instead of guesses.

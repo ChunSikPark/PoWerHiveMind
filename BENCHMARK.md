@@ -1,7 +1,7 @@
-# Benchmark — PowerWorldHiveMind v0.4.0
+# Benchmark — PoWerHiveMind v0.4.0
 
 If you are about to drive PowerWorld from Python with an AI assistant, this page tells you
-what PowerWorldHiveMind changes, what it does not, and what it costs.
+what PoWerHiveMind changes, what it does not, and what it costs.
 
 Measured against release **v0.4.0**. Later releases are benchmarked the same way, so the
 numbers below can be compared across versions.
@@ -33,7 +33,7 @@ used a three-level scale, and the middle level is where two of five scoring erro
 wrong answer marked *partly right* reads as a judgement call rather than a mistake, so
 nobody re-checks it.
 
-![Where PowerWorldHiveMind helps and where it does not](assets/headline.svg)
+![Where PoWerHiveMind helps and where it does not](assets/headline.svg)
 
 ---
 

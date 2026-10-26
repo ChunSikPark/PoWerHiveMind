@@ -169,7 +169,7 @@ there hold here too: **offer, never file on your own; show the exact text
 first; say the tracker is public.**
 
 **1. Ask.** Once the checks above are clean, ask one plain question: *"Want to
-share this page so everyone using PowerWorldHiveMind gets it? I'd strip the case details
+share this page so everyone using PoWerHiveMind gets it? I'd strip the case details
 first and show you exactly what would go out."* No answer, or no, ends it.
 
 **2. Scrub a copy, not the page.** The user's page may keep their case details;
@@ -233,7 +233,7 @@ If `gh` is installed and signed in (`gh auth status`), offer it instead of the
 link, still only after they approve the exact text:
 
 ```bash
-gh issue create --repo ChunSikPark/PowerWorldHiveMind --title "New page: methods/<slug>.md" --label new-page --label <topic> --body-file "<scrubbed copy>.issue.md"
+gh issue create --repo ChunSikPark/PoWerHiveMind --title "New page: methods/<slug>.md" --label new-page --label <topic> --body-file "<scrubbed copy>.issue.md"
 ```
 
 `--body-file` has no 8,000-character limit. If `gh` refuses because a label

@@ -1,6 +1,6 @@
 # The website (site/)
 
-Source for https://chunsikpark.github.io/PowerWorldHiveMind/. Maintainer notes only: this
+Source for https://chunsikpark.github.io/PoWerHiveMind/. Maintainer notes only: this
 file is not published (the Pages workflow copies an explicit file list) and not in the
 plugin build.
 

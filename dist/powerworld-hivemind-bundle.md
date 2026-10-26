@@ -1,7 +1,7 @@
-# PowerWorldHiveMind - complete knowledge bundle
+# PoWerHiveMind - complete knowledge bundle
 
-Single-file bundle of the PowerWorldHiveMind knowledge base for chat tools that
-cannot clone a repository. Source: https://github.com/ChunSikPark/PowerWorldHiveMind
+Single-file bundle of the PoWerHiveMind knowledge base for chat tools that
+cannot clone a repository. Source: https://github.com/ChunSikPark/PoWerHiveMind
 
 NOTE: a chat interface cannot open your .pwb, run Python, or reach SimAuto. Use
 this to have it WRITE code that you then run yourself.
@@ -10,7 +10,7 @@ this to have it WRITE code that you then run yourself.
 
 # ==== AGENTS.md ====
 
-# PowerWorldHiveMind — agent instructions
+# PoWerHiveMind — agent instructions
 
 You have a knowledge base for **PowerWorld Simulator automation**: driving PowerWorld
 from Python with `esapp`, including PowerWorld's own weather features (PWW files and
@@ -381,7 +381,7 @@ The two reports worth making, both rare:
 the user, who clicks it, reviews the issue on GitHub, and submits:
 
 ```
-https://github.com/ChunSikPark/PowerWorldHiveMind/issues/new?title=TITLE&body=BODY&labels=LABEL
+https://github.com/ChunSikPark/PoWerHiveMind/issues/new?title=TITLE&body=BODY&labels=LABEL
 ```
 
 Percent-encode `TITLE` and `BODY`. Use `Page wrong: methods/<page>.md` or
@@ -396,7 +396,7 @@ user to paste a long traceback into the issue themselves.
 If `gh` is installed and authenticated on this machine, this files it in one step:
 
 ```bash
-gh issue create --repo ChunSikPark/PowerWorldHiveMind \
+gh issue create --repo ChunSikPark/PoWerHiveMind \
   --title "Page wrong: methods/save-powerworld-case.md" \
   --label page-defect --label scripting --body "..."
 ```
@@ -424,7 +424,7 @@ Fetching weather data and inspecting PWW files is pure Python and works anywhere
 
 # ==== index.md ====
 
-# Index — every page in PowerWorldHiveMind
+# Index — every page in PoWerHiveMind
 
 One line per page. Read this to decide what to open; do not open everything.
 
@@ -9158,7 +9158,7 @@ the November 6, 2025 edition is missing four that exist by September 2026,
 refute a field name, ever.
 
 Do not guess field names, and do not take them from prose pages in this knowledge base either —
-one such page in PowerWorldHiveMind carried an Area field name that does not exist in the schema.
+one such page in PoWerHiveMind carried an Area field name that does not exist in the schema.
 
 **Verify against esapp's generated schema first, then emit the aux.** This costs seconds,
 needs no PowerWorld session, and is the correct workflow for authoring aux by hand:

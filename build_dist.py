@@ -21,10 +21,10 @@ ROOT = Path(__file__).resolve().parent
 DIST = ROOT / "dist"
 DIRS = ["demos", "methods", "concepts", "references"]
 
-BUNDLE_HEADER = """# PowerWorldHiveMind - complete knowledge bundle
+BUNDLE_HEADER = """# PoWerHiveMind - complete knowledge bundle
 
-Single-file bundle of the PowerWorldHiveMind knowledge base for chat tools that
-cannot clone a repository. Source: https://github.com/ChunSikPark/PowerWorldHiveMind
+Single-file bundle of the PoWerHiveMind knowledge base for chat tools that
+cannot clone a repository. Source: https://github.com/ChunSikPark/PoWerHiveMind
 
 NOTE: a chat interface cannot open your .pwb, run Python, or reach SimAuto. Use
 this to have it WRITE code that you then run yourself.
@@ -66,7 +66,7 @@ def build_bundle() -> int:
 def build_dir_bundle(d: str) -> int:
     parts = [section(p.name, read(p)) for p in pages(d)]
     write(DIST / f"powerworld-hivemind-{d}.md",
-          f"# PowerWorldHiveMind - {d.upper()}\n\n" + SEP.join(parts) + "\n\n\n---\n")
+          f"# PoWerHiveMind - {d.upper()}\n\n" + SEP.join(parts) + "\n\n\n---\n")
     return len(parts)
 
 

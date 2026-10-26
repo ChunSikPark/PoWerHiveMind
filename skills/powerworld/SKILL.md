@@ -20,7 +20,7 @@ at the start of the session and prefix every path below with it
 
 Anywhere else (Codex, Cursor, or the kit copied into a project), the kit root is whichever
 directory holds `AGENTS.md` alongside the four content directories. That is usually the
-project root or a `PowerWorldHiveMind/` subdirectory of it. Find it once, then use it the
+project root or a `PoWerHiveMind/` subdirectory of it. Find it once, then use it the
 same way.
 
 **Searching the working directory instead of the kit root is the one failure this skill
@@ -191,7 +191,7 @@ Two cases are worth a bug report, and both are rare enough to be signal:
 over; they click, review on GitHub, and submit:
 
 ```
-https://github.com/ChunSikPark/PowerWorldHiveMind/issues/new?title=TITLE&body=BODY&labels=LABEL
+https://github.com/ChunSikPark/PoWerHiveMind/issues/new?title=TITLE&body=BODY&labels=LABEL
 ```
 
 URL-encode both fields. Title as `Page wrong: methods/<page>.md` or `No page: <topic>`;
@@ -200,7 +200,7 @@ what PowerWorld did instead, the Simulator build date from preflight, and the es
 Keep it short: an over-long URL will not open.
 
 Where `gh` is installed and authenticated, `gh issue create --repo
-ChunSikPark/PowerWorldHiveMind --title "..." --body "..."` files it directly. Still show the
+ChunSikPark/PoWerHiveMind --title "..." --body "..."` files it directly. Still show the
 user the exact text first.
 
 **Show the text before anything is submitted.** A traceback can carry case filenames, bus

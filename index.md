@@ -1,4 +1,4 @@
-# Index — every page in PowerWorldHiveMind
+# Index — every page in PoWerHiveMind
 
 One line per page. Read this to decide what to open; do not open everything.
 

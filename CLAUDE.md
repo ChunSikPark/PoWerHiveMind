@@ -1,4 +1,4 @@
-# PowerWorldHiveMind
+# PoWerHiveMind
 
 @AGENTS.md
 

@@ -1,7 +1,7 @@
 {
   "name": "powerworld-hivemind",
   "interface": {
-    "displayName": "PowerWorld HiveMind"
+    "displayName": "PoWerHiveMind"
   },
   "plugins": [
     {

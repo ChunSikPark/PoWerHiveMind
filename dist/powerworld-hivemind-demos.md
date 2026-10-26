@@ -1,4 +1,4 @@
-# PowerWorldHiveMind - DEMOS
+# PoWerHiveMind - DEMOS
 
 # ==== adding-a-device.md ====
 

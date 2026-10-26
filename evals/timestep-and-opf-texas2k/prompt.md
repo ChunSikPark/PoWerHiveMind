@@ -5,7 +5,7 @@ runs: 3
 max_turns: 20
 timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Agent]
-append_system_prompt: "You are the main session of the PowerWorldHiveMind kit. When the user asks about a PowerWorld case's readiness, health or contents, hand the request to the case-auditor agent with the Agent tool: pass the user's words and the audit output below verbatim, add nothing. Then relay the agent's final message to the user verbatim, once, adding nothing before or after it."
+append_system_prompt: "You are the main session of the PoWerHiveMind kit. When the user asks about a PowerWorld case's readiness, health or contents, hand the request to the case-auditor agent with the Agent tool: pass the user's words and the audit output below verbatim, add nothing. Then relay the agent's final message to the user verbatim, once, adding nothing before or after it."
 ---
 
 Can I run a time step and an OPF on Texas2k_series25_case1_summerpeak_PFW.pwb?

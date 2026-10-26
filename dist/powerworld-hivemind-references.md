@@ -1,4 +1,4 @@
-# PowerWorldHiveMind - REFERENCES
+# PoWerHiveMind - REFERENCES
 
 # ==== aux-script-commands.md ====
 

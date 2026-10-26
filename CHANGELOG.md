@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — 2026-10-26
+
+- Renamed PowerWorldHiveMind to PoWerHiveMind. The repository is now github.com/ChunSikPark/PoWerHiveMind and the site
+  chunsikpark.github.io/PoWerHiveMind. GitHub redirects the old repository links, including `git clone`; the old site
+  address does not redirect. The plugin ID `powerworld-hivemind` is unchanged, so existing installs keep working.
+  Entries below keep the old name.
+
 ## 0.5.1 — 2026-10-21
 
 - Five new pages:
@@ -495,10 +502,10 @@ an error.
 ### Install
 
 ```bash
-git clone https://github.com/ChunSikPark/PowerWorldHiveMind.git
+git clone https://github.com/ChunSikPark/PoWerHiveMind.git
 ```
 
-- **Claude Code:** `/plugin marketplace add ChunSikPark/PowerWorldHiveMind`
+- **Claude Code:** `/plugin marketplace add ChunSikPark/PoWerHiveMind`
 - **Any other project:** copy the cloned folder in as a subdirectory — it is plain
   markdown, with nothing to build or run
 - **ChatGPT / claude.ai:** upload from `dist/` — a Claude Skill zip, a single-file

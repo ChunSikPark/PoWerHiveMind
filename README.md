@@ -1,19 +1,19 @@
-# PowerWorldHiveMind
+# PoWerHiveMind
 
 <p align="center">
   <img src="assets/juiced.jpg" alt="A juiced-up pixel-art agent with glowing red eyes" width="220">
 </p>
 
-<p align="center"><strong>Your agent on PowerWorldHiveMind.</strong> Version 0.5.1</p>
+<p align="center"><strong>Your agent on PoWerHiveMind.</strong> Version 0.5.1</p>
 
-<p align="center"><a href="https://chunsikpark.github.io/PowerWorldHiveMind/"><strong>Open the site</strong></a>: a recorded design run, the benchmark, and a 15-minute install.</p>
+<p align="center"><a href="https://chunsikpark.github.io/PoWerHiveMind/"><strong>Open the site</strong></a>: a recorded design run, the benchmark, and a 15-minute install.</p>
 
 ### Tired of babysitting your coding agent?
 
 Tired of explaining, again, that `SaveCase` silently does nothing and that a filtered
 write changes nothing at all?
 
-**PowerWorldHiveMind juices up your agent.** Drop it in, and your assistant stops guessing
+**PoWerHiveMind juices up your agent.** Drop it in, and your assistant stops guessing
 at PowerWorld and starts knowing it, including the failures that never raise an exception
 and quietly hand you a wrong answer. You give it a case, it gives you the analysis, and you
 stop having to be the documentation.
@@ -26,7 +26,7 @@ stop having to be the documentation.
 Paste this sentence into Claude Code (desktop app or CLI):
 
 ```
-Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PowerWorldHiveMind ~/.claude/skills/powerworld-hivemind
+Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PoWerHiveMind ~/.claude/skills/powerworld-hivemind
 ```
 
 Then run `/reload-plugins`, then `/powerworld-hivemind:powerworld-setup`. The setup installs
@@ -43,7 +43,7 @@ it keeps yours and adds only the `[PWHM#<version>]` tag.
 **Check it worked:** ask what `pw.esa.SaveCase("out.pwb")` does. "Silently writes no file"
 means the kit loaded.
 
-- **Codex:** `codex plugin marketplace add ChunSikPark/PowerWorldHiveMind`, then install
+- **Codex:** `codex plugin marketplace add ChunSikPark/PoWerHiveMind`, then install
   **powerworld-hivemind** from `/plugins`. Not yet tested on a released Codex build.
 - **Anything else:** clone the repo, `pip install esapp TeamOverbyeWeather`, start your agent
   in the folder, and tell it `Read AGENTS.md and run the preflight.`
@@ -59,7 +59,7 @@ folder, and read PowerWorld's own message log for each one:
 
 - **Validated on 30 real study requests.** A fresh agent, given only the request and the case,
   solved 30 of 30 against an answer key written before the run. v0.4 solved 20.
-  [See every request and answer](https://chunsikpark.github.io/PowerWorldHiveMind/validation.html).
+  [See every request and answer](https://chunsikpark.github.io/PoWerHiveMind/validation.html).
 - **It knows when to stop.** Seven rules in [AGENTS.md](AGENTS.md#scope-the-work-before-you-start):
   answer, then offer; estimate before a long study; one working design first; audit and ask on
   a vague request; out of scope means stop. Most v0.4 misses were the agent working past the

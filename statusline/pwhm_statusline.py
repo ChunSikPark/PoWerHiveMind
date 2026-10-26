@@ -1,4 +1,4 @@
-"""The PowerWorldHiveMind tag for Claude Code's terminal status line.
+"""The PoWerHiveMind tag for Claude Code's terminal status line.
 
 Prints [PWHM#0.4.0], plus a yellow "↑0.5.0 available" when the kit's daily update check has
 seen a newer version. With no status line of the user's own, it also shows a dashboard: model,

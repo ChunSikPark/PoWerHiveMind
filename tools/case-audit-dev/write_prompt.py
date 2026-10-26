@@ -17,7 +17,7 @@ from pathlib import Path
 
 INTRO = "PowerWorld isn't on this machine, but I already ran the case audit on it. Here is its findings.md:"
 MARK = "PowerWorld isn't on this machine"   # where the question ends, in the old prompts and the new
-ROUTING = ("You are the main session of the PowerWorldHiveMind kit. When the user asks about a PowerWorld "
+ROUTING = ("You are the main session of the PoWerHiveMind kit. When the user asks about a PowerWorld "
            "case's readiness, health or contents, hand the request to the case-auditor agent with the Agent "
            "tool: pass the user's words and the audit output below verbatim, add nothing. Then relay the "
            "agent's final message to the user verbatim, once, adding nothing before or after it.")

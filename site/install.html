@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Install HiveMind</title>
-<meta name="description" content="Install PowerWorldHiveMind by asking Claude to set it up for you, or in three lines yourself.">
+<meta name="description" content="Install PoWerHiveMind by asking Claude to set it up for you, or in three lines yourself.">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -166,12 +166,12 @@ details.peek .cmd{margin-top:8px;}
 <body data-tool="claude">
 <header class="topbar">
   <div class="wrap top">
-    <a class="brand" href="./" aria-label="PowerWorldHiveMind home">
+    <a class="brand" href="./" aria-label="PoWerHiveMind home">
       <svg viewBox="0 0 64 64" aria-hidden="true"><path class="h" d="M32.00 23.80 39.10 27.90 39.10 36.10 32.00 40.20 24.90 36.10 24.90 27.90Z M46.20 23.80 53.30 27.90 53.30 36.10 46.20 40.20 39.10 36.10 39.10 27.90Z M39.10 36.10 46.20 40.20 46.20 48.40 39.10 52.50 32.00 48.40 32.00 40.20Z M24.90 36.10 32.00 40.20 32.00 48.40 24.90 52.50 17.80 48.40 17.80 40.20Z M17.80 23.80 24.90 27.90 24.90 36.10 17.80 40.20 10.70 36.10 10.70 27.90Z M24.90 11.50 32.00 15.60 32.00 23.80 24.90 27.90 17.80 23.80 17.80 15.60Z M39.10 11.50 46.20 15.60 46.20 23.80 39.10 27.90 32.00 23.80 32.00 15.60Z"/><path class="w" d="M32 32L46.20 32.00 M32 32L39.10 44.30 M32 32L24.90 44.30 M32 32L17.80 32.00 M32 32L24.90 19.70 M32 32L39.10 19.70 M46.20 32.00L39.10 44.30 M24.90 44.30L17.80 32.00 M24.90 19.70L39.10 19.70"/><circle class="n" cx="46.20" cy="32.00" r="2.6"/><circle class="n" cx="39.10" cy="44.30" r="2.6"/><circle class="n" cx="24.90" cy="44.30" r="2.6"/><circle class="n" cx="17.80" cy="32.00" r="2.6"/><circle class="n" cx="24.90" cy="19.70" r="2.6"/><circle class="n" cx="39.10" cy="19.70" r="2.6"/><circle class="c" cx="32" cy="32" r="4.2"/></svg>
-      PowerWorldHiveMind
+      PoWerHiveMind
     </a>
     <div class="right">
-      <nav><a href="demo-design.html">Demo</a><a href="validation.html">Benchmark</a><a href="install.html" aria-current="page">Install</a><a href="./#add">Contribute</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/CHANGELOG.md">Changelog</a><a href="https://github.com/ChunSikPark/PowerWorldHiveMind">GitHub</a></nav>
+      <nav><a href="demo-design.html">Demo</a><a href="validation.html">Benchmark</a><a href="install.html" aria-current="page">Install</a><a href="./#add">Contribute</a><a href="https://github.com/ChunSikPark/PoWerHiveMind/blob/main/CHANGELOG.md">Changelog</a><a href="https://github.com/ChunSikPark/PoWerHiveMind">GitHub</a></nav>
       <button type="button" class="theme" id="theme">Light</button>
     </div>
   </div>
@@ -180,7 +180,7 @@ details.peek .cmd{margin-top:8px;}
 <main class="wrap">
   <div class="head">
     <h1>Let Claude install it for you.</h1>
-    <p class="lede">PowerWorldHiveMind is a set of pages your AI assistant reads. You copy one request, and Claude does the setup.</p>
+    <p class="lede">PoWerHiveMind is a set of pages your AI assistant reads. You copy one request, and Claude does the setup.</p>
     <ul class="need" aria-label="What you need">
       <li>You need:</li>
       <li class="it">Windows</li>
@@ -210,10 +210,10 @@ details.peek .cmd{margin-top:8px;}
           <p class="note">First it asks if you want HiveMind in the terminal, where it works better and shows its dashboard. Then it installs or updates what HiveMind needs, asking before each install, and tells you your PowerWorld version. It never opens or changes your PowerWorld cases.</p>
           <details class="peek">
             <summary>Read the request first</summary>
-            <div class="cmd"><pre id="setupText">Set up PowerWorldHiveMind on this computer for me. Ask me before you install anything, and explain each step in plain words. After you install any program, call it by its full path, because this session won't see it on the PATH yet.
+            <div class="cmd"><pre id="setupText">Set up PoWerHiveMind on this computer for me. Ask me before you install anything, and explain each step in plain words. After you install any program, call it by its full path, because this session won't see it on the PATH yet.
 
 1. First ask me one question: do I want to use HiveMind in the terminal? It works better there, because the terminal shows the HiveMind dashboard: the version, my usage limits and how full the context is. If I'm not familiar with the terminal, keep me in the Claude desktop app. That works fine too. Remember my answer.
-2. Install HiveMind: clone https://github.com/ChunSikPark/PowerWorldHiveMind into ~/.claude/skills/powerworld-hivemind. If Git is missing, install it first.
+2. Install HiveMind: clone https://github.com/ChunSikPark/PoWerHiveMind into ~/.claude/skills/powerworld-hivemind. If Git is missing, install it first.
 3. Run the HiveMind setup: follow commands/powerworld-setup.md in that folder. Where it says ${CLAUDE_PLUGIN_ROOT}, use that folder. If Python is missing, don't stop: install it with "Add Python to PATH" turned on, then use the full path to python.exe. The setup installs or updates the Python packages HiveMind needs and checks that PowerWorld and the SimAuto licence work. When it offers the dashboard, use my answer from step 1 instead of asking again.
 4. Tell me what the check found, including my PowerWorld version and whether HiveMind was tested on it. Do step 5 even if the check failed.
 5. If I chose the terminal: install Claude Code with irm https://claude.ai/install.ps1 | iex, open a new PowerShell window, and start claude there by its full path. Tell me a browser will open once so I can sign in. If I chose the app: tell me to start a new conversation here so HiveMind loads.</pre><button type="button" data-copy>Copy</button></div>
@@ -257,9 +257,9 @@ details.peek .cmd{margin-top:8px;}
           <p data-tool="claude">Paste into Claude Code, then load it.</p>
           <p data-tool="codex" hidden>Run in the terminal. Then open <code>/plugins</code>, install <b>powerworld-hivemind</b>, and start a new session. Not yet tested on a released Codex build.</p></div>
         <div class="do">
-          <div class="cmd" data-tool="claude"><pre>Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PowerWorldHiveMind ~/.claude/skills/powerworld-hivemind</pre><button type="button" data-copy>Copy</button></div>
+          <div class="cmd" data-tool="claude"><pre>Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PoWerHiveMind ~/.claude/skills/powerworld-hivemind</pre><button type="button" data-copy>Copy</button></div>
           <div class="cmd" data-tool="claude"><pre>/reload-plugins</pre><button type="button" data-copy>Copy</button></div>
-          <div class="cmd" data-tool="codex" hidden><pre>codex plugin marketplace add ChunSikPark/PowerWorldHiveMind</pre><button type="button" data-copy>Copy</button></div>
+          <div class="cmd" data-tool="codex" hidden><pre>codex plugin marketplace add ChunSikPark/PoWerHiveMind</pre><button type="button" data-copy>Copy</button></div>
         </div>
       </li>
       <li>
@@ -289,7 +289,7 @@ details.peek .cmd{margin-top:8px;}
     </div>
   </section>
 
-  <p class="foot">Stuck? <a href="https://github.com/ChunSikPark/PowerWorldHiveMind/blob/main/GETTING-STARTED.md">The getting-started guide</a> shows what each failure looks like and how to fix it.</p>
+  <p class="foot">Stuck? <a href="https://github.com/ChunSikPark/PoWerHiveMind/blob/main/GETTING-STARTED.md">The getting-started guide</a> shows what each failure looks like and how to fix it.</p>
 </main>
 
 <script>

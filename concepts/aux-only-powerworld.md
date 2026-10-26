@@ -159,7 +159,7 @@ the November 6, 2025 edition is missing four that exist by September 2026,
 refute a field name, ever.
 
 Do not guess field names, and do not take them from prose pages in this knowledge base either —
-one such page in PowerWorldHiveMind carried an Area field name that does not exist in the schema.
+one such page in PoWerHiveMind carried an Area field name that does not exist in the schema.
 
 **Verify against esapp's generated schema first, then emit the aux.** This costs seconds,
 needs no PowerWorld session, and is the correct workflow for authoring aux by hand:

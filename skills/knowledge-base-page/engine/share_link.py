@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 from urllib.parse import quote, urlencode
 
-REPO = "https://github.com/ChunSikPark/PowerWorldHiveMind/issues/new"
+REPO = "https://github.com/ChunSikPark/PoWerHiveMind/issues/new"
 LIMIT = 8000  # past roughly this, browsers and GitHub refuse the link
 TITLES = ("New page: ", "Page update: ")
 KINDS = ("new-page", "page-defect", "missing-page")

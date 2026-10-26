@@ -1,4 +1,4 @@
-"""Tell the user when a newer PowerWorldHiveMind is published.
+"""Tell the user when a newer PoWerHiveMind is published.
 
 Runs at session start. Reads this copy's version, asks GitHub for the published one at most
 once a day, and says one line when the published one is newer. It edits nothing, and any
@@ -15,7 +15,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-LATEST_URL = "https://raw.githubusercontent.com/ChunSikPark/PowerWorldHiveMind/main/.claude-plugin/plugin.json"
+LATEST_URL = "https://raw.githubusercontent.com/ChunSikPark/PoWerHiveMind/main/.claude-plugin/plugin.json"
 CACHE = Path.home() / ".claude" / "powerworld-hivemind-version.json"
 DAY = 24 * 3600
 
@@ -54,8 +54,8 @@ def notify(local, new):
     print(json.dumps({"hookSpecificOutput": {
         "hookEventName": "SessionStart",
         "additionalContext": (
-            f"PowerWorldHiveMind {new} is published; this copy is {local}. Start your first reply "
-            f'with one line telling the user, e.g. "PowerWorldHiveMind {new} is out (you have '
+            f"PoWerHiveMind {new} is published; this copy is {local}. Start your first reply "
+            f'with one line telling the user, e.g. "PoWerHiveMind {new} is out (you have '
             f'{local}). Want me to update it?" Say it once. If they agree, run `git pull` in '
             f"{root}, then tell them to run /reload-plugins."),
     }}))

@@ -84,7 +84,7 @@ Paste this into the box where you type and press Enter. It is a plain sentence a
 Claude to fetch something for you.
 
 ```
-Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PowerWorldHiveMind ~/.claude/skills/powerworld-hivemind
+Install the PowerWorld knowledge base: git clone https://github.com/ChunSikPark/PoWerHiveMind ~/.claude/skills/powerworld-hivemind
 ```
 
 Claude downloads it into a folder it already watches. There is no folder to choose, no ZIP
@@ -172,7 +172,7 @@ Any agent that runs on your computer and can read your files works with this kit
 **Codex** has its own plugin marketplace and this repository ships a manifest for it:
 
 ```
-codex plugin marketplace add ChunSikPark/PowerWorldHiveMind
+codex plugin marketplace add ChunSikPark/PoWerHiveMind
 ```
 
 Then open `/plugins`, install **powerworld-hivemind**, and start a new session. *(Not yet
@@ -183,7 +183,7 @@ open an issue.)*
 the folder.
 
 ```
-git clone https://github.com/ChunSikPark/PowerWorldHiveMind
+git clone https://github.com/ChunSikPark/PoWerHiveMind
 ```
 
 No `git`? On the repository page, click the green **Code** button, then **Download ZIP**,

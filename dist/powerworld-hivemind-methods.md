@@ -1,4 +1,4 @@
-# PowerWorldHiveMind - METHODS
+# PoWerHiveMind - METHODS
 
 # ==== adding-devices-esapp.md ====
 

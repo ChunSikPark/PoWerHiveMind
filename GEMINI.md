@@ -6,7 +6,7 @@
   everything below.
 -->
 
-# PowerWorldHiveMind — agent instructions
+# PoWerHiveMind — agent instructions
 
 You have a knowledge base for **PowerWorld Simulator automation**: driving PowerWorld
 from Python with `esapp`, including PowerWorld's own weather features (PWW files and
@@ -303,7 +303,7 @@ The two reports worth making, both rare:
 the user, who clicks it, reviews the issue on GitHub, and submits:
 
 ```
-https://github.com/ChunSikPark/PowerWorldHiveMind/issues/new?title=TITLE&body=BODY&labels=LABEL
+https://github.com/ChunSikPark/PoWerHiveMind/issues/new?title=TITLE&body=BODY&labels=LABEL
 ```
 
 Percent-encode `TITLE` and `BODY`. Use `Page wrong: methods/<page>.md` or
@@ -316,7 +316,7 @@ user to paste a long traceback into the issue themselves.
 If `gh` is installed and authenticated on this machine, this files it in one step:
 
 ```bash
-gh issue create --repo ChunSikPark/PowerWorldHiveMind \
+gh issue create --repo ChunSikPark/PoWerHiveMind \
   --title "Page wrong: methods/save-powerworld-case.md" \
   --label page-defect --body "..."
 ```
